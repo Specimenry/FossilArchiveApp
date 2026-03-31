@@ -47,6 +47,127 @@ var PERIOD_AGES = {
     'Proterozoic': 650, 'Archean': 650, 'Hadean': 650
 };
 
+// Map exact millions of years ago to proper Epoch, Period, and Age
+var AGE_RANGES = [
+    { max: 0.0042, period: "Quaternary", epoch: "Holocene", age: "Meghalayan" },
+    { max: 0.0082, period: "Quaternary", epoch: "Holocene", age: "Northgrippian" },
+    { max: 0.0117, period: "Quaternary", epoch: "Holocene", age: "Greenlandian" },
+    { max: 0.129, period: "Quaternary", epoch: "Pleistocene", age: "Upper/Late (Tarantian)" },
+    { max: 0.774, period: "Quaternary", epoch: "Pleistocene", age: "Chibanian" },
+    { max: 1.80, period: "Quaternary", epoch: "Pleistocene", age: "Calabrian" },
+    { max: 2.58, period: "Quaternary", epoch: "Pleistocene", age: "Gelasian" },
+    { max: 3.60, period: "Neogene", epoch: "Pliocene", age: "Piacenzian" },
+    { max: 5.333, period: "Neogene", epoch: "Pliocene", age: "Zanclean" },
+    { max: 7.246, period: "Neogene", epoch: "Miocene", age: "Messinian" },
+    { max: 11.63, period: "Neogene", epoch: "Miocene", age: "Tortonian" },
+    { max: 13.82, period: "Neogene", epoch: "Miocene", age: "Serravallian" },
+    { max: 15.97, period: "Neogene", epoch: "Miocene", age: "Langhian" },
+    { max: 20.44, period: "Neogene", epoch: "Miocene", age: "Burdigalian" },
+    { max: 23.03, period: "Neogene", epoch: "Miocene", age: "Aquitanian" },
+    { max: 27.82, period: "Paleogene", epoch: "Oligocene", age: "Chattian" },
+    { max: 33.9, period: "Paleogene", epoch: "Oligocene", age: "Rupelian" },
+    { max: 37.71, period: "Paleogene", epoch: "Eocene", age: "Priabonian" },
+    { max: 41.2, period: "Paleogene", epoch: "Eocene", age: "Bartonian" },
+    { max: 47.8, period: "Paleogene", epoch: "Eocene", age: "Lutetian" },
+    { max: 56.0, period: "Paleogene", epoch: "Eocene", age: "Ypresian" },
+    { max: 59.2, period: "Paleogene", epoch: "Paleocene", age: "Thanetian" },
+    { max: 61.6, period: "Paleogene", epoch: "Paleocene", age: "Selandian" },
+    { max: 66.0, period: "Paleogene", epoch: "Paleocene", age: "Danian" },
+    { max: 72.1, period: "Cretaceous", epoch: "Late Cretaceous", age: "Maastrichtian" },
+    { max: 83.6, period: "Cretaceous", epoch: "Late Cretaceous", age: "Campanian" },
+    { max: 86.3, period: "Cretaceous", epoch: "Late Cretaceous", age: "Santonian" },
+    { max: 89.8, period: "Cretaceous", epoch: "Late Cretaceous", age: "Coniacian" },
+    { max: 93.9, period: "Cretaceous", epoch: "Late Cretaceous", age: "Turonian" },
+    { max: 100.5, period: "Cretaceous", epoch: "Late Cretaceous", age: "Cenomanian" },
+    { max: 113.0, period: "Cretaceous", epoch: "Early Cretaceous", age: "Albian" },
+    { max: 121.4, period: "Cretaceous", epoch: "Early Cretaceous", age: "Aptian" },
+    { max: 125.77, period: "Cretaceous", epoch: "Early Cretaceous", age: "Barremian" },
+    { max: 132.6, period: "Cretaceous", epoch: "Early Cretaceous", age: "Hauterivian" },
+    { max: 139.8, period: "Cretaceous", epoch: "Early Cretaceous", age: "Valanginian" },
+    { max: 145.0, period: "Cretaceous", epoch: "Early Cretaceous", age: "Berriasian" },
+    { max: 152.1, period: "Jurassic", epoch: "Late Jurassic", age: "Tithonian" },
+    { max: 157.3, period: "Jurassic", epoch: "Late Jurassic", age: "Kimmeridgian" },
+    { max: 163.5, period: "Jurassic", epoch: "Late Jurassic", age: "Oxfordian" },
+    { max: 166.1, period: "Jurassic", epoch: "Middle Jurassic", age: "Callovian" },
+    { max: 168.3, period: "Jurassic", epoch: "Middle Jurassic", age: "Bathonian" },
+    { max: 170.3, period: "Jurassic", epoch: "Middle Jurassic", age: "Bajocian" },
+    { max: 174.1, period: "Jurassic", epoch: "Middle Jurassic", age: "Aalenian" },
+    { max: 182.7, period: "Jurassic", epoch: "Early Jurassic", age: "Toarcian" },
+    { max: 190.8, period: "Jurassic", epoch: "Early Jurassic", age: "Pliensbachian" },
+    { max: 199.3, period: "Jurassic", epoch: "Early Jurassic", age: "Sinemurian" },
+    { max: 201.3, period: "Jurassic", epoch: "Early Jurassic", age: "Hettangian" },
+    { max: 208.5, period: "Triassic", epoch: "Late Triassic", age: "Rhaetian" },
+    { max: 227, period: "Triassic", epoch: "Late Triassic", age: "Norian" },
+    { max: 237, period: "Triassic", epoch: "Late Triassic", age: "Carnian" },
+    { max: 242, period: "Triassic", epoch: "Middle Triassic", age: "Ladinian" },
+    { max: 247.2, period: "Triassic", epoch: "Middle Triassic", age: "Anisian" },
+    { max: 251.2, period: "Triassic", epoch: "Early Triassic", age: "Olenekian" },
+    { max: 251.9, period: "Triassic", epoch: "Early Triassic", age: "Induan" },
+    { max: 254.14, period: "Permian", epoch: "Lopingian", age: "Changhsingian" },
+    { max: 259.1, period: "Permian", epoch: "Lopingian", age: "Wuchiapingian" },
+    { max: 265.1, period: "Permian", epoch: "Guadalupian", age: "Capitanian" },
+    { max: 268.8, period: "Permian", epoch: "Guadalupian", age: "Wordian" },
+    { max: 272.95, period: "Permian", epoch: "Guadalupian", age: "Roadian" },
+    { max: 283.5, period: "Permian", epoch: "Cisuralian", age: "Kungurian" },
+    { max: 290.1, period: "Permian", epoch: "Cisuralian", age: "Artinskian" },
+    { max: 293.52, period: "Permian", epoch: "Cisuralian", age: "Sakmarian" },
+    { max: 298.9, period: "Permian", epoch: "Cisuralian", age: "Asselian" },
+    { max: 303.7, period: "Carboniferous", epoch: "Pennsylvanian", age: "Gzhelian" },
+    { max: 307.0, period: "Carboniferous", epoch: "Pennsylvanian", age: "Kasimovian" },
+    { max: 315.2, period: "Carboniferous", epoch: "Pennsylvanian", age: "Moscovian" },
+    { max: 323.2, period: "Carboniferous", epoch: "Pennsylvanian", age: "Bashkirian" },
+    { max: 330.9, period: "Carboniferous", epoch: "Mississippian", age: "Serpukhovian" },
+    { max: 346.7, period: "Carboniferous", epoch: "Mississippian", age: "Visean" },
+    { max: 358.9, period: "Carboniferous", epoch: "Mississippian", age: "Tournaisian" },
+    { max: 372.2, period: "Devonian", epoch: "Late Devonian", age: "Famennian" },
+    { max: 382.7, period: "Devonian", epoch: "Late Devonian", age: "Frasnian" },
+    { max: 387.7, period: "Devonian", epoch: "Middle Devonian", age: "Givetian" },
+    { max: 393.3, period: "Devonian", epoch: "Middle Devonian", age: "Eifelian" },
+    { max: 407.6, period: "Devonian", epoch: "Early Devonian", age: "Emsian" },
+    { max: 410.8, period: "Devonian", epoch: "Early Devonian", age: "Pragian" },
+    { max: 419.2, period: "Devonian", epoch: "Early Devonian", age: "Lochkovian" },
+    { max: 423.0, period: "Silurian", epoch: "Pridoli", age: "Pridoli" },
+    { max: 425.6, period: "Silurian", epoch: "Ludlow", age: "Ludfordian" },
+    { max: 427.4, period: "Silurian", epoch: "Ludlow", age: "Gorstian" },
+    { max: 430.5, period: "Silurian", epoch: "Wenlock", age: "Homerian" },
+    { max: 433.4, period: "Silurian", epoch: "Wenlock", age: "Sheinwoodian" },
+    { max: 438.5, period: "Silurian", epoch: "Llandovery", age: "Telychian" },
+    { max: 440.8, period: "Silurian", epoch: "Llandovery", age: "Aeronian" },
+    { max: 443.8, period: "Silurian", epoch: "Llandovery", age: "Rhuddanian" },
+    { max: 445.2, period: "Ordovician", epoch: "Late Ordovician", age: "Hirnantian" },
+    { max: 453.0, period: "Ordovician", epoch: "Late Ordovician", age: "Katian" },
+    { max: 458.4, period: "Ordovician", epoch: "Late Ordovician", age: "Sandbian" },
+    { max: 467.3, period: "Ordovician", epoch: "Middle Ordovician", age: "Darriwilian" },
+    { max: 470.0, period: "Ordovician", epoch: "Middle Ordovician", age: "Dapingian" },
+    { max: 477.7, period: "Ordovician", epoch: "Early Ordovician", age: "Floian" },
+    { max: 485.4, period: "Ordovician", epoch: "Early Ordovician", age: "Tremadocian" },
+    { max: 489.5, period: "Cambrian", epoch: "Furongian", age: "Stage 10" },
+    { max: 494, period: "Cambrian", epoch: "Furongian", age: "Jiangshanian" },
+    { max: 497, period: "Cambrian", epoch: "Furongian", age: "Paibian" },
+    { max: 500.5, period: "Cambrian", epoch: "Miaolingian", age: "Guzhangian" },
+    { max: 504.5, period: "Cambrian", epoch: "Miaolingian", age: "Drumian" },
+    { max: 509, period: "Cambrian", epoch: "Miaolingian", age: "Wuliuan" },
+    { max: 514, period: "Cambrian", epoch: "Series 2", age: "Stage 4" },
+    { max: 521, period: "Cambrian", epoch: "Series 2", age: "Stage 3" },
+    { max: 529, period: "Cambrian", epoch: "Terreneuvian", age: "Stage 2" },
+    { max: 538.8, period: "Cambrian", epoch: "Terreneuvian", age: "Fortunian" },
+    { max: 635, period: "Proterozoic", epoch: "Neoproterozoic", age: "Ediacaran" },
+    { max: 720, period: "Proterozoic", epoch: "Neoproterozoic", age: "Cryogenian" },
+    { max: 1000, period: "Proterozoic", epoch: "Neoproterozoic", age: "Tonian" },
+    { max: 1200, period: "Proterozoic", epoch: "Mesoproterozoic", age: "Stenian" },
+    { max: 1400, period: "Proterozoic", epoch: "Mesoproterozoic", age: "Ectasian" },
+    { max: 1600, period: "Proterozoic", epoch: "Mesoproterozoic", age: "Calymmian" },
+    { max: 1800, period: "Proterozoic", epoch: "Paleoproterozoic", age: "Statherian" },
+    { max: 2050, period: "Proterozoic", epoch: "Paleoproterozoic", age: "Orosirian" },
+    { max: 2300, period: "Proterozoic", epoch: "Paleoproterozoic", age: "Rhyacian" },
+    { max: 2500, period: "Proterozoic", epoch: "Paleoproterozoic", age: "Siderian" },
+    { max: 2800, period: "Archean", epoch: "Neoarchean", age: "" },
+    { max: 3200, period: "Archean", epoch: "Mesoarchean", age: "" },
+    { max: 3600, period: "Archean", epoch: "Paleoarchean", age: "" },
+    { max: 4000, period: "Archean", epoch: "Eoarchean", age: "" },
+    { max: 9999, period: "Hadean", epoch: "", age: "" }
+];
+
 function getPeriodsGrouped() {
     var groups = [];
     for (var era in PERIODS_AND_EPOCHS) {
@@ -62,6 +183,20 @@ function getEpochsForPeriod(period) {
         }
     }
     return [];
+}
+
+function getAgesForEpoch(epoch) {
+    if (!epoch) return [];
+    var ages = [];
+    var seen = {};
+    for (var i = 0; i < AGE_RANGES.length; i++) {
+        var a = AGE_RANGES[i].age;
+        if (AGE_RANGES[i].epoch === epoch && a && !seen[a]) {
+            ages.push(a);
+            seen[a] = true;
+        }
+    }
+    return ages;
 }
 
 
@@ -189,16 +324,19 @@ function normalizeCSVRow(row) {
     var wl = (keyMap['iswishlist'] || keyMap['wishlist'] || keyMap['is wishlist'] || '').toLowerCase();
     mapped.isWishlist  = (wl === 'true' || wl === '1' || wl === 'yes');
 
-    mapped.geologicalPeriod = keyMap['geologicalperiod'] || keyMap['geological period'] || keyMap['period'] || keyMap['age'] || '';
+    mapped.geologicalPeriod = keyMap['geologicalperiod'] || keyMap['geological period'] || keyMap['period'] || '';
     mapped.epoch       = keyMap['epoch'] || '';
+    mapped.stratAge    = keyMap['stratigraphic age'] || keyMap['stratigraphic_age'] || keyMap['stage'] || keyMap['age (stage)'] || keyMap['age'] || '';
     mapped.country     = keyMap['country'] || keyMap['country of origin'] || keyMap['origin'] || '';
     mapped.location    = keyMap['location'] || keyMap['locality'] || keyMap['site'] || '';
     mapped.formation   = keyMap['formation'] || keyMap['geological formation'] || '';
-    mapped.size        = keyMap['size'] || keyMap['dimensions'] || '';
-    mapped.weight      = keyMap['weight'] || '';
+    mapped.size        = parseFloat(keyMap['size'] || keyMap['dimensions'] || '') || null;
+    mapped.sizeUnit    = (keyMap['size unit'] || keyMap['size_unit'] || keyMap['unit'] || 'cm').toLowerCase();
+    mapped.weight      = parseFloat(keyMap['weight'] || '') || null;
     mapped.price       = parseFloat(keyMap['price'] || keyMap['value'] || keyMap['cost'] || '') || null;
+    mapped.currency    = (keyMap['currency'] || 'USD').toUpperCase();
     mapped.notes       = keyMap['notes'] || keyMap['description'] || keyMap['comments'] || '';
-    mapped.ageMa       = parseInt(keyMap['agema'] || keyMap['age ma'] || keyMap['age (ma)'] || '0') || 0;
+    mapped.ageMa       = parseFloat(keyMap['agema'] || keyMap['age ma'] || keyMap['age (ma)'] || '0') || 0;
 
     return mapped;
 }
@@ -243,15 +381,18 @@ window.app = {
                 document.getElementById('f-wishlist').value = f.isWishlist ? 'true' : 'false';
                 document.getElementById('f-period').value = f.geologicalPeriod || '';
                 window.app.updateEpochs(f.epoch);
+                window.app.updateStratAges(f.stratAge);
                 var ageVal = f.ageMa || 0;
                 document.getElementById('f-age').value = ageVal;
-                document.getElementById('age-display').textContent = ageVal;
+                document.getElementById('f-age-slider').value = ageVal;
                 document.getElementById('f-country').value = f.country || '';
                 document.getElementById('f-location').value = f.location || '';
                 document.getElementById('f-formation').value = f.formation || '';
                 document.getElementById('f-size').value = f.size || '';
+                document.getElementById('f-size-unit').value = f.sizeUnit || 'cm';
                 document.getElementById('f-weight').value = f.weight || '';
                 document.getElementById('f-price').value = f.price || '';
+                document.getElementById('f-currency').value = f.currency || 'USD';
                 document.getElementById('f-notes').value = f.notes || '';
 
                 if (f.images && Array.isArray(f.images)) {
@@ -262,8 +403,11 @@ window.app = {
         } else {
             document.getElementById('fossil-id').value = '';
             document.getElementById('f-age').value = 0;
-            document.getElementById('age-display').textContent = '0';
+            document.getElementById('f-age-slider').value = 0;
+            document.getElementById('f-size-unit').value = 'cm';
+            document.getElementById('f-currency').value = 'USD';
             window.app.updateEpochs();
+            window.app.updateStratAges();
         }
 
         modal.showModal();
@@ -311,12 +455,63 @@ window.app = {
         if (preselectEpoch) { sel.value = preselectEpoch; }
     },
 
+    updateStratAges: function(preselectAge) {
+        preselectAge = preselectAge || '';
+        var epoch = document.getElementById('f-epoch').value;
+        var period = document.getElementById('f-period').value;
+        var sel = document.getElementById('f-strat-age');
+        sel.innerHTML = '<option value="">— Select Age —</option>';
+
+        if (epoch) {
+            var ages = getAgesForEpoch(epoch);
+            ages.forEach(function(a) {
+                var opt = document.createElement('option');
+                opt.value = a;
+                opt.textContent = a;
+                sel.appendChild(opt);
+            });
+        } else if (period) {
+            var epochs = getEpochsForPeriod(period);
+            epochs.forEach(function(ep) {
+                var ages = getAgesForEpoch(ep);
+                if (ages.length > 0) {
+                    var og = document.createElement('optgroup');
+                    og.label = ep;
+                    ages.forEach(function(a) {
+                        var opt = document.createElement('option');
+                        opt.value = a;
+                        opt.textContent = a;
+                        og.appendChild(opt);
+                    });
+                    sel.appendChild(og);
+                }
+            });
+        }
+        if (preselectAge) { sel.value = preselectAge; }
+    },
+
     updateAgeSlider: function() {
         var period = document.getElementById('f-period').value;
         if (period && PERIOD_AGES[period] !== undefined) {
             var age = PERIOD_AGES[period];
             document.getElementById('f-age').value = age;
-            document.getElementById('age-display').textContent = age;
+            document.getElementById('f-age-slider').value = age;
+        }
+    },
+
+    updateDropdownsFromAge: function() {
+        var age = Number(document.getElementById('f-age').value);
+        var res = null;
+        for (var i = 0; i < AGE_RANGES.length; i++) {
+            if (age <= AGE_RANGES[i].max) {
+                res = AGE_RANGES[i];
+                break;
+            }
+        }
+        if (res && res.period) {
+            document.getElementById('f-period').value = res.period;
+            window.app.updateEpochs(res.epoch);
+            window.app.updateStratAges(res.age || '');
         }
     },
 
@@ -375,13 +570,16 @@ window.app = {
             isWishlist: document.getElementById('f-wishlist').value === 'true',
             geologicalPeriod: document.getElementById('f-period').value,
             epoch: document.getElementById('f-epoch').value,
-            ageMa: parseInt(document.getElementById('f-age').value) || 0,
+            stratAge: document.getElementById('f-strat-age').value,
+            ageMa: parseFloat(document.getElementById('f-age').value) || 0,
             country: document.getElementById('f-country').value,
             location: document.getElementById('f-location').value,
             formation: document.getElementById('f-formation').value,
-            size: document.getElementById('f-size').value,
-            weight: document.getElementById('f-weight').value,
+            size: parseFloat(document.getElementById('f-size').value) || null,
+            sizeUnit: document.getElementById('f-size-unit').value,
+            weight: parseFloat(document.getElementById('f-weight').value) || null,
             price: parseFloat(document.getElementById('f-price').value) || null,
+            currency: document.getElementById('f-currency').value,
             notes: document.getElementById('f-notes').value,
             images: currentImages,
             createdAt: isEditing ? undefined : Date.now()  // timestamp for sort
@@ -500,7 +698,14 @@ window.app = {
                 var badgeClass = f.isWishlist ? 'badge badge-wishlist' : 'badge';
                 var periodText = f.geologicalPeriod ? ' &middot; ' + escapeHtml(f.geologicalPeriod) : '';
                 var epochText  = f.epoch ? ' (' + escapeHtml(f.epoch) + ')' : '';
+                var stratAgeText = f.stratAge ? ' &middot; ' + escapeHtml(f.stratAge) + ' Age' : '';
                 var ageText    = f.ageMa ? ' &middot; ~' + f.ageMa + ' Ma' : '';
+
+                var detailsArr = [];
+                if (f.size) detailsArr.push('Size: ' + escapeHtml(f.size) + ' ' + (f.sizeUnit || 'cm'));
+                if (f.weight) detailsArr.push('Weight: ' + escapeHtml(f.weight) + 'g');
+                if (f.price) detailsArr.push('Value: ' + f.price + ' ' + (f.currency || 'USD'));
+                var detailsText = detailsArr.length > 0 ? '<p class="card-meta" style="margin-top: 0.25rem; font-weight: 500;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> ' + detailsArr.join(' &middot; ') + '</p>' : '';
 
                 card.innerHTML =
                     '<div class="checkbox-container">' +
@@ -509,8 +714,9 @@ window.app = {
                     '<div class="card-img-container">' + imgHtml + '</div>' +
                     '<div class="card-content">' +
                         '<h3 class="card-title">' + escapeHtml(f.specimen) + '</h3>' +
-                        '<p class="card-meta"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg> ' + escapeHtml(f.category) + periodText + epochText + ageText + '</p>' +
-                        '<p class="card-meta"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> ' + escapeHtml(f.country || 'Unknown Origin') + '</p>' +
+                        '<p class="card-meta"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg> ' + escapeHtml(f.category) + periodText + epochText + stratAgeText + ageText + '</p>' +
+                        '<p class="card-meta"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> ' + escapeHtml(f.country || 'Unknown Origin') + (f.formation ? ' (' + escapeHtml(f.formation) + ')' : '') + '</p>' +
+                        detailsText +
                         '<div class="card-footer">' +
                             '<span class="' + badgeClass + '">' + (f.isWishlist ? 'Wishlist' : 'Owned') + '</span>' +
                             '<div class="card-actions">' +

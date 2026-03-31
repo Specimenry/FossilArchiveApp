@@ -130,22 +130,32 @@
 
                     <div class="form-group">
                         <label for="f-period">Geological Period</label>
-                        <select id="f-period" onchange="app.updateEpochs(); app.updateAgeSlider()"></select>
+                        <select id="f-period" onchange="app.updateEpochs(); app.updateStratAges(); app.updateAgeSlider()"></select>
                     </div>
 
                     <div class="form-group">
                         <label for="f-epoch">Epoch</label>
-                        <select id="f-epoch">
+                        <select id="f-epoch" onchange="app.updateStratAges()">
                             <option value="">— Select Period First —</option>
                         </select>
                     </div>
 
+                    <div class="form-group">
+                        <label for="f-strat-age">Age (Stage)</label>
+                        <select id="f-strat-age">
+                            <option value="">— Select Epoch First —</option>
+                        </select>
+                    </div>
+
                     <div class="form-group full-width">
-                        <label for="f-age">Estimated Age: <span id="age-display">0</span> Million Years Ago (Ma)</label>
-                        <input type="range" id="f-age" min="0" max="650" value="0" step="1" oninput="document.getElementById('age-display').textContent = this.value">
-                        <div class="slider-labels">
+                        <label for="f-age">Estimated Age (Million Years Ago)</label>
+                        <div style="display: flex; gap: 1rem; align-items: center;">
+                            <input type="number" id="f-age" step="0.01" min="0" value="0" style="width: 120px;" oninput="document.getElementById('f-age-slider').value = Math.min(this.value, 650); app.updateDropdownsFromAge();">
+                            <input type="range" id="f-age-slider" min="0" max="650" value="0" step="0.1" style="flex: 1;" oninput="document.getElementById('f-age').value = this.value; app.updateDropdownsFromAge();">
+                        </div>
+                        <div class="slider-labels" style="margin-top: 0.25rem;">
                             <span>Present</span>
-                            <span>650 Ma</span>
+                            <span>650 Ma (Slider Max)</span>
                         </div>
                     </div>
 
@@ -166,17 +176,30 @@
 
                     <div class="form-group">
                         <label for="f-size">Size</label>
-                        <input type="text" id="f-size" placeholder="e.g. 10 cm">
+                        <div class="input-with-select">
+                            <input type="number" step="0.01" id="f-size" placeholder="e.g. 10">
+                            <select id="f-size-unit">
+                                <option value="cm">cm</option>
+                                <option value="inch">inch</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div class="form-group">
-                        <label for="f-weight">Weight</label>
-                        <input type="text" id="f-weight" placeholder="e.g. 500g">
+                        <label for="f-weight">Weight (g)</label>
+                        <input type="number" step="0.1" id="f-weight" placeholder="e.g. 500">
                     </div>
 
                     <div class="form-group">
                         <label for="f-price">Value (Optional)</label>
-                        <input type="number" step="0.01" id="f-price" placeholder="e.g. 150">
+                        <div class="input-with-select">
+                            <input type="number" step="0.01" id="f-price" placeholder="e.g. 150">
+                            <select id="f-currency">
+                                <option value="USD">USD</option>
+                                <option value="EUR">EUR</option>
+                                <option value="SEK">SEK</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div class="form-group full-width">

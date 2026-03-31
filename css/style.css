@@ -279,6 +279,25 @@ button:focus-visible {
     min-width: 140px;
 }
 
+/* --- Input With Select --- */
+.input-with-select {
+    display: flex;
+}
+.input-with-select input {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    flex: 1;
+}
+.input-with-select select {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-left: 0;
+    width: auto;
+    background: var(--bg-warm);
+    font-weight: 500;
+}
+
+
 input[type="text"],
 input[type="number"],
 select,
