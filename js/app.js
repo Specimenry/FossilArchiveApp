@@ -727,6 +727,31 @@ window.app = {
         }
     },
 
+    duplicateFossil: function(id) {
+        window.app.openModal(); // opens as new (resets form and images)
+        var f = fossils.find(function(x) { return x.id === id; });
+        if (!f) return;
+        document.getElementById('modal-title').innerText = 'Duplicate Fossil';
+        document.getElementById('f-specimen').value = f.specimen || '';
+        document.getElementById('f-category').value = f.category || '';
+        document.getElementById('f-wishlist').value = f.isWishlist ? 'true' : 'false';
+        document.getElementById('f-period').value = f.geologicalPeriod || '';
+        window.app.updateEpochs(f.epoch);
+        window.app.updateStratAges(f.stratAge);
+        var ageVal = f.ageMa || 0;
+        document.getElementById('f-age').value = ageVal;
+        document.getElementById('f-age-slider').value = ageVal;
+        document.getElementById('f-country').value = f.country || '';
+        document.getElementById('f-location').value = f.location || '';
+        document.getElementById('f-formation').value = f.formation || '';
+        document.getElementById('f-size').value = f.size || '';
+        document.getElementById('f-size-unit').value = f.sizeUnit || 'cm';
+        document.getElementById('f-weight').value = f.weight || '';
+        document.getElementById('f-price').value = f.price || '';
+        document.getElementById('f-currency').value = f.currency || 'USD';
+        document.getElementById('f-notes').value = f.notes || '';
+    },
+
     // --- Render ---
     renderFossils: function() {
         return getAllFossils().then(function(allFossils) {
@@ -830,6 +855,7 @@ window.app = {
                             '<span class="' + badgeClass + '">' + (f.isWishlist ? 'Wishlist' : 'Owned') + '</span>' +
                             '<div class="card-actions">' +
                                 '<button title="Edit" onclick="app.openModal(\'' + f.id + '\')"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>' +
+                                '<button title="Duplicate" onclick="app.duplicateFossil(\'' + f.id + '\')"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>' +
                                 '<button class="btn-delete" title="Delete" onclick="app.deleteFossilItem(\'' + f.id + '\')"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>' +
                             '</div>' +
                         '</div>' +
