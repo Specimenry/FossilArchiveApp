@@ -354,6 +354,8 @@ window.addEventListener('DOMContentLoaded', function() {
     populateDropdowns();
     initDB().then(function() {
         window.app.renderFossils();
+        // Run background check for bloated images 2 seconds after load
+        setTimeout(optimizeExistingDatabase, 2000);
     });
 });
 
@@ -534,9 +536,17 @@ window.app = {
                 var reader = new FileReader();
                 reader.onload = function(e) {
                     if (e.target.result) {
-                        currentImages.push(e.target.result);
+                        downscaleImage(e.target.result, 1200, 0.85).then(function(optimizedStr) {
+                            currentImages.push(optimizedStr);
+                            resolve();
+                        }).catch(function(err) {
+                            console.error('Image optimization failed', err);
+                            currentImages.push(e.target.result); // Fallback to original
+                            resolve();
+                        });
+                    } else {
+                        resolve();
                     }
-                    resolve();
                 };
                 reader.readAsDataURL(file);
             });
@@ -976,3 +986,75 @@ function makeOption(value, text) {
     opt.textContent = text;
     return opt;
 }
+
+// --- Image Optimization Helpers ---
+function downscaleImage(dataUrl, maxDimension, quality) {
+    return new Promise(function(resolve, reject) {
+        var img = new Image();
+        img.onload = function() {
+            var width = img.width;
+            var height = img.height;
+            
+            // Only resize if it exceeds the max dimension
+            if (width > maxDimension || height > maxDimension) {
+                if (width > height) {
+                    height = Math.round(height *= maxDimension / width);
+                    width = maxDimension;
+                } else {
+                    width = Math.round(width *= maxDimension / height);
+                    height = maxDimension;
+                }
+            }
+            
+            var canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            var ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            // Convert to compressed JPEG regardless of input format
+            resolve(canvas.toDataURL('image/jpeg', quality || 0.85));
+        };
+        img.onerror = function(e) { reject(e); };
+        img.src = dataUrl;
+    });
+}
+
+function optimizeExistingDatabase() {
+    getAllFossils().then(function(fossils) {
+        var needsUpdate = [];
+        fossils.forEach(function(f) {
+            if (f.images && f.images.length > 0) {
+                // If a base64 string is > 800,000 characters (~600KB), it's likely unoptimized
+                var hasLarge = f.images.some(function(img) { return img && img.length > 800000; });
+                if (hasLarge) needsUpdate.push(f);
+            }
+        });
+        
+        if (needsUpdate.length > 0) {
+            console.log('Found ' + needsUpdate.length + ' fossil(s) with large images. Running retroactive optimization...');
+            var chain = Promise.resolve();
+            needsUpdate.forEach(function(f) {
+                chain = chain.then(function() {
+                    var optPromises = f.images.map(function(imgStr) {
+                        if (imgStr && imgStr.length > 800000) {
+                            return downscaleImage(imgStr, 1200, 0.85).catch(function() { return imgStr; });
+                        }
+                        return Promise.resolve(imgStr);
+                    });
+                    
+                    return Promise.all(optPromises).then(function(optimizedImages) {
+                        f.images = optimizedImages;
+                        return updateFossil(f);
+                    });
+                });
+            });
+            
+            chain.then(function() {
+                console.log('Retroactive optimization complete. The database footprint has been reduced.');
+                // Optionally re-render if needed, but it's okay to just leave it until next view change.
+            });
+        }
+    });
+}
+
