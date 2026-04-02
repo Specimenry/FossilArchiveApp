@@ -524,36 +524,95 @@ window.app = {
     },
 
     // --- Images ---
-    handleImageUpload: function(event) {
+    handleImageUpload: async function(event) {
         var files = event.target.files;
-        if (!files) return;
-        for (var i = 0; i < files.length; i++) {
-            (function(file) {
+        if (!files || files.length === 0) return;
+
+        var inputElement = event.target;
+        var processFile = function(file) {
+            return new Promise(function(resolve) {
                 var reader = new FileReader();
                 reader.onload = function(e) {
-                    currentImages.push(e.target.result);
-                    window.app.renderImagePreview();
+                    if (e.target.result) {
+                        currentImages.push(e.target.result);
+                    }
+                    resolve();
                 };
                 reader.readAsDataURL(file);
-            })(files[i]);
+            });
+        };
+
+        var previewContainer = document.getElementById('image-preview');
+        var existingLoader = document.getElementById('heic-processing');
+        if (existingLoader) existingLoader.remove();
+
+        var showLoader = function(msg) {
+            var loader = document.getElementById('heic-processing');
+            if (!loader) {
+                loader = document.createElement('div');
+                loader.id = 'heic-processing';
+                loader.className = 'processing-indicator';
+                if (previewContainer) previewContainer.insertAdjacentElement('beforebegin', loader);
+            }
+            loader.innerHTML = '<span class="loading-spinner"></span> ' + msg;
+            return loader;
+        };
+
+        for (var i = 0; i < files.length; i++) {
+            var file = files[i];
+            var isHeic = file.type === 'image/heic' || (file.name && (file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif')));
+
+            if (isHeic && typeof heic2any !== 'undefined') {
+                showLoader('Converting iPhone photo ' + (i + 1) + ' of ' + files.length + ' format (may take a moment)...');
+                try {
+                    // Convert sequentially to prevent memory spike crashes
+                    var resultBlob = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.8 });
+                    var processBlob = Array.isArray(resultBlob) ? resultBlob[0] : resultBlob;
+                    await processFile(processBlob);
+                } catch (e) {
+                    console.error("HEIC conversion error", e);
+                    showLoader('<span style="color:var(--danger)">Failed to process photo ' + (i + 1) + '. It may be too large.</span>');
+                    await new Promise(function(r) { setTimeout(r, 2000); });
+                    await processFile(file); // Try native fallback anyway
+                }
+            } else {
+                if (isHeic && typeof heic2any === 'undefined') {
+                    alert('Connecting to the internet is required to process HEIC iPhone photos.');
+                }
+                await processFile(file);
+            }
         }
+
+        var finalLoader = document.getElementById('heic-processing');
+        if (finalLoader) finalLoader.remove();
+
+        // Render preview once all files are in the array
+        window.app.renderImagePreview();
+        
+        // Reset the file input so the user can upload the same files again if needed
+        inputElement.value = '';
     },
 
     renderImagePreview: function() {
         var container = document.getElementById('image-preview');
         container.innerHTML = '';
         currentImages.forEach(function(imgSrc, index) {
+            var imgContainer = document.createElement('div');
+            imgContainer.className = 'img-preview-item-wrapper';
+            
             var img = document.createElement('img');
             img.src = imgSrc;
             img.className = 'img-preview-item';
-            img.alt = 'Preview ' + (index + 1) + ' (click to remove)';
+            img.alt = 'Photo ' + (index + 1);
             img.title = 'Click to remove';
-            img.style.cursor = 'pointer';
+            
             img.onclick = function() {
                 currentImages.splice(index, 1);
                 window.app.renderImagePreview();
             };
-            container.appendChild(img);
+            
+            imgContainer.appendChild(img);
+            container.appendChild(imgContainer);
         });
     },
 
@@ -632,6 +691,32 @@ window.app = {
         }
     },
 
+    changeImage: function(id, dir) {
+        var f = fossils.find(function(x) { return x.id === id; });
+        if (!f || !f.images || f.images.length <= 1) return;
+        
+        var container = document.querySelector('[data-id="' + id + '"] .card-img-container');
+        if (!container) return;
+        
+        var currentIndex = parseInt(container.getAttribute('data-current-index') || '0');
+        var nextIndex = (currentIndex + dir + f.images.length) % f.images.length;
+        
+        container.setAttribute('data-current-index', nextIndex);
+        
+        var img = container.querySelector('img');
+        if (img) img.src = f.images[nextIndex];
+        
+        var dots = document.querySelectorAll('#dots-' + id + ' .dot');
+        dots.forEach(function(dot, i) {
+            dot.classList.toggle('active', i === nextIndex);
+        });
+
+        var counter = document.getElementById('counter-' + id);
+        if (counter) {
+            counter.innerText = (nextIndex + 1) + ' / ' + f.images.length;
+        }
+    },
+
     // --- Render ---
     renderFossils: function() {
         return getAllFossils().then(function(allFossils) {
@@ -689,11 +774,25 @@ window.app = {
             filtered.forEach(function(f) {
                 var card = document.createElement('article');
                 card.className = 'fossil-card';
+                card.setAttribute('data-id', f.id);
 
                 var hasImage = f.images && f.images.length > 0;
-                var imgHtml = hasImage
-                    ? '<img src="' + f.images[0] + '" alt="' + escapeHtml(f.specimen) + ' photograph" loading="lazy" />'
-                    : '<svg class="card-placeholder-icon" xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>';
+                var multipleImages = f.images && f.images.length > 1;
+                
+                var imgHtml = '';
+                if (hasImage) {
+                    imgHtml = '<img src="' + f.images[0] + '" alt="' + escapeHtml(f.specimen) + ' photograph" loading="lazy" />';
+                    if (multipleImages) {
+                        imgHtml += '<button class="carousel-btn prev" onclick="event.stopPropagation(); app.changeImage(\'' + f.id + '\', -1)">&#10094;</button>' +
+                                   '<button class="carousel-btn next" onclick="event.stopPropagation(); app.changeImage(\'' + f.id + '\', 1)">&#10095;</button>' +
+                                   '<div class="photo-counter" id="counter-' + f.id + '">1 / ' + f.images.length + '</div>' +
+                                   '<div class="carousel-dots" id="dots-' + f.id + '">' +
+                                        f.images.map(function(_, i) { return '<span class="dot ' + (i === 0 ? 'active' : '') + '"></span>'; }).join('') +
+                                   '</div>';
+                    }
+                } else {
+                    imgHtml = '<svg class="card-placeholder-icon" xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>';
+                }
 
                 var badgeClass = f.isWishlist ? 'badge badge-wishlist' : 'badge';
                 var periodText = f.geologicalPeriod ? ' &middot; ' + escapeHtml(f.geologicalPeriod) : '';
@@ -704,14 +803,14 @@ window.app = {
                 var detailsArr = [];
                 if (f.size) detailsArr.push('Size: ' + escapeHtml(f.size) + ' ' + (f.sizeUnit || 'cm'));
                 if (f.weight) detailsArr.push('Weight: ' + escapeHtml(f.weight) + 'g');
-                if (f.price) detailsArr.push('Value: ' + f.price + ' ' + (f.currency || 'USD'));
+                if (f.price) detailsArr.push('Price: ' + f.price + ' ' + (f.currency || 'USD'));
                 var detailsText = detailsArr.length > 0 ? '<p class="card-meta" style="margin-top: 0.25rem; font-weight: 500;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> ' + detailsArr.join(' &middot; ') + '</p>' : '';
 
                 card.innerHTML =
                     '<div class="checkbox-container">' +
                         '<input type="checkbox" aria-label="Select ' + escapeHtml(f.specimen) + '" onchange="app.toggleSelectFossil(event, \'' + f.id + '\')" ' + (selectedFossils.has(f.id) ? 'checked' : '') + '>' +
                     '</div>' +
-                    '<div class="card-img-container">' + imgHtml + '</div>' +
+                    '<div class="card-img-container" data-current-index="0">' + imgHtml + '</div>' +
                     '<div class="card-content">' +
                         '<h3 class="card-title">' + escapeHtml(f.specimen) + '</h3>' +
                         '<p class="card-meta"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg> ' + escapeHtml(f.category) + periodText + epochText + stratAgeText + ageText + '</p>' +
