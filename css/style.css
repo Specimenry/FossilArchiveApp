@@ -506,18 +506,39 @@ main {
 
 .stats-charts {
     display: flex;
-    gap: 2rem;
+    gap: 3rem;
     width: 100%;
-    justify-content: space-around;
+    justify-content: center;
+    align-items: flex-start;
     flex-wrap: wrap;
     border-top: 1px solid var(--border-color);
-    padding-top: 1.25rem;
+    padding: 2rem 1rem;
 }
 
 .chart-wrapper {
     position: relative;
-    width: 250px;
-    height: 250px;
+    width: 100%;
+    max-width: 480px;
+    min-height: 480px;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.chart-wrapper canvas {
+    max-width: 100% !important;
+    height: auto !important;
+}
+
+.chart-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 1rem;
+    text-align: center;
 }
 
 /* --- Fossil Grid --- */
@@ -881,6 +902,40 @@ main {
     background: var(--wishlist-bg);
     color: var(--wishlist-color);
     border-color: rgba(120, 80, 160, 0.15);
+}
+
+.card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-top: 0.65rem;
+    margin-bottom: 0.1rem;
+}
+
+.tag-pill {
+    font-size: 0.625rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    background: var(--bg-warm);
+    padding: 0.15rem 0.6rem;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    text-transform: lowercase;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.tag-pill:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-bg);
+}
+
+/* Specific Tag Filtering Highlight (Optional visual feedback if implemented) */
+.tag-pill.active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
 }
 
 .card-actions {
