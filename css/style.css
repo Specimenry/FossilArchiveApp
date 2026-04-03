@@ -2,6 +2,7 @@
 
 :root {
     /* Warm, fossil-inspired palette */
+    --logo-url: url('../img/logo_flat_light.png');
     --bg-base: #faf8f5;
     --bg-surface: #ffffff;
     --bg-warm: #f5f0ea;
@@ -25,6 +26,28 @@
     --shadow-lg: 0 8px 30px rgba(44, 36, 24, 0.12);
     --transition: all 0.2s ease;
     --content-max: 1200px;
+}
+
+[data-theme="dark"] {
+    --logo-url: url('../img/logo_flat.png');
+    --bg-base: #0b1015; /* Deep trench */
+    --bg-surface: #141d26; /* Midnight blue */
+    --bg-warm: #1a242f; /* Slightly lighter */
+    --text-primary: #e0e6ed;
+    --text-secondary: #9da8b5;
+    --border-color: #273747;
+    --border-hover: #3d5063;
+    --accent: #4ca1a3; /* Bioluminescent teal */
+    --accent-light: #6ac5c7;
+    --accent-bg: rgba(76, 161, 163, 0.15);
+    --accent-ring: rgba(76, 161, 163, 0.3);
+    --danger: #d94c4c;
+    --danger-hover: #f26b6b;
+    --wishlist-bg: rgba(150, 110, 200, 0.15);
+    --wishlist-color: #a47ecc;
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.5);
 }
 
 /* --- Reset --- */
@@ -90,6 +113,7 @@ header h1 .accent {
 .header-logo {
     width: 40px;
     height: 40px;
+    content: var(--logo-url);
     object-fit: contain;
     border-radius: var(--radius-sm);
 }

@@ -380,6 +380,15 @@ function fetchExchangeRates() {
 }
 
 window.addEventListener('DOMContentLoaded', function() {
+    var savedTheme = localStorage.getItem('oceanic_theme') || 'light';
+    if (savedTheme === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        var themeIcon = document.getElementById('theme-icon');
+        if (themeIcon) {
+            themeIcon.innerHTML = '<circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>';
+        }
+    }
+
     populateDropdowns();
     fetchExchangeRates();
     initDB().then(function() {
@@ -394,6 +403,21 @@ window.addEventListener('DOMContentLoaded', function() {
 // APP METHODS — attached to window.app for inline HTML handlers
 // =========================================================================
 window.app = {
+
+    // --- Theme ---
+    toggleTheme: function() {
+        var current = document.documentElement.getAttribute('data-theme');
+        var icon = document.getElementById('theme-icon');
+        if (current === 'dark') {
+            document.documentElement.removeAttribute('data-theme');
+            localStorage.setItem('oceanic_theme', 'light');
+            if (icon) icon.innerHTML = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+        } else {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            localStorage.setItem('oceanic_theme', 'dark');
+            if (icon) icon.innerHTML = '<circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>';
+        }
+    },
 
     // --- Dashboard ---
     toggleStats: function() {

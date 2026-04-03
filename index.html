@@ -15,10 +15,14 @@
     <header>
         <div class="header-inner">
             <div class="header-brand">
-                <img src="img/logo.png" alt="Fossil Archive logo" class="header-logo">
+                <img src="img/logo_flat.png" alt="Fossil Archive logo" class="header-logo">
                 <h1>Fossil <span class="accent">Archive</span></h1>
             </div>
             <div class="header-actions">
+                <button id="btn-toggle-theme" class="btn-icon" onclick="app.toggleTheme()" title="Toggle Dark Mode" aria-label="Toggle Dark Mode" style="margin-right: 0.5rem;">
+                    <svg id="theme-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                </button>
+                <div style="width: 1px; height: 20px; background-color: var(--border-color); margin-right: 0.5rem;"></div>
                 <button id="btn-export" class="btn-icon" onclick="app.exportData()" title="Backup Database to JSON" aria-label="Export backup">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 </button>
