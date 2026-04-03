@@ -38,13 +38,13 @@ var PERIODS_AND_EPOCHS = {
     }
 };
 
-// Approximate mid-point age (Ma) for each period — capped to 650 slider max
+// Approximate mid-point age (Ma) for each period — capped to 541 slider max
 var PERIOD_AGES = {
     'Quaternary': 1, 'Neogene': 15, 'Paleogene': 50,
     'Cretaceous': 100, 'Jurassic': 175, 'Triassic': 230,
     'Permian': 275, 'Carboniferous': 325, 'Devonian': 390,
     'Silurian': 430, 'Ordovician': 470, 'Cambrian': 510,
-    'Proterozoic': 650, 'Archean': 650, 'Hadean': 650
+    'Proterozoic': 541, 'Archean': 541, 'Hadean': 541
 };
 
 // Map exact millions of years ago to proper Epoch, Period, and Age
@@ -712,6 +712,24 @@ window.app = {
             };
             
             imgContainer.appendChild(img);
+            
+            if (index > 0) {
+                var coverBtn = document.createElement('button');
+                coverBtn.type = 'button';
+                coverBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg> Cover';
+                coverBtn.style.cssText = 'position:absolute; top:4px; right:4px; background:rgba(0,0,0,0.65); color:#fff; border:none; padding:3px 6px; font-size:9px; border-radius:4px; z-index:10; cursor:pointer; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; display:flex; align-items:center; opacity:0.8; transition:opacity 0.2s;';
+                coverBtn.onmouseover = function() { this.style.opacity = '1'; };
+                coverBtn.onmouseout = function() { this.style.opacity = '0.8'; };
+                coverBtn.onclick = function(e) {
+                    e.stopPropagation();
+                    var clickedImg = currentImages.splice(index, 1)[0];
+                    currentImages.unshift(clickedImg);
+                    window.app.renderImagePreview();
+                };
+                imgContainer.style.position = 'relative';
+                imgContainer.appendChild(coverBtn);
+            }
+            
             container.appendChild(imgContainer);
         });
     },
@@ -1051,19 +1069,19 @@ window.app = {
 
                 var fullTimelineBlock = '';
                 if (f.ageMa > 0) {
-                    var percentage = Math.min((f.ageMa / 650) * 100, 100);
+                    var percentage = Math.min((f.ageMa / 541) * 100, 100);
                     var eraColor = '#a878d0';
                     var eraName = 'Precambrian';
                     if (f.ageMa <= 66) { eraColor = '#e6a817'; eraName = 'Cenozoic'; }
                     else if (f.ageMa <= 252) { eraColor = '#439775'; eraName = 'Mesozoic'; }
                     else if (f.ageMa <= 541) { eraColor = '#3a8fb7'; eraName = 'Paleozoic'; }
                     
-                    fullTimelineBlock = '<div style="margin-top: 0.6rem; margin-bottom: 0.4rem; display: flex; flex-direction: column; gap: 0.35rem;">' +
-                                        '<div style="display: flex; justify-content: space-between; font-size: 0.65rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em;">' +
+                    fullTimelineBlock = '<div style="margin-top: 0; padding: 0.5rem 1.25rem 0.75rem 1.25rem; border-top: 1px solid var(--border-color); background: var(--bg-warm);">' +
+                                        '<div style="display: flex; justify-content: space-between; font-size: 0.65rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 0.35rem;">' +
                                             '<span>Present</span>' +
                                             '<span style="color: ' + eraColor + ';">' + escapeHtml(eraName) + ' (~' + f.ageMa + ' Ma)</span>' +
                                         '</div>' +
-                                        '<div style="width: 100%; height: 6px; background: var(--border-color); border-radius: 3px; overflow: hidden; position: relative;" title="~' + f.ageMa + ' Million Years Old">' +
+                                        '<div style="width: 100%; height: 4px; background: var(--border-color); border-radius: 2px; overflow: hidden; position: relative;" title="~' + f.ageMa + ' Million Years Old">' +
                                             '<div style="width: ' + Math.max(percentage, 1) + '%; height: 100%; background-color: ' + eraColor + ';"></div>' +
                                         '</div></div>';
                 }
@@ -1101,7 +1119,6 @@ window.app = {
                         '<h3 class="card-title">' + escapeHtml(f.specimen) + '</h3>' +
                         (f.anatomy ? '<div style="margin-top: -0.25rem; margin-bottom: 0.5rem;"><span style="display: inline-flex; align-items: center; gap: 0.35rem; background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 0.15rem 0.5rem; border-radius: 1rem; font-size: 0.75rem; font-weight: 600;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg> ' + escapeHtml(f.anatomy) + '</span></div>' : '') +
                         '<p class="card-meta"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg> ' + escapeHtml(f.category) + periodText + epochText + stratAgeText + '</p>' +
-                        fullTimelineBlock + 
                         '<p class="card-meta" style="margin-top: 0.5rem;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> ' + locationHtmlStr + '</p>' +
                         detailsText +
                         '<div class="card-footer">' +
@@ -1113,7 +1130,8 @@ window.app = {
                                 '<button class="btn-delete" title="Delete" onclick="app.deleteFossilItem(\'' + f.id + '\')"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>' +
                             '</div>' +
                         '</div>' +
-                    '</div>';
+                    '</div>' +
+                    fullTimelineBlock;
 
                 grid.appendChild(card);
             });
