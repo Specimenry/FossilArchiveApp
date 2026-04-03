@@ -47,8 +47,8 @@ var PERIOD_AGES = {
     'Proterozoic': 541, 'Archean': 541, 'Hadean': 541
 };
 
-// Scientific name etymology — common Greek/Latin roots in paleontology
-// Sorted longest-first so the matcher always prefers the most specificvar ETYMOLOGY = [
+// Sorted longest-first so the matcher always prefers the most specific
+var ETYMOLOGY = [
     // Multi-syllable compound roots (longest first)
     { root: 'madagascariensis', meaning: 'from Madagascar' },
     { root: 'crenatissimus', meaning: 'very notched/crenate (Latin)' },
@@ -110,10 +110,18 @@ var PERIOD_AGES = {
     { root: 'ptero', meaning: 'wing (Greek: pteron)' },
     { root: 'thero', meaning: 'beast (Greek: therion)' },
     { root: 'platy', meaning: 'flat / broad (Greek: platys)' },
+    { root: 'brachio', meaning: 'arm (Greek: brakhion)' },
+    { root: 'Edmonto', meaning: 'after Edmonton, Canada (Edmontosaurus)' },
+    { root: 'corytho', meaning: 'helmet / crest (Greek: korys)' },
     { root: 'Majunga', meaning: 'from the Majunga region (Madagascar)' },
     { root: 'Psittaco', meaning: 'parrot (Greek: psittakos)' },
     { root: 'Ourano', meaning: 'brave / monitor lizard (Ouranosaurus)' },
     { root: 'obliquus', meaning: 'slanting / oblique (Latin)' },
+    { root: 'belemn', meaning: 'dart / arrow (Greek: belemnon)' },
+    { root: 'blasto', meaning: 'bud / sprout (Greek: blastos)' },
+    { root: 'gastro', meaning: 'stomach (Greek: gaster)' },
+    { root: 'plesio', meaning: 'near / close to (Greek: plesios)' },
+    { root: 'lambeo', meaning: 'after Lawrence Lambe (paleontologist)' },
 
     // 5-letter roots
     { root: 'saura', meaning: 'lizard (Greek: saura)' },
@@ -136,6 +144,17 @@ var PERIOD_AGES = {
     { root: 'Krypt', meaning: 'hidden (Greek: kryptos)' },
     { root: 'Abeli', meaning: 'after Roberto Abel (Abelisaurus)' },
     { root: 'Sucho', meaning: 'crocodile (Greek: soukhos)' },
+    { root: 'cerat', meaning: 'horn (Greek: keras)' },
+    { root: 'trilo', meaning: 'three-lobed (Greek: trilobos)' },
+    { root: 'crino', meaning: 'lily (Greek: krinon)' },
+    { root: 'pachy', meaning: 'thick (Greek: pakhys)' },
+    { root: 'kentro', meaning: 'spike / prickle (Greek: kentron)' },
+    { root: 'plateo', meaning: 'flat / broad (Greek: platys)' },
+    { root: 'masso', meaning: 'massive / large (Latin: massa)' },
+    { root: 'ortho', meaning: 'straight (Greek: orthos)' },
+    { root: 'petri', meaning: 'stone / rock (Greek: petra)' },
+    { root: 'docidae', meaning: 'common family ending for sauropods like Diplodocidae' },
+    { root: 'indet.', meaning: 'indeterminate (could not be identified to species level)' },
 
     // 4-letter roots
     { root: 'mega', meaning: 'great / large (Greek: megas)' },
@@ -158,6 +177,8 @@ var PERIOD_AGES = {
     { root: 'giga', meaning: 'giant (Greek: gigas)' },
     { root: 'nano', meaning: 'dwarf (Greek: nanos)' },
     { root: 'plio', meaning: 'more (Greek: pleion)' },
+    { root: 'naut', meaning: 'sailor (Greek: nautilos)' },
+    { root: 'idae', meaning: 'standard suffix for animal family names' },
     { root: 'mosa', meaning: 'of the Meuse river (Latin)' },
     { root: 'croc', meaning: 'pebble / crocodile (Greek: kroke)' },
     { root: 'hypo', meaning: 'under / below (Greek)' },
@@ -183,6 +204,7 @@ var PERIOD_AGES = {
     { root: 'pes', meaning: 'foot (Latin)' },
     { root: 'pus', meaning: 'foot (Greek)' },
     { root: 'rex', meaning: 'king (Latin)' },
+    { root: 'sp.', meaning: 'species (abbreviation for unknown species)' },
     { root: 'leo', meaning: 'lion (Latin)' },
     { root: 'neo', meaning: 'new (Greek: neos)' }
 ];
@@ -1294,6 +1316,8 @@ window.app = {
                 statsContainer.style.display = 'none';
             }
 
+
+
             // --- EMPTY STATE ---
             if (filtered.length === 0) {
                 grid.innerHTML =
@@ -1340,13 +1364,15 @@ window.app = {
                     else if (f.ageMa <= 252) { eraColor = '#439775'; eraName = 'Mesozoic'; }
                     else if (f.ageMa <= 541) { eraColor = '#3a8fb7'; eraName = 'Paleozoic'; }
                     
-                    fullTimelineBlock = '<div style="margin-top: 0; padding: 0.5rem 1.25rem 0.75rem 1.25rem; border-top: 1px solid var(--border-color); background: var(--bg-warm);">' +
-                                        '<div style="display: flex; justify-content: space-between; font-size: 0.65rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 0.35rem;">' +
-                                            '<span>Present</span>' +
-                                            '<span style="color: ' + eraColor + ';">' + escapeHtml(eraName) + ' (~' + f.ageMa + ' Ma)</span>' +
+                    var geoText = (f.geologicalPeriod || 'Unknown Period') + (f.epoch ? ' (' + f.epoch + ')' : '') + (f.stratAge ? ' · ' + f.stratAge : '') + ' · ~' + f.ageMa + ' Ma';
+
+                    fullTimelineBlock = '<div class="card-timeline-container">' +
+                                        '<div class="card-timeline-header">' +
+                                            '<span class="card-timeline-label">Present</span>' +
+                                            '<span class="card-timeline-value" style="color: ' + eraColor + ';" title="' + escapeHtml(geoText) + '">' + escapeHtml(geoText) + '</span>' +
                                         '</div>' +
-                                        '<div style="width: 100%; height: 4px; background: var(--border-color); border-radius: 2px; overflow: hidden; position: relative;" title="~' + f.ageMa + ' Million Years Old">' +
-                                            '<div style="width: ' + Math.max(percentage, 1) + '%; height: 100%; background-color: ' + eraColor + ';"></div>' +
+                                        '<div class="card-timeline-bar-track">' +
+                                            '<div class="card-timeline-bar-fill" style="width: ' + Math.max(percentage, 1) + '%; background-color: ' + eraColor + ';"></div>' +
                                         '</div></div>';
                 }
 
@@ -1383,7 +1409,7 @@ window.app = {
                         '<div style="font-size: 0.625rem; color: var(--text-secondary); opacity: 0.7; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.2rem;">' + escapeHtml(f.id) + '</div>' +
                         '<h3 class="card-title">' + annotateSpecimenName(f.specimen) + '</h3>' +
                         (f.anatomy ? '<div style="margin-top: -0.25rem; margin-bottom: 0.5rem;"><span style="display: inline-flex; align-items: center; gap: 0.35rem; background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 0.15rem 0.5rem; border-radius: 1rem; font-size: 0.75rem; font-weight: 600;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg> ' + escapeHtml(f.anatomy) + '</span></div>' : '') +
-                        '<p class="card-meta"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg> ' + escapeHtml(f.category) + periodText + epochText + stratAgeText + '</p>' +
+                        '<p class="card-meta"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg> ' + escapeHtml(f.category) + '</p>' +
                         '<p class="card-meta" style="margin-top: 0.5rem;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> ' + locationHtmlStr + '</p>' +
                         detailsText +
                         '<div class="card-footer">' +
@@ -1736,170 +1762,4 @@ function optimizeExistingDatabase() {
 }
 
 
-// --- DISCOVERY MAP LOGIC ---
 
-var MAP_ACTIVE_FILTER = null;
-
-// Normalize user-entered country names to ISO alpha-2 codes
-var COUNTRY_ISO_MAP = {
-    'usa': 'US', 'united states': 'US', 'america': 'US', 'u.s.a.': 'US',
-    'canada': 'CA',
-    'mexico': 'MX',
-    'uk': 'GB', 'united kingdom': 'GB', 'britain': 'GB', 'england': 'GB',
-    'germany': 'DE',
-    'france': 'FR',
-    'italy': 'IT',
-    'spain': 'ES',
-    'china': 'CN',
-    'india': 'IN',
-    'japan': 'JP',
-    'australia': 'AU',
-    'russia': 'RU', 'russian federation': 'RU',
-    'brazil': 'BR',
-    'argentina': 'AR',
-    'egypt': 'EG',
-    'morocco': 'MA',
-    'algeria': 'DZ',
-    'norway': 'NO',
-    'sweden': 'SE',
-    'kazakhstan': 'KZ',
-    'madagascar': 'MG',
-    'mongolia': 'MN',
-    'iran': 'IR',
-    'saudi arabia': 'SA',
-    'indonesia': 'ID',
-    'thailand': 'TH',
-    'vietnam': 'VN',
-    'kenya': 'KE',
-    'south africa': 'ZA',
-    'tanzania': 'TZ'
-};
-
-function toggleMap() {
-    var drawer = document.getElementById('map-drawer');
-    var btn = document.getElementById('toggle-map');
-    var isHidden = drawer.classList.contains('hidden');
-
-    if (isHidden) {
-        drawer.classList.remove('hidden');
-        drawer.style.display = 'block';
-        btn.classList.add('active');
-        initMap();
-        // Redraw heatmap with current filtered set
-        getAllFossils().then(updateMapHeatmap);
-    } else {
-        drawer.classList.add('hidden');
-        setTimeout(function() { drawer.style.display = 'none'; }, 300);
-        btn.classList.remove('active');
-    }
-}
-
-function initMap() {
-    var container = document.getElementById('world-map-container');
-    if (container.innerHTML.trim() !== '') return; // Already loaded
-
-    container.innerHTML = window.WORLD_MAP_SVG;
-    
-    var paths = container.querySelectorAll('path');
-    paths.forEach(function(path) {
-        // Add listeners for hover and click
-        path.addEventListener('mouseenter', handleMapHover);
-        path.addEventListener('mouseleave', hideMapTooltip);
-        path.addEventListener('mousemove', moveMapTooltip);
-        path.addEventListener('click', function() {
-            filterByMapCountry(path.getAttribute('id'));
-        });
-    });
-}
-
-function updateMapHeatmap(fossils) {
-    if (!document.getElementById('world-map-container').innerHTML) return;
-
-    var counts = {};
-    fossils.forEach(function(f) {
-        if (!f.country) return;
-        var normalized = f.country.toLowerCase().trim();
-        var iso = COUNTRY_ISO_MAP[normalized] || normalized.toUpperCase(); 
-        // Fallback to uppercase if direct match exists (e.g. user typed 'US')
-        
-        counts[iso] = (counts[iso] || 0) + 1;
-    });
-
-    var paths = document.querySelectorAll('.world-map-container path');
-    paths.forEach(function(p) {
-        var iso = p.getAttribute('id');
-        var count = counts[iso] || 0;
-        
-        // Remove old heat classes
-        p.classList.remove('heat-0', 'heat-1', 'heat-2', 'heat-3');
-        
-        // Apply new heat class
-        if (count === 0) p.classList.add('heat-0');
-        else if (count <= 2) p.classList.add('heat-1');
-        else if (count <= 5) p.classList.add('heat-2');
-        else p.classList.add('heat-3');
-        
-        // Set data attribute for tooltip
-        p.setAttribute('data-count', count);
-    });
-}
-
-function filterByMapCountry(isoCode) {
-    // Find the primary name used in our map or ISO
-    var countryName = isoCode;
-    for (var name in COUNTRY_ISO_MAP) {
-        if (COUNTRY_ISO_MAP[name] === isoCode) {
-            countryName = name.charAt(0).toUpperCase() + name.slice(1);
-            break;
-        }
-    }
-
-    // Set search bar to this country
-    var searchInput = document.getElementById('search-input');
-    searchInput.value = countryName;
-    
-    // Highlight the path
-    document.querySelectorAll('.world-map-container path').forEach(function(p) {
-        p.classList.remove('path-active');
-    });
-    var selectedPath = document.getElementById(isoCode);
-    if (selectedPath) selectedPath.classList.add('path-active');
-
-    // Trigger global render
-    renderFossils();
-}
-
-function clearMapFilter() {
-    document.getElementById('search-input').value = '';
-    document.querySelectorAll('.world-map-container path').forEach(function(p) {
-        p.classList.remove('path-active');
-    });
-    renderFossils();
-}
-
-function handleMapHover(e) {
-    var iso = e.target.getAttribute('id');
-    var count = e.target.getAttribute('data-count') || 0;
-    var tooltip = document.getElementById('map-tooltip');
-    
-    tooltip.innerHTML = '<strong>' + iso + '</strong>: ' + count + ' specimen(s)';
-    tooltip.style.display = 'block';
-}
-
-function moveMapTooltip(e) {
-    var tooltip = document.getElementById('map-tooltip');
-    var container = document.getElementById('world-map-container');
-    var rect = container.getBoundingClientRect();
-    
-    tooltip.style.left = (e.clientX - rect.left + 15) + 'px';
-    tooltip.style.top = (e.clientY - rect.top + 15) + 'px';
-}
-
-function hideMapTooltip() {
-    document.getElementById('map-tooltip').style.display = 'none';
-}
-
-// Export for window use
-window.app = window.app || {};
-window.app.toggleMap = toggleMap;
-window.app.clearMapFilter = clearMapFilter;
