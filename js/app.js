@@ -1364,11 +1364,11 @@ window.app = {
                     else if (f.ageMa <= 252) { eraColor = '#439775'; eraName = 'Mesozoic'; }
                     else if (f.ageMa <= 541) { eraColor = '#3a8fb7'; eraName = 'Paleozoic'; }
                     
-                    var geoText = (f.geologicalPeriod || 'Unknown Period') + (f.epoch ? ' (' + f.epoch + ')' : '') + (f.stratAge ? ' · ' + f.stratAge : '') + ' · ~' + f.ageMa + ' Ma';
+                    var geoText = (f.geologicalPeriod || 'Unknown Period') + (f.epoch ? ' (' + f.epoch + ')' : '') + (f.stratAge ? ' · ' + f.stratAge : '');
 
                     fullTimelineBlock = '<div class="card-timeline-container">' +
                                         '<div class="card-timeline-header">' +
-                                            '<span class="card-timeline-label">Present</span>' +
+                                            '<div style="display: flex; flex-direction: column; line-height: 1.1;"><span class="card-timeline-label">Present</span><span style="font-size: 0.75rem; color: ' + eraColor + '; font-weight: 700;">' + f.ageMa + ' Ma</span></div>' +
                                             '<span class="card-timeline-value" style="color: ' + eraColor + ';" title="' + escapeHtml(geoText) + '">' + escapeHtml(geoText) + '</span>' +
                                         '</div>' +
                                         '<div class="card-timeline-bar-track">' +
@@ -1406,7 +1406,7 @@ window.app = {
                     '</div>' +
                     '<div class="card-img-container" data-current-index="0" style="position: relative;">' + imgHtml + '</div>' +
                     '<div class="card-content">' +
-                        '<div style="font-size: 0.625rem; color: var(--text-secondary); opacity: 0.7; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.2rem;">' + escapeHtml(f.id) + '</div>' +
+                        '<div style="font-size: 0.7rem; color: var(--text-secondary); opacity: 0.8; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.2rem;">' + escapeHtml(f.id) + '</div>' +
                         '<h3 class="card-title">' + annotateSpecimenName(f.specimen) + '</h3>' +
                         (f.anatomy ? '<div style="margin-top: -0.25rem; margin-bottom: 0.5rem;"><span style="display: inline-flex; align-items: center; gap: 0.35rem; background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 0.15rem 0.5rem; border-radius: 1rem; font-size: 0.75rem; font-weight: 600;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg> ' + escapeHtml(f.anatomy) + '</span></div>' : '') +
                         '<p class="card-meta"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg> ' + escapeHtml(f.category) + '</p>' +

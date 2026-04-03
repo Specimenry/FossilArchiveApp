@@ -7,7 +7,10 @@ The Fossil Archive is a fully offline-capable, local-first database built on sta
 ## Features ✨
 
 - **Local-First Privacy**: No servers, no accounts, and no data tracking. Everything lives directly in your browser.
+- **Scientific Etymology Tooltips**: Integrated paleontological dictionary that automatically annotates specimen names. Hover over roots like *saurus*, *pteryx*, or *idae* to see their scientific meanings and origins.
+- **Interactive Geological Timeline**: Each specimen features a high-fidelity timeline bar, visualizing its position in Earth's 541-million-year history (Phanerozoic Eon) relative to the Present.
 - **Detailed Taxonomic & Geological Data**: Built-in support for intricate geological periods, epochs, stages (custom stratigraphic ages), and estimated age in millions of years (Ma).
+- **Collection Insights (Dashboard)**: Dynamic charts and statistics summarizing your collection's taxonomic diversity, geographical distribution, and estimated valuation.
 - **Collection vs. Wishlist**: Seamlessly manage both the fossils you currently own and the ones you are actively hunting for.
 - **Advanced Filtering & Sorting**: Quickly search through notes and localities, or filter by taxonomy and geological age. Sort by purchase price, age, or recently added.
 - **Intelligent Image Handling**:
