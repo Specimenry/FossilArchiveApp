@@ -101,7 +101,28 @@
                         <option value="price-asc">Value (Low–High)</option>
                         <option value="price-desc">Value (High–Low)</option>
                     </select>
+                    <button class="btn btn-secondary" id="toggle-map" onclick="app.toggleMap()" title="View Discovery Map">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                        Map
+                    </button>
                 </div>
+            </div>
+            
+            <div id="map-drawer" class="map-drawer hidden">
+                <div class="map-header">
+                    <h3>Discovery Density Heatmap</h3>
+                    <div class="map-legend">
+                        <span class="legend-item"><span class="swatch level-0"></span> 0</span>
+                        <span class="legend-item"><span class="swatch level-1"></span> 1-2</span>
+                        <span class="legend-item"><span class="swatch level-2"></span> 3-5</span>
+                        <span class="legend-item"><span class="swatch level-3"></span> 6+</span>
+                        <button class="btn-text btn-small" onclick="app.clearMapFilter()">Clear Filter</button>
+                    </div>
+                </div>
+                <div id="world-map-container" class="world-map-container">
+                    <!-- SVG injected by JS -->
+                </div>
+                <div id="map-tooltip" class="map-tooltip"></div>
             </div>
         </div>
     </nav>
@@ -272,6 +293,7 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js" integrity="sha512-doSKIKVlMhB2hO3+YAMkFG0+bxBHSjbCOSVFcOIlqLCO6vgD0/07HL8rSfKiEx8dONBh0tyltk2NiKLMsacs0A==" crossorigin="anonymous"></script>
+    <script src="js/map-data.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>
