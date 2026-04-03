@@ -349,6 +349,9 @@ var fossils = [];
 var selectedFossils = new Set();
 var currentImages = [];
 var currentView = 'false'; // 'false' = Collection, 'true' = Wishlist
+var isStatsOpen = false;
+var chartCountry = null;
+var chartPeriod = null;
 
 window.addEventListener('DOMContentLoaded', function() {
     populateDropdowns();
@@ -364,6 +367,22 @@ window.addEventListener('DOMContentLoaded', function() {
 // APP METHODS — attached to window.app for inline HTML handlers
 // =========================================================================
 window.app = {
+
+    // --- Dashboard ---
+    toggleStats: function() {
+        isStatsOpen = !isStatsOpen;
+        var container = document.getElementById('stats-summary');
+        if (container) {
+            container.style.display = isStatsOpen && fossils.length > 0 ? 'flex' : 'none';
+        }
+        var btn = document.getElementById('btn-toggle-stats');
+        if (btn) {
+            btn.classList.toggle('active', isStatsOpen);
+        }
+        if (isStatsOpen) {
+            window.app.renderFossils();
+        }
+    },
 
     // --- Modal ---
     openModal: function(id) {
@@ -793,6 +812,119 @@ window.app = {
                     default:           return (b.createdAt || 0) - (a.createdAt || 0);
                 }
             });
+
+            // --- STATS DASHBOARD ---
+            var statsContainer = document.getElementById('stats-summary');
+            if (filtered.length > 0) {
+                // Group by Currency
+                var valueByCurrency = {};
+                
+                // Charts Data Arrays
+                var countryCounts = {};
+                var periodCounts = {};
+
+                var catCounts = {};
+                var maxCatCount = 0;
+                var mostCommonCat = null;
+
+                for (var i = 0; i < filtered.length; i++) {
+                    var f = filtered[i];
+
+                    // Tally Category
+                    var c = f.category;
+                    if (c) {
+                        catCounts[c] = (catCounts[c] || 0) + 1;
+                        if (catCounts[c] > maxCatCount) {
+                            maxCatCount = catCounts[c];
+                            mostCommonCat = c;
+                        }
+                    }
+
+                    // Tally Currency
+                    if (f.price > 0) {
+                        var curr = f.currency || 'USD';
+                        valueByCurrency[curr] = (valueByCurrency[curr] || 0) + f.price;
+                    }
+
+                    // Tally Country
+                    var cntry = f.country ? f.country.trim() : 'Unknown';
+                    if (cntry.length === 0) cntry = 'Unknown';
+                    countryCounts[cntry] = (countryCounts[cntry] || 0) + 1;
+
+                    // Tally Period
+                    var per = f.geologicalPeriod ? f.geologicalPeriod : 'Unknown';
+                    periodCounts[per] = (periodCounts[per] || 0) + 1;
+                }
+                
+                var statsHtml = 'Showing <strong>' + filtered.length + '</strong> specimens';
+                
+                var totalValueSEK = 0;
+                var hasTotalValue = false;
+                for (var currencyKey in valueByCurrency) {
+                    var val = valueByCurrency[currencyKey];
+                    // Approximate conversion rates to SEK
+                    if (currencyKey === 'USD') totalValueSEK += val * 10.50;
+                    else if (currencyKey === 'EUR') totalValueSEK += val * 11.50;
+                    else if (currencyKey === 'SEK') totalValueSEK += val;
+                    else totalValueSEK += val; // fallback for unhandled
+                    
+                    if (val > 0) hasTotalValue = true;
+                }
+                
+                if (hasTotalValue) {
+                    statsHtml += ' &middot; Est. Total Value: <strong>' + Math.round(totalValueSEK).toLocaleString() + ' SEK</strong>';
+                }
+
+                if (mostCommonCat) {
+                    statsHtml += ' &middot; Primary: <strong>' + (window.escapeHtml ? escapeHtml(mostCommonCat) : mostCommonCat) + '</strong>';
+                }
+                
+                var textContainer = document.getElementById('stats-summary-text');
+                if (textContainer) {
+                    textContainer.innerHTML = statsHtml;
+                }
+
+                if (isStatsOpen) {
+                    statsContainer.style.display = 'flex';
+                    
+                    // Render Charts
+                    try {
+                        if (chartCountry) chartCountry.destroy();
+                        var ctxCountry = document.getElementById('chart-country').getContext('2d');
+                        chartCountry = new Chart(ctxCountry, {
+                            type: 'pie',
+                            data: {
+                                labels: Object.keys(countryCounts),
+                                datasets: [{
+                                    data: Object.values(countryCounts),
+                                    backgroundColor: ['#4e79a7', '#f28e2c', '#e15759', '#76b7b2', '#59a14f', '#edc949', '#af7aa1', '#ff9da7', '#9c755f', '#bab0ab']
+                                }]
+                            },
+                            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' }, title: { display: true, text: 'Country of Origin' } } }
+                        });
+
+                        if (chartPeriod) chartPeriod.destroy();
+                        var ctxPeriod = document.getElementById('chart-period').getContext('2d');
+                        chartPeriod = new Chart(ctxPeriod, {
+                            type: 'pie',
+                            data: {
+                                labels: Object.keys(periodCounts),
+                                datasets: [{
+                                    data: Object.values(periodCounts),
+                                    backgroundColor: ['#4e79a7', '#f28e2c', '#e15759', '#76b7b2', '#59a14f', '#edc949', '#af7aa1', '#ff9da7', '#9c755f', '#bab0ab']
+                                }]
+                            },
+                            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' }, title: { display: true, text: 'Geological Period' } } }
+                        });
+                    } catch (e) {
+                        console.error('Chart.js error:', e);
+                    }
+                } else {
+                    statsContainer.style.display = 'none';
+                }
+            } else {
+                statsContainer.style.display = 'none';
+            }
 
             // --- EMPTY STATE ---
             if (filtered.length === 0) {

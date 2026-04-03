@@ -8,6 +8,7 @@
     <link rel="icon" type="image/png" href="img/favicon.png">
     <link rel="stylesheet" href="css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
@@ -61,6 +62,11 @@
                         Wishlist
                     </button>
                 </div>
+
+                <button type="button" id="btn-toggle-stats" class="btn-secondary" onclick="app.toggleStats()" title="Toggle Dashboard" aria-label="Toggle Dashboard" style="margin-left: auto;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                    Dashboard
+                </button>
             </div>
 
             <!-- Row 2: Filters -->
@@ -97,6 +103,13 @@
     </nav>
 
     <main>
+        <div id="stats-summary" class="stats-summary" aria-live="polite">
+            <div id="stats-summary-text" class="stats-text" style="width: 100%;"></div>
+            <div class="stats-charts">
+                <div class="chart-wrapper"><canvas id="chart-country"></canvas></div>
+                <div class="chart-wrapper"><canvas id="chart-period"></canvas></div>
+            </div>
+        </div>
         <div id="fossil-grid" class="fossil-grid" aria-live="polite">
             <!-- Fossils rendered by JS -->
         </div>
