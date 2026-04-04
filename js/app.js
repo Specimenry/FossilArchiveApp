@@ -612,6 +612,7 @@ var selectedFossils = new Set();
 var currentImages = [];
 var currentView = 'false'; // 'false' = Collection, 'true' = Wishlist
 var isStatsOpen = false;
+var isStratColumnOpen = false;
 var chartCountry = null;
 var chartPeriod = null;
 var exchangeRates = null;
@@ -773,6 +774,27 @@ window.app = {
         if (btn) {
             btn.classList.toggle('active', isStatsOpen);
         }
+        if (isStatsOpen) {
+            window.app.renderFossils();
+        }
+    },
+
+    toggleVisuals: function() {
+        isStratColumnOpen = !isStratColumnOpen;
+        var btn = document.getElementById('btn-toggle-visuals');
+        if (btn) btn.classList.toggle('active', isStratColumnOpen);
+        
+        var chartsContainer = document.getElementById('stats-charts-container');
+        var stratContainer = document.getElementById('strat-column-container');
+        
+        if (isStratColumnOpen) {
+            if (chartsContainer) chartsContainer.style.display = 'none';
+            if (stratContainer) stratContainer.style.display = 'block';
+        } else {
+            if (chartsContainer) chartsContainer.style.display = 'flex';
+            if (stratContainer) stratContainer.style.display = 'none';
+        }
+        
         if (isStatsOpen) {
             window.app.renderFossils();
         }
@@ -1253,6 +1275,81 @@ window.app = {
         document.getElementById('f-tags').value = (f.tags || []).join(', ');
     },
 
+    // --- Print Label ---
+    printLabel: function(id) {
+        var f = fossils.find(function(x) { return x.id === id; });
+        if (!f) return;
+
+        var specimen = f.specimen || 'Unknown Specimen';
+        var catalogId = f.id || '';
+        var category = f.category || '';
+        var anatomy = f.anatomy || '';
+        var period = f.geologicalPeriod || '';
+        var epoch = f.epoch || '';
+        var stratAge = f.stratAge || '';
+        var ageMa = f.ageMa ? '~' + f.ageMa + ' Ma' : '';
+        var country = f.country || '';
+        var location = f.location || '';
+        var formation = f.formation || '';
+
+        var geoLine = [period, epoch, stratAge].filter(Boolean).join(' · ');
+        var locLine = [location, country].filter(Boolean).join(', ');
+        if (formation) locLine += locLine ? ' (' + formation + ')' : formation;
+        var detailParts = [category, anatomy].filter(Boolean).join(' — ');
+
+        var labelHtml = '<!DOCTYPE html><html><head><title>Specimen Label — ' + specimen + '</title>' +
+            '<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">' +
+            '<style>' +
+            '*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }' +
+            'body { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: #f0ece4; font-family: "Inter", sans-serif; }' +
+            '.label-card { width: 3in; height: 2in; border: 1.5pt solid #2c2418; border-radius: 4px; padding: 0.18in 0.22in; display: flex; flex-direction: column; justify-content: space-between; background: #fff; position: relative; overflow: hidden; }' +
+            '.label-card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #8b6914, #b8942e, #8b6914); }' +
+            '.label-top { display: flex; flex-direction: column; gap: 2px; }' +
+            '.specimen-name { font-family: "Playfair Display", Georgia, serif; font-size: 13pt; font-weight: 700; color: #2c2418; line-height: 1.15; letter-spacing: -0.01em; }' +
+            '.specimen-detail { font-size: 7pt; color: #7a6e5d; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 1px; }' +
+            '.label-mid { display: flex; flex-direction: column; gap: 2px; border-top: 0.5pt solid #e0d8cc; padding-top: 4px; }' +
+            '.label-row { display: flex; align-items: baseline; gap: 4px; }' +
+            '.label-key { font-size: 5.5pt; font-weight: 600; color: #7a6e5d; text-transform: uppercase; letter-spacing: 0.08em; min-width: 42px; flex-shrink: 0; }' +
+            '.label-val { font-size: 7.5pt; color: #2c2418; font-weight: 500; }' +
+            '.label-bottom { display: flex; justify-content: space-between; align-items: flex-end; border-top: 0.5pt solid #e0d8cc; padding-top: 3px; }' +
+            '.catalog-id { font-size: 7pt; font-weight: 700; color: #8b6914; letter-spacing: 0.1em; text-transform: uppercase; }' +
+            '.label-archive { font-size: 5pt; color: #b0a898; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; }' +
+            '.no-print { text-align: center; margin-top: 1rem; }' +
+            '.no-print button { font-family: "Inter", sans-serif; padding: 0.5rem 1.5rem; background: #8b6914; color: #fff; border: none; border-radius: 6px; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: background 0.2s; }' +
+            '.no-print button:hover { background: #b8942e; }' +
+            '@media print {' +
+            '  body { background: #fff; min-height: auto; }' +
+            '  .no-print { display: none !important; }' +
+            '  .label-card { border: 1.5pt solid #000; border-radius: 0; page-break-inside: avoid; }' +
+            '  @page { size: 3in 2in; margin: 0; }' +
+            '}' +
+            '</style></head><body>' +
+            '<div>' +
+            '<div class="label-card">' +
+                '<div class="label-top">' +
+                    '<div class="specimen-name">' + escapeHtml(specimen) + '</div>' +
+                    (detailParts ? '<div class="specimen-detail">' + escapeHtml(detailParts) + '</div>' : '') +
+                '</div>' +
+                '<div class="label-mid">' +
+                    (geoLine ? '<div class="label-row"><span class="label-key">Age</span><span class="label-val">' + escapeHtml(geoLine) + (ageMa ? ' · ' + ageMa : '') + '</span></div>' : '') +
+                    (locLine ? '<div class="label-row"><span class="label-key">Locality</span><span class="label-val">' + escapeHtml(locLine) + '</span></div>' : '') +
+                '</div>' +
+                '<div class="label-bottom">' +
+                    '<span class="catalog-id">' + escapeHtml(catalogId) + '</span>' +
+                    '<span class="label-archive">Fossil Archive</span>' +
+                '</div>' +
+            '</div>' +
+            '<div class="no-print"><button onclick="window.print()">Print Label</button></div>' +
+            '</div>' +
+            '</body></html>';
+
+        var labelWindow = window.open('', '_blank', 'width=420,height=380,menubar=no,toolbar=no,location=no,status=no');
+        if (labelWindow) {
+            labelWindow.document.write(labelHtml);
+            labelWindow.document.close();
+        }
+    },
+
     // --- Render ---
     renderFossils: function() {
         return getAllFossils().then(function(allFossils) {
@@ -1316,14 +1413,28 @@ window.app = {
             });
 
             // --- SORT ---
+            // Helper: convert a fossil's price to SEK for normalized comparison
+            var toSEK = function(f) {
+                if (!f.price) return 0;
+                var curr = f.currency || 'USD';
+                if (curr === 'SEK') return f.price;
+                if (exchangeRates && exchangeRates[curr]) {
+                    return f.price / exchangeRates[curr];
+                }
+                // Approximate fallback rates
+                if (curr === 'USD') return f.price * 10.50;
+                if (curr === 'EUR') return f.price * 11.50;
+                return f.price;
+            };
+
             filtered.sort(function(a, b) {
                 switch (sortQ) {
                     case 'name-asc':   return (a.specimen || '').localeCompare(b.specimen || '');
                     case 'name-desc':  return (b.specimen || '').localeCompare(a.specimen || '');
                     case 'age-asc':    return (a.ageMa || 0) - (b.ageMa || 0);
                     case 'age-desc':   return (b.ageMa || 0) - (a.ageMa || 0);
-                    case 'price-asc':  return (a.price || 0) - (b.price || 0);
-                    case 'price-desc': return (b.price || 0) - (a.price || 0);
+                    case 'price-asc':  return toSEK(a) - toSEK(b);
+                    case 'price-desc': return toSEK(b) - toSEK(a);
                     case 'oldest':     return (a.createdAt || 0) - (b.createdAt || 0);
                     case 'newest':
                     default:           return (b.createdAt || 0) - (a.createdAt || 0);
@@ -1408,8 +1519,11 @@ window.app = {
                 if (isStatsOpen) {
                     statsContainer.style.display = 'flex';
                     
-                    // Render Charts
-                    try {
+                    if (isStratColumnOpen) {
+                        window.app.renderStratigraphicColumn(filtered);
+                    } else {
+                        // Render Charts
+                        try {
                         if (chartCountry) chartCountry.destroy();
                         var ctxCountry = document.getElementById('chart-country').getContext('2d');
                         chartCountry = new Chart(ctxCountry, {
@@ -1456,6 +1570,7 @@ window.app = {
                     } catch (e) {
                         console.error('Chart.js error:', e);
                     }
+                    } // End of else block for charts
                 } else {
                     statsContainer.style.display = 'none';
                 }
@@ -1584,6 +1699,7 @@ window.app = {
                                     (speciesFirstWord ? '<button title="Read about ' + escapeHtml(speciesFirstWord) + ' on Wikipedia" onclick="window.open(\'https://en.wikipedia.org/wiki/Special:Search?search=\' + \'' + wikiQuery + '\', \'_blank\')"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg></button>' : '') +
                                     '<button title="Edit" onclick="app.openModal(\'' + f.id + '\')"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>' +
                                     '<button title="Duplicate" onclick="app.duplicateFossil(\'' + f.id + '\')"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>' +
+                                    '<button title="Print Label" onclick="app.printLabel(\'' + f.id + '\')"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg></button>' +
                                     '<button class="btn-delete" title="Delete" onclick="app.deleteFossilItem(\'' + f.id + '\')"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>' +
                                 '</div>' +
                             '</div>' +
@@ -1611,6 +1727,63 @@ window.app = {
                 event.target.checked = false;
             }
         }
+    },
+
+    renderStratigraphicColumn: function(currentFossils) {
+        var stratContainer = document.getElementById('strat-column-container');
+        if (!stratContainer) return;
+        
+        // Count owned fossils per period (only non-wishlist from the current filtered set)
+        var ownedByPeriod = {};
+        currentFossils.forEach(function(f) {
+            if (!f.isWishlist && f.geologicalPeriod) {
+                ownedByPeriod[f.geologicalPeriod] = (ownedByPeriod[f.geologicalPeriod] || 0) + 1;
+            }
+        });
+        
+        // Define the column from newest (top) to oldest (bottom)
+        var phanerozoicGroups = [
+            {
+                era: 'Cenozoic', color: '#e6a817', 
+                periods: ['Quaternary', 'Neogene', 'Paleogene']
+            },
+            {
+                era: 'Mesozoic', color: '#439775', 
+                periods: ['Cretaceous', 'Jurassic', 'Triassic']
+            },
+            {
+                era: 'Paleozoic', color: '#3a8fb7', 
+                periods: ['Permian', 'Carboniferous', 'Devonian', 'Silurian', 'Ordovician', 'Cambrian']
+            }
+        ];
+        
+        var html = '<div class="strat-column">';
+        
+        phanerozoicGroups.forEach(function(group) {
+            html += '<div class="strat-era-group">';
+            html += '<div class="strat-era-label" style="background-color: ' + group.color + ';">' + group.era + '</div>';
+            html += '<div class="strat-periods">';
+            
+            group.periods.forEach(function(per) {
+                var count = ownedByPeriod[per] || 0;
+                var isMissing = count === 0;
+                var bgColor = isMissing ? 'var(--bg-card)' : group.color + 'E6'; // slightly transparent era color
+                var textColor = isMissing ? 'var(--text-muted)' : '#ffffff';
+                var missingClass = isMissing ? ' strat-missing' : '';
+                
+                html += '<div class="strat-block' + missingClass + '" style="background-color: ' + bgColor + '; color: ' + textColor + ';" title="' + per + ': ' + count + ' specimens">';
+                html += '<span class="strat-name">' + per + '</span>';
+                if (!isMissing) {
+                    html += '<span class="strat-count">' + count + '</span>';
+                }
+                html += '</div>';
+            });
+            
+            html += '</div></div>';
+        });
+        
+        html += '</div>';
+        stratContainer.innerHTML = html;
     },
 
     // --- Export / Import ---
