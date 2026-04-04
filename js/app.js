@@ -785,10 +785,13 @@ window.app = {
         if (container) {
             container.style.display = isStatsOpen && fossils.length > 0 ? 'flex' : 'none';
         }
-        var btn = document.getElementById('btn-toggle-stats');
-        if (btn) {
-            btn.classList.toggle('active', isStatsOpen);
-        }
+        
+        // Handle both mobile FAB and desktop button states
+        ['btn-toggle-stats', 'btn-toggle-stats-desktop'].forEach(function(id) {
+            var btn = document.getElementById(id);
+            if (btn) btn.classList.toggle('active', isStatsOpen);
+        });
+
         if (isStatsOpen) {
             window.app.renderFossils();
         }
