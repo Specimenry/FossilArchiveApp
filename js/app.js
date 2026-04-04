@@ -48,6 +48,71 @@ var PERIOD_AGES = {
 };
 
 // Sorted longest-first so the matcher always prefers the most specific
+var COUNTRY_TO_ISO = {
+    'afghanistan': 'af', 'albania': 'al', 'algeria': 'dz', 'andorra': 'ad', 'angola': 'ao',
+    'argentina': 'ar', 'armenia': 'am', 'australia': 'au', 'austria': 'at', 'azerbaijan': 'az',
+    'bahamas': 'bs', 'bahrain': 'bh', 'bangladesh': 'bd', 'barbados': 'bb', 'belarus': 'by',
+    'belgium': 'be', 'belize': 'bz', 'benin': 'bj', 'bhutan': 'bt', 'bolivia': 'bo',
+    'bosnia': 'ba', 'botswana': 'bw', 'brazil': 'br', 'brunei': 'bn', 'bulgaria': 'bg',
+    'burkina faso': 'bf', 'burundi': 'bi', 'cambodia': 'kh', 'cameroon': 'cm', 'canada': 'ca',
+    'cape verde': 'cv', 'central african republic': 'cf', 'chad': 'td', 'chile': 'cl', 'china': 'cn',
+    'colombia': 'co', 'comoros': 'km', 'congo': 'cg', 'costa rica': 'cr', 'croatia': 'hr',
+    'cuba': 'cu', 'cyprus': 'cy', 'czech republic': 'cz', 'denmark': 'dk', 'djibouti': 'dj',
+    'dominica': 'dm', 'dominican republic': 'do', 'ecuador': 'ec', 'egypt': 'eg', 'el salvador': 'sv',
+    'equatorial guinea': 'gq', 'eritrea': 'er', 'estonia': 'ee', 'ethiopia': 'et', 'fiji': 'fj',
+    'finland': 'fi', 'france': 'fr', 'gabon': 'ga', 'gambia': 'gm', 'georgia': 'ge',
+    'germany': 'de', 'ghana': 'gh', 'greece': 'gr', 'grenada': 'gd', 'guatemala': 'gt',
+    'guinea': 'gn', 'guinea-bissau': 'gw', 'guyana': 'gy', 'haiti': 'ht', 'honduras': 'hn',
+    'hungary': 'hu', 'iceland': 'is', 'india': 'in', 'indonesia': 'id', 'iran': 'ir',
+    'iraq': 'iq', 'ireland': 'ie', 'israel': 'il', 'italy': 'it', 'jamaica': 'jm',
+    'japan': 'jp', 'jordan': 'jo', 'kazakhstan': 'kz', 'kenya': 'ke', 'kiribati': 'ki',
+    'kuwait': 'kw', 'kyrgyzstan': 'kg', 'laos': 'la', 'latvia': 'lv', 'lebanon': 'lb',
+    'lesotho': 'ls', 'liberia': 'lr', 'libya': 'ly', 'liechtenstein': 'li', 'lithuania': 'lt',
+    'luxembourg': 'lu', 'macedonia': 'mk', 'madagascar': 'mg', 'malawi': 'mw', 'malaysia': 'my',
+    'maldives': 'mv', 'mali': 'ml', 'malta': 'mt', 'marshall islands': 'mh', 'mauritania': 'mr',
+    'mauritius': 'mu', 'mexico': 'mx', 'micronesia': 'fm', 'moldova': 'md', 'monaco': 'mc',
+    'mongolia': 'mn', 'montenegro': 'me', 'morocco': 'ma', 'mozambique': 'mz', 'myanmar': 'mm',
+    'namibia': 'na', 'nauru': 'nr', 'nepal': 'np', 'netherlands': 'nl', 'new zealand': 'nz',
+    'nicaragua': 'ni', 'niger': 'ne', 'nigeria': 'ng', 'north korea': 'kp', 'norway': 'no',
+    'oman': 'om', 'pakistan': 'pk', 'palau': 'pw', 'panama': 'pa', 'papua new guinea': 'pg',
+    'paraguay': 'py', 'peru': 'pe', 'philippines': 'ph', 'poland': 'pl', 'portugal': 'pt',
+    'qatar': 'qa', 'romania': 'ro', 'russia': 'ru', 'rwanda': 'rw', 'st kitts': 'kn',
+    'st lucia': 'lc', 'st vincent': 'vc', 'samoa': 'ws', 'san marino': 'sm', 'sao tome': 'st',
+    'saudi arabia': 'sa', 'senegal': 'sn', 'serbia': 'rs', 'seychelles': 'sc', 'sierra leone': 'sl',
+    'singapore': 'sg', 'slovakia': 'sk', 'slovenia': 'si', 'solomon islands': 'sb', 'somalia': 'so',
+    'south africa': 'za', 'south korea': 'kr', 'south sudan': 'ss', 'spain': 'es', 'sri lanka': 'lk',
+    'sudan': 'sd', 'suriname': 'sr', 'swaziland': 'sz', 'sweden': 'se', 'switzerland': 'ch',
+    'syria': 'sy', 'taiwan': 'tw', 'tajikistan': 'tj', 'tanzania': 'tz', 'thailand': 'th',
+    'timor-leste': 'tl', 'togo': 'tg', 'tonga': 'to', 'trinidad': 'tt', 'tunisia': 'tn',
+    'turkey': 'tr', 'turkmenistan': 'tm', 'tuvalu': 'tv', 'uganda': 'ug', 'ukraine': 'ua',
+    'uae': 'ae', 'united arab emirates': 'ae', 'uk': 'gb', 'united kingdom': 'gb', 'usa': 'us',
+    'united states': 'us', 'uruguay': 'uy', 'uzbekistan': 'uz', 'vanuatu': 'vu', 'vatican city': 'va',
+    'venezuela': 've', 'vietnam': 'vn', 'yemen': 'ye', 'zambia': 'zm', 'zimbabwe': 'zw'
+};
+
+function getFlagHtml(countryName) {
+    if (!countryName) return '';
+    var clean = countryName.toLowerCase().trim();
+    
+    // Direct match
+    var code = COUNTRY_TO_ISO[clean];
+    
+    // Handle common multi-word aliases or messy inputs
+    if (!code) {
+        if (clean.indexOf('united states') !== -1 || clean === 'usa') code = 'us';
+        else if (clean.indexOf('united kingdom') !== -1 || clean === 'uk') code = 'gb';
+        else if (clean.indexOf('morocco') !== -1) code = 'ma';
+        else if (clean.indexOf('netherlands') !== -1) code = 'nl';
+    }
+
+    // Fallback: if the user already provided a 2-char code
+    if (!code && clean.length === 2) code = clean;
+    
+    if (code) {
+        return '<img src="https://flagcdn.com/w20/' + code.toLowerCase() + '.png" srcset="https://flagcdn.com/w40/' + code.toLowerCase() + '.png 2x" width="20" alt="' + countryName + '" class="flag-icon" style="vertical-align: middle; margin-right: 0.4rem; border-radius: 2px; box-shadow: 0 0 1px rgba(0,0,0,0.2);">';
+    }
+    return '';
+}
 var ETYMOLOGY = [
     // Multi-syllable compound roots (longest first)
     { root: 'madagascariensis', meaning: 'from Madagascar' },
@@ -603,12 +668,43 @@ function normalizeCSVRow(row) {
     return mapped;
 }
 
+// --- Taxonomic Hierarchy (PBDB API) ---
+function fetchTaxonomyData(specimenName) {
+    if (!specimenName) return Promise.reject('No specimen name');
+    
+    // Clean name: take only the first two words (Genus species) to avoid noise
+    var cleanName = specimenName.trim().split(/\s+/).slice(0, 2).join(' ');
+    var url = 'https://paleobiodb.org/data1.2/taxa/list.json?name=' + encodeURIComponent(cleanName) + '&rel=all_parents&show=class';
+    
+    return fetch(url)
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+            if (!data || !data.records || data.records.length === 0) {
+                throw new Error('No taxonomic data found');
+            }
+            
+            // Map common ranks we want to display
+            var desiredRanks = ['kingdom', 'phylum', 'class', 'order', 'family', 'genus', 'species'];
+            var hierarchy = {};
+            
+            data.records.forEach(function(rec) {
+                var rnk = (rec.rnk || '').toLowerCase();
+                if (desiredRanks.indexOf(rnk) !== -1) {
+                    hierarchy[rnk] = rec.nam;
+                }
+            });
+            
+            return hierarchy;
+        });
+}
+
 
 // =========================================================================
 // APP STATE
 // =========================================================================
 var fossils = [];
 var selectedFossils = new Set();
+var expandedTaxonomyIds = new Set();
 var currentImages = [];
 var currentView = 'false'; // 'false' = Collection, 'true' = Wishlist
 var isStatsOpen = false;
@@ -778,6 +874,50 @@ window.app = {
         document.getElementById('lightbox-counter').textContent = 'Photo ' + (lightboxIdx + 1) + ' of ' + f.images.length;
     },
 
+    // --- Taxonomy ---
+    toggleTaxonomy: function(id) {
+        var f = fossils.find(function(x) { return x.id === id; });
+        if (!f) return;
+        
+        var card = document.querySelector('[data-id="' + id + '"]');
+        var tray = card.querySelector('.taxonomy-tray');
+        var btn = card.querySelector('.btn-taxonomy');
+        
+        if (expandedTaxonomyIds.has(id)) {
+            expandedTaxonomyIds.delete(id);
+            tray.classList.remove('active');
+            btn.classList.remove('active');
+            return;
+        }
+        
+        expandedTaxonomyIds.add(id);
+        
+        // If we already have the data, just show it
+        if (f.taxonomy) {
+            tray.classList.add('active');
+            btn.classList.add('active');
+            return;
+        }
+        
+        // Otherwise, fetch it
+        btn.classList.add('loading');
+        fetchTaxonomyData(f.specimen)
+            .then(function(taxonomy) {
+                f.taxonomy = taxonomy;
+                return updateFossil(f);
+            })
+            .then(function() {
+                btn.classList.remove('loading');
+                window.app.renderFossils(); 
+            })
+            .catch(function(err) {
+                expandedTaxonomyIds.delete(id);
+                console.warn('Taxonomy fetch failed:', err);
+                btn.classList.remove('loading');
+                alert('Taxonomy lookup failed for "' + f.specimen + '". Check spelling or internet connection.');
+            });
+    },
+
     // --- Dashboard ---
     toggleStats: function() {
         isStatsOpen = !isStatsOpen;
@@ -826,6 +966,9 @@ window.app = {
         form.reset();
         currentImages = [];
         window.app.renderImagePreview();
+        if (document.getElementById('modal-flag-preview')) {
+            document.getElementById('modal-flag-preview').innerHTML = '';
+        }
 
         if (id) {
             var f = fossils.find(function(x) { return x.id === id; });
@@ -843,6 +986,7 @@ window.app = {
                 document.getElementById('f-age').value = ageVal;
                 document.getElementById('f-age-slider').value = ageVal;
                 document.getElementById('f-country').value = f.country || '';
+                window.app.updateModalFlag();
                 document.getElementById('f-location').value = f.location || '';
                 document.getElementById('f-formation').value = f.formation || '';
                 document.getElementById('f-size').value = f.size || '';
@@ -875,6 +1019,7 @@ window.app = {
 
             // Auto-load last used geography/geology for batch logging
             document.getElementById('f-country').value = localStorage.getItem('last_country') || '';
+            window.app.updateModalFlag();
             document.getElementById('f-location').value = localStorage.getItem('last_location') || '';
             document.getElementById('f-formation').value = localStorage.getItem('last_formation') || '';
             document.getElementById('f-period').value = localStorage.getItem('last_period') || '';
@@ -889,6 +1034,14 @@ window.app = {
 
     closeModal: function() {
         document.getElementById('fossil-modal').close();
+    },
+
+    updateModalFlag: function() {
+        var input = document.getElementById('f-country');
+        var preview = document.getElementById('modal-flag-preview');
+        if (input && preview) {
+            preview.innerHTML = getFlagHtml(input.value);
+        }
     },
 
     // --- Epoch / Age helpers ---
@@ -1525,6 +1678,12 @@ window.app = {
                 
                 var statsHtml = 'Showing <strong>' + filtered.length + '</strong> specimens';
                 
+                // Add top country flag to summary
+                if (mostCommonCountry && mostCommonCountry !== 'Unknown') {
+                    var summaryFlag = getFlagHtml(mostCommonCountry);
+                    statsHtml += ' &middot; Top Origin: ' + summaryFlag + '<strong>' + (window.escapeHtml ? escapeHtml(mostCommonCountry) : mostCommonCountry) + '</strong>';
+                }
+                
                 function calculateTotalSEK(map) {
                     var total = 0;
                     for (var k in map) {
@@ -1557,6 +1716,31 @@ window.app = {
                 var textContainer = document.getElementById('stats-summary-text');
                 if (textContainer) {
                     textContainer.innerHTML = statsHtml;
+                }
+
+                // Distribution List for Countries (with Flags)
+                var countryListHtml = '<div class="dashboard-country-list" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px dashed var(--border-color); display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0.75rem;">';
+                var sortedCountries = Object.entries(countryCounts).sort(function(a,b){ return b[1] - a[1]; });
+                sortedCountries.forEach(function(entry) {
+                    var cName = entry[0];
+                    var cValue = entry[1];
+                    var cFlagHtml = getFlagHtml(cName);
+                    var percent = Math.round((cValue / filtered.length) * 100);
+                    countryListHtml += '<div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.85rem; background: var(--bg-warm); padding: 0.5rem 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">' +
+                                        '<div style="display: flex; align-items: center; gap: 0.5rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">' +
+                                            cFlagHtml + '<span style="font-weight: 600;">' + (window.escapeHtml ? escapeHtml(cName) : cName) + '</span>' +
+                                        '</div>' +
+                                        '<span style="opacity: 0.6; font-weight: 700; color: var(--accent);">' + cValue + ' (' + percent + '%)</span>' +
+                                      '</div>';
+                });
+                countryListHtml += '</div>';
+
+                var countryChartElem = document.getElementById('chart-country');
+                if (countryChartElem && countryChartElem.parentElement) {
+                    var countryChartWrapper = countryChartElem.parentElement;
+                    var existingList = countryChartWrapper.querySelector('.dashboard-country-list');
+                    if (existingList) existingList.remove();
+                    countryChartWrapper.insertAdjacentHTML('beforeend', countryListHtml);
                 }
 
                 if (isStatsOpen) {
@@ -1740,7 +1924,8 @@ window.app = {
                     if (f.country) locQueryArr.push(f.country);
                     var mapQuery = encodeURIComponent(locQueryArr.join(', '));
                     
-                    var locationTextRaw = (f.location ? escapeHtml(f.location) + ', ' : '') + escapeHtml(f.country || 'Unknown Origin') + (f.formation ? ' (' + escapeHtml(f.formation) + ')' : '');
+                    var flagHtml = getFlagHtml(f.country);
+                    var locationTextRaw = (f.location ? escapeHtml(f.location) + ', ' : '') + flagHtml + escapeHtml(f.country || 'Unknown Origin') + (f.formation ? ' (' + escapeHtml(f.formation) + ')' : '');
                     var locationHtmlStr = locQueryArr.length > 0 ? '<a href="https://www.google.com/maps/search/?api=1&query=' + mapQuery + '" target="_blank" onclick="event.stopPropagation();" title="View on Google Maps" style="color: inherit; text-decoration: none; transition: color 0.15s ease;" onmouseover="this.style.color=\'var(--accent)\'" onmouseout="this.style.color=\'inherit\'">' + locationTextRaw + '</a>' : locationTextRaw;
 
                     var detailsArr = [];
@@ -1769,6 +1954,7 @@ window.app = {
                                 '</div>' +
                                 '<div class="card-actions">' +
                                     (speciesFirstWord ? '<button title="Read about ' + escapeHtml(speciesFirstWord) + ' on Wikipedia" onclick="window.open(\'https://en.wikipedia.org/wiki/Special:Search?search=\' + \'' + wikiQuery + '\', \'_blank\')"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg></button>' : '') +
+                                    '<button class="btn-taxonomy ' + (expandedTaxonomyIds.has(f.id) ? 'active' : '') + '" title="Biological Taxonomy" onclick="app.toggleTaxonomy(\'' + f.id + '\')"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="M5 12h14"/><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button>' +
                                     '<button title="Edit" onclick="app.openModal(\'' + f.id + '\')"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>' +
                                     '<button title="Duplicate" onclick="app.duplicateFossil(\'' + f.id + '\')"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>' +
                                     '<button title="Print Label" onclick="app.printLabel(\'' + f.id + '\')"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg></button>' +
@@ -1776,6 +1962,7 @@ window.app = {
                                 '</div>' +
                             '</div>' +
                         '</div>' +
+                        getFullTaxonomyTray(f) +
                         fullTimelineBlock;
                 }
 
@@ -1951,6 +2138,35 @@ window.app = {
         });
     }
 };
+
+function getFullTaxonomyTray(f) {
+    if (!f) return '';
+    var isActive = expandedTaxonomyIds.has(f.id) ? 'active' : '';
+    var html = '<div class="taxonomy-tray ' + isActive + '">';
+    
+    if (f.taxonomy) {
+        html += '<div class="taxonomy-content">';
+        html += '<h4 class="taxonomy-header">Taxonomic Hierarchy</h4>';
+        html += '<div class="taxonomy-tree">';
+        
+        var ranks = ['kingdom', 'phylum', 'class', 'order', 'family', 'genus', 'species'];
+        ranks.forEach(function(rnk) {
+            if (f.taxonomy[rnk]) {
+                html += '<div class="taxonomy-node">' +
+                        '<span class="node-rank">' + rnk + '</span>' +
+                        '<span class="node-name">' + escapeHtml(f.taxonomy[rnk]) + '</span>' +
+                        '</div>';
+            }
+        });
+        
+        html += '</div></div>';
+    } else {
+        html += '<div class="taxonomy-placeholder">Click the taxonomy icon to load biological hierarchy...</div>';
+    }
+    
+    html += '</div>';
+    return html;
+}
 
 
 // =========================================================================

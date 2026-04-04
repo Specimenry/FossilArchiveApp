@@ -211,7 +211,10 @@
 
                     <div class="form-group">
                         <label for="f-country">Country of Origin</label>
-                        <input type="text" id="f-country" placeholder="e.g. Morocco">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; position: relative;">
+                            <div id="modal-flag-preview" style="min-width: 20px; text-align: center; height: 14px; display: flex; align-items: center;"></div>
+                            <input type="text" id="f-country" placeholder="e.g. Morocco" style="flex: 1;" oninput="app.updateModalFlag()">
+                        </div>
                     </div>
 
                     <div class="form-group">
