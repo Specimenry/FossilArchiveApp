@@ -722,7 +722,7 @@ function debounce(fn, wait) {
 }
 
 // Debounced search handler (250ms) to avoid Levenshtein stutter on large collections
-var debouncedSearch = debounce(function() {
+var renderFossilsDebounced = debounce(function() {
     window.app.renderFossils();
 }, 250);
 var isStratColumnOpen = false;
@@ -913,10 +913,12 @@ window.app = {
                 window.app.renderFossils(); 
             })
             .catch(function(err) {
-                expandedTaxonomyIds.delete(id);
-                console.warn('Taxonomy fetch failed:', err);
-                btn.classList.remove('loading');
-                alert('Taxonomy lookup failed for "' + f.specimen + '". Check spelling or internet connection.');
+                console.error("fetchTaxonomy Error:", err);
+                // Fail gracefully: stop loading but don't crash
+                document.getElementById('fetch-loader').style.display = 'none';
+                if (window.app && window.app.showToast) {
+                    window.app.showToast("Taxonomy fetch failed. Check network.", 3000);
+                }
             });
     },
 
@@ -1721,11 +1723,19 @@ window.app = {
                                   '</div>';
                 }
 
-                // Pricing Pill (Aggregated)
+                // Pricing Pillar (Cost)
                 if (totalCostSEK > 0) {
                     statsHtml += '<div class="stats-pill" style="display: flex; align-items: center; gap: 0.5rem; background: var(--bg-warm); padding: 0.4rem 0.85rem; border-radius: 2rem; border: 1px solid var(--border-color); font-size: 0.85rem; font-weight: 500;">' +
+                                    '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b5d4d" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M16 8l-8 8M8 8l8 8"/></svg>' +
+                                    '<span>Cost: <strong>' + Math.round(totalCostSEK).toLocaleString() + ' SEK</strong></span>' +
+                                  '</div>';
+                }
+
+                // Value Pillar (Total Estimated Value)
+                if (totalEstSEK > 0) {
+                    statsHtml += '<div class="stats-pill" style="display: flex; align-items: center; gap: 0.5rem; background: var(--bg-warm); padding: 0.4rem 0.85rem; border-radius: 2rem; border: 1px solid var(--border-color); font-size: 0.85rem; font-weight: 500;">' +
                                     '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e6a817" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v12M17 12H7"/></svg>' +
-                                    '<span>Investment: <strong>' + Math.round(totalCostSEK).toLocaleString() + ' SEK</strong></span>' +
+                                    '<span>Value: <strong>' + Math.round(totalEstSEK).toLocaleString() + ' SEK</strong></span>' +
                                   '</div>';
                 }
 
@@ -1745,8 +1755,8 @@ window.app = {
                     textContainer.innerHTML = statsHtml;
                 }
 
-                // Vertical List Legend with Flags (Reverting grid layout as requested)
-                var countryListHtml = '<div class="dashboard-custom-legend" style="margin-top: 1.25rem; display: flex; flex-direction: column; gap: 0.4rem; max-height: none; overflow: visible;">';
+                // Compressed Horizontal Legend with Flags
+                var countryListHtml = '<div class="dashboard-custom-legend" style="margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; align-items: center;">';
                 var sortedCountries = Object.entries(countryCounts).sort(function(a,b){ return b[1] - a[1]; });
                 var chartColors = ['#4e79a7', '#f28e2c', '#e15759', '#76b7b2', '#59a14f', '#edc949', '#af7aa1', '#ff9da7', '#9c755f', '#bab0ab'];
                 
@@ -1756,11 +1766,11 @@ window.app = {
                     var cFlagHtml = getFlagHtml(cName);
                     var color = chartColors[idx % chartColors.length];
                     
-                    countryListHtml += '<div style="display: flex; align-items: center; gap: 0.75rem; font-size: 0.85rem; padding: 0.25rem 0; border-bottom: 1px solid rgba(0,0,0,0.03);">' +
-                                        '<div style="width: 10px; height: 10px; border-radius: 50%; background: ' + color + '; flex-shrink: 0;"></div>' +
-                                        '<div style="width: 20px; display: flex; align-items: center;">' + cFlagHtml.replace('margin-right: 0.4rem;', 'margin-right: 0;') + '</div>' + 
-                                        '<div style="flex: 1; font-weight: 600;">' + (window.escapeHtml ? escapeHtml(cName) : cName) + '</div>' +
-                                        '<span style="opacity: 0.6; font-weight: 700; color: var(--accent);">' + cValue + '</span>' +
+                    countryListHtml += '<div style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.75rem; background: var(--bg-warm); padding: 0.25rem 0.6rem; border-radius: 1rem; border: 1px solid var(--border-color); white-space: nowrap;">' +
+                                        '<div style="width: 8px; height: 8px; border-radius: 50%; background: ' + color + '; flex-shrink: 0;"></div>' +
+                                        cFlagHtml.replace('margin-right: 0.4rem;', 'margin-right: 0;') + 
+                                        '<span style="font-weight: 600;">' + (window.escapeHtml ? escapeHtml(cName) : cName) + '</span>' +
+                                        '<span style="opacity: 0.6; font-weight: 700; color: var(--accent); margin-left: 0.15rem;">' + cValue + '</span>' +
                                       '</div>';
                 });
                 countryListHtml += '</div>';
@@ -1771,6 +1781,31 @@ window.app = {
                     var existingList = countryChartWrapper.querySelector('.dashboard-country-list') || countryChartWrapper.querySelector('.dashboard-custom-legend');
                     if (existingList) existingList.remove();
                     countryChartWrapper.insertAdjacentHTML('beforeend', countryListHtml);
+                }
+
+                // Compressed Horizontal Legend for PERIODS
+                var periodListHtml = '<div class="dashboard-custom-legend" style="margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; align-items: center;">';
+                var sortedPeriods = Object.entries(periodCounts).sort(function(a,b){ return b[1] - a[1]; });
+                
+                sortedPeriods.forEach(function(entry, idx) {
+                    var pName = entry[0];
+                    var pValue = entry[1];
+                    var color = chartColors[idx % chartColors.length];
+                    
+                    periodListHtml += '<div style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.75rem; background: var(--bg-warm); padding: 0.25rem 0.6rem; border-radius: 1rem; border: 1px solid var(--border-color); white-space: nowrap;">' +
+                                        '<div style="width: 8px; height: 8px; border-radius: 50%; background: ' + color + '; flex-shrink: 0;"></div>' +
+                                        '<span style="font-weight: 600;">' + (window.escapeHtml ? escapeHtml(pName) : pName) + '</span>' +
+                                        '<span style="opacity: 0.6; font-weight: 700; color: var(--accent); margin-left: 0.15rem;">' + pValue + '</span>' +
+                                      '</div>';
+                });
+                periodListHtml += '</div>';
+
+                var periodChartElem = document.getElementById('chart-period');
+                if (periodChartElem && periodChartElem.parentElement) {
+                    var periodChartWrapper = periodChartElem.parentElement;
+                    var existingList = periodChartWrapper.querySelector('.dashboard-custom-legend');
+                    if (existingList) existingList.remove();
+                    periodChartWrapper.insertAdjacentHTML('beforeend', periodListHtml);
                 }
 
                 if (isStatsOpen) {
@@ -1827,24 +1862,15 @@ window.app = {
                                 maintainAspectRatio: true,
                                 aspectRatio: 1.15,
                                 plugins: { 
-                                    legend: { 
-                                        position: 'bottom', 
-                                        labels: { 
-                                            boxWidth: 10, 
-                                            usePointStyle: true,
-                                            padding: 10, 
-                                            color: chartTextColor,
-                                            font: { size: 10, weight: '600' } 
-                                        } 
-                                    }, 
+                                    legend: { display: false }, 
                                     title: { display: false } 
                                 } 
                             }
                         });
-                    } catch (e) {
-                        console.error('Chart.js error:', e);
-                    }
-                    } // End of else block for charts
+                        } catch (e) {
+                            console.error('Chart.js error:', e);
+                        }
+                    } // end of chart else
                 } else {
                     statsContainer.style.display = 'none';
                 }
@@ -1852,32 +1878,33 @@ window.app = {
                 statsContainer.style.display = 'none';
             }
 
-
-
-            // --- EMPTY STATE ---
-            if (filtered.length === 0) {
-                grid.innerHTML =
-                    '<div class="empty-state">' +
-                        '<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>' +
-                        '<h3>No Specimens Found</h3>' +
-                        '<p>Add your first fossil using the button above, or import a CSV file.</p>' +
-                    '</div>';
-                return;
-            }
-
             // --- RENDER CARDS ---
             grid.classList.toggle('wishlist-mode', wlQ);
+            var fragment = document.createDocumentFragment();
+
+            if (filtered.length === 0) {
+                var empty = document.createElement('div');
+                empty.className = 'empty-state';
+                empty.innerHTML =
+                    '<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>' +
+                    '<h3>No Specimens Found</h3>' +
+                    '<p>Add your first fossil using the button above, or import a CSV file.</p>';
+                grid.innerHTML = ''; // Clear once
+                grid.appendChild(empty);
+                return;
+            }
 
             filtered.forEach(function(f) {
                 var card = document.createElement('article');
                 card.setAttribute('data-id', f.id);
+                var cardInnerHtml = '';
 
                 if (wlQ) {
                     // WISHLIST CHECKLIST VIEW
                     card.className = 'wishlist-row';
                     var linkHtml = f.sourceUrl ? '<a href="' + f.sourceUrl + '" target="_blank" class="btn-link" title="Open Source Link"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg> Source</a>' : '';
                     
-                    card.innerHTML = 
+                    cardInnerHtml = 
                         '<div class="wishlist-check-container">' +
                             '<input type="checkbox" class="wishlist-checkbox" title="Mark as Found" onchange="app.markAsFound(event, \'' + f.id + '\', \'' + escapeHtml(f.specimen) + '\')">' +
                         '</div>' +
@@ -1958,7 +1985,7 @@ window.app = {
                     }
                     var detailsText = detailsArr.length > 0 ? '<p class="card-meta" style="margin-top: 0.25rem; font-weight: 500;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> ' + detailsArr.join(' &middot; ') + '</p>' : '';
 
-                    card.innerHTML =
+                    cardInnerHtml =
                         '<div class="checkbox-container">' +
                             '<input type="checkbox" aria-label="Select ' + escapeHtml(f.specimen) + '" onchange="app.toggleSelectFossil(event, \'' + f.id + '\')" ' + (selectedFossils.has(f.id) ? 'checked' : '') + '>' +
                         '</div>' +
@@ -1986,12 +2013,15 @@ window.app = {
                                 '</div>' +
                             '</div>' +
                         '</div>' +
-                        getFullTaxonomyTray(f) +
-                        fullTimelineBlock;
+                        getFullTaxonomyTray(f);
                 }
 
-                grid.appendChild(card);
+                card.innerHTML = cardInnerHtml;
+                fragment.appendChild(card);
             });
+
+            grid.innerHTML = ''; // Batch clear
+            grid.appendChild(fragment); // Batch append
         });
     },
 
@@ -2070,7 +2100,15 @@ window.app = {
     },
 
     // --- Export / Import ---
-    exportData: function() { 
+    exportData: function() {
+        try {
+            localStorage.setItem('fossils', JSON.stringify(fossils));
+        } catch (e) {
+            console.error('LocalStorage quota exceeded!', e);
+            if (window.app && window.app.showToast) {
+                window.app.showToast('Storage limit reached! Some data might not be saved. Try removing some photos.', 5000);
+            }
+        }
         localStorage.setItem('last_backup', Date.now());
         var pd = document.querySelector('#btn-export .pulse-dot');
         if (pd) pd.remove();
