@@ -166,7 +166,17 @@
                 <div class="form-grid">
                     <div class="form-group full-width">
                         <label for="f-specimen">Specimen Name *</label>
-                        <input type="text" id="f-specimen" required placeholder="e.g. Megalodon">
+                        <div style="display: flex; gap: 0.5rem;">
+                            <input type="text" id="f-specimen" required placeholder="e.g. Megalodon" style="flex: 1;">
+                            <button type="button" class="btn-secondary" onclick="app.fetchScientificInfo()" title="Auto-fetch Taxonomy & Etymology" style="padding: 0.4rem 0.6rem; font-size: 0.75rem;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Fetch info
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label for="f-etymology">Etymology / Translation</label>
+                        <textarea id="f-etymology" rows="2" placeholder="e.g. 'Great tooth' in Greek..."></textarea>
                     </div>
 
                     <div class="form-group full-width">

@@ -735,6 +735,77 @@ main {
 }
 
 /* --- Carousel --- */
+.etym-unified-summary, .etym-unified-roots {
+    cursor: help;
+    display: inline; /* Back to inline for better wrapping */
+    position: relative;
+    user-select: none;
+    transition: all 0.2s ease;
+}
+
+/* Subtle indicator that there is a full Wikipedia summary available */
+.etym-unified-summary {
+    color: var(--text-main);
+    /* No whole-name underline anymore to avoid confusion */
+}
+
+.root-underline {
+    border-bottom: 1.5px dotted var(--accent);
+    padding-bottom: 1px;
+}
+
+.etym-unified-summary:hover::after, .etym-unified-roots:hover::after {
+    content: attr(data-meaning);
+    position: absolute;
+    bottom: 135%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    padding: 0.8rem 1.2rem;
+    border-radius: var(--radius-md);
+    font-size: 0.85rem;
+    line-height: 1.5;
+    width: 380px; /* Wider for full sentences */
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--border-color);
+    z-index: 2000;
+    font-weight: 500;
+    pointer-events: none;
+    animation: fadeIn 0.2s ease;
+    white-space: normal;
+    text-align: left;
+}
+
+/* Tooltip caret */
+.etym-unified-summary:hover::before, .etym-unified-roots:hover::before {
+    content: '';
+    position: absolute;
+    bottom: 115%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 8px solid transparent;
+    border-top-color: var(--border-color);
+    z-index: 2001;
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    border: 3px solid rgba(139, 105, 20, 0.1);
+    border-top: 3px solid var(--accent);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    vertical-align: middle;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* --- Carousel --- */
 .carousel-btn {
     position: absolute;
     top: 50%;

@@ -319,26 +319,124 @@ var ETYMOLOGY = [
     { root: 'ther', meaning: 'beast (Greek: ther)' },
     { root: 'sp.', meaning: 'species (abbreviation for unknown species)' },
     { root: 'leo', meaning: 'lion (Latin)' },
-    { root: 'neo', meaning: 'new (Greek: neos)' }
+    { root: 'neo', meaning: 'new (Greek: neos)' },
+    { root: 'borealis', meaning: 'northern (Latin)' },
+    { root: 'australis', meaning: 'southern (Latin)' },
+    { root: 'occidentalis', meaning: 'western (Latin)' },
+    { root: 'orientalis', meaning: 'eastern (Latin)' },
+    { root: 'japonicus', meaning: 'from Japan' },
+    { root: 'sinensis', meaning: 'from China (Sino-)' },
+    { root: 'canadensis', meaning: 'from Canada' },
+    { root: 'maroccanus', meaning: 'from Morocco' },
+    { root: 'africanus', meaning: 'from Africa' },
+    { root: 'americanus', meaning: 'from America' },
+    { root: 'europaeus', meaning: 'from Europe' },
+    { root: 'indicus', meaning: 'from India' },
+    { root: 'giganteus', meaning: 'giant / very large (Latin)' },
+    { root: 'nanus', meaning: 'dwarf / small (Latin)' },
+    { root: 'gracilis', meaning: 'slender / graceful (Latin)' },
+    { root: 'robustus', meaning: 'strong / sturdy (Latin)' },
+    { root: 'armatus', meaning: 'armored / armed (Latin)' },
+    { root: 'serratus', meaning: 'saw-toothed (Latin)' },
+    { root: 'grandis', meaning: 'large / great (Latin)' },
+    { root: 'elegans', meaning: 'elegant / fine (Latin)' },
+    { root: 'magnus', meaning: 'great (Latin)' },
+    { root: 'minor', meaning: 'smaller (Latin)' },
+    { root: 'major', meaning: 'larger (Latin)' },
+    { root: 'medius', meaning: 'middle (Latin)' },
+    { root: 'parvus', meaning: 'small (Latin)' },
+    { root: 'validus', meaning: 'strong / valid (Latin)' },
+    { root: 'regalis', meaning: 'royal (Latin)' },
+    { root: 'imperator', meaning: 'emperor / commander (Latin)' },
+    { root: 'rex', meaning: 'king (Latin)' },
+    { root: 'regina', meaning: 'queen (Latin)' },
+    { root: 'primus', meaning: 'first (Latin)' },
+    { root: 'secundus', meaning: 'second (Latin)' },
+    { root: 'tertio', meaning: 'third (Latin)' },
+    { root: 'quart', meaning: 'fourth (Latin)' },
+    { root: 'longus', meaning: 'long (Latin)' },
+    { root: 'brevis', meaning: 'short (Latin)' },
+    { root: 'latus', meaning: 'broad / wide (Latin)' },
+    { root: 'crassus', meaning: 'thick / fat (Latin)' },
+    { root: 'altis', meaning: 'high / tall (Latin)' },
+    { root: 'boreo', meaning: 'north (Greek: boreas)' },
+    { root: 'noto', meaning: 'south (Greek: notos)' },
+    { root: 'euro', meaning: 'east / south-east (Greek)' },
+    { root: 'zephr', meaning: 'west (Greek: zephyros)' },
+    { root: 'calli', meaning: 'beautiful (Greek: kallos)' },
+    { root: 'eu', meaning: 'good / well / true (Greek)' },
+    { root: 'ortho', meaning: 'straight (Greek)' },
+    { root: 'crypto', meaning: 'hidden (Greek)' },
+    { root: 'philo', meaning: 'loving (Greek: philein)' },
+    { root: 'phobos', meaning: 'fear (Greek)' },
+    { root: 'hydro', meaning: 'water (Greek)' },
+    { root: 'pyro', meaning: 'fire (Greek)' },
+    { root: 'geo', meaning: 'earth (Greek)' },
+    { root: 'cryo', meaning: 'cold / icy (Greek)' },
+    { root: 'thermo', meaning: 'heat (Greek)' },
+    { root: 'macro', meaning: 'large (Greek)' },
+    { root: 'micro', meaning: 'small (Greek)' },
+    { root: 'mega', meaning: 'huge (Greek)' },
+    { root: 'giga', meaning: 'giant (Greek)' },
+    { root: 'mono', meaning: 'one (Greek)' },
+    { root: 'di', meaning: 'two (Greek)' },
+    { root: 'tri', meaning: 'three (Greek)' },
+    { root: 'tetra', meaning: 'four (Greek)' },
+    { root: 'penta', meaning: 'five (Greek)' },
+    { root: 'hexa', meaning: 'six (Greek)' },
+    { root: 'hepta', meaning: 'seven (Greek)' },
+    { root: 'octo', meaning: 'eight (Greek)' },
+    { root: 'poly', meaning: 'many (Greek)' },
+    { root: 'multi', meaning: 'many (Latin)' },
+    { root: 'pauci', meaning: 'few (Latin)' },
+    { root: 'omni', meaning: 'all / every (Latin)' },
+    { root: 'pan', meaning: 'all (Greek)' },
+    { root: 'holo', meaning: 'whole / entire (Greek)' },
+    { root: 'hemi', meaning: 'half (Greek)' },
+    { root: 'semi', meaning: 'half (Latin)' },
+    { root: 'aero', meaning: 'air / flight (Greek)' },
+    { root: 'ornitho', meaning: 'bird (Greek: ornis)' },
+    { root: 'herpeto', meaning: 'reptile (Greek)' },
+    { root: 'ophi', meaning: 'snake (Greek)' },
+    { root: 'entomo', meaning: 'insect (Greek)' },
+    { root: 'malaco', meaning: 'soft / mollusk (Greek)' },
+    { root: 'concho', meaning: 'shell (Greek)' },
+    { root: 'rhizo', meaning: 'root (Greek)' },
+    { root: 'xylo', meaning: 'wood (Greek)' },
+    { root: 'phyllo', meaning: 'leaf (Greek)' },
+    { root: 'antho', meaning: 'flower (Greek)' },
+    { root: 'carpo', meaning: 'fruit (Greek)' },
+    { root: 'litho', meaning: 'stone / rock (Greek)' },
+    { root: 'chryso', meaning: 'gold (Greek)' },
+    { root: 'argyro', meaning: 'silver (Greek)' },
+    { root: 'melano', meaning: 'black (Greek: melas)' },
+    { root: 'leuco', meaning: 'white (Greek: leukos)' },
+    { root: 'erythro', meaning: 'red (Greek: erythros)' },
+    { root: 'cyano', meaning: 'blue (Greek: kyanos)' },
+    { root: 'chloro', meaning: 'green (Greek: chloros)' },
+    { root: 'xantho', meaning: 'yellow (Greek: xanthos)' },
+    { root: 'ensis', meaning: 'from / belonging to (suffix)' },
+    { root: 'idae', meaning: 'family (standard suffix)' },
+    { root: 'inae', meaning: 'subfamily (standard suffix)' },
+    { root: 'iformes', meaning: 'form / order (standard suffix)' }
 ];
 
 // Scan specimen name for etymology roots and wrap matches in tooltip spans
-function annotateSpecimenName(rawName) {
+function annotateSpecimenName(rawName, fossil) {
     if (!rawName) return '';
     var safeName = escapeHtml(rawName);
     var nameLower = rawName.toLowerCase();
     var matches = [];
 
+    // 1. Collect all root matches
     ETYMOLOGY.forEach(function(entry) {
         var idx = nameLower.indexOf(entry.root.toLowerCase());
         while (idx !== -1) {
-            // Avoid overlapping matches — only keep the longest at each position
+            // Check for overlaps
             var dominated = false;
             for (var m = 0; m < matches.length; m++) {
                 var em = matches[m];
-                // If existing match fully covers this one, skip
                 if (em.start <= idx && em.end >= idx + entry.root.length) { dominated = true; break; }
-                // If this match fully covers existing, replace it
                 if (idx <= em.start && idx + entry.root.length >= em.end) { matches.splice(m, 1); m--; }
             }
             if (!dominated) {
@@ -348,31 +446,46 @@ function annotateSpecimenName(rawName) {
         }
     });
 
-    if (matches.length === 0) return safeName;
+    // 2. Build the tooltip content
+    var tooltipText = '';
+    
+    // Include full description if cached
+    if (fossil && fossil.etymology) {
+        tooltipText = fossil.etymology;
+        if (matches.length > 0) tooltipText += ' — Sub-meanings: ';
+    }
+    
+    if (matches.length > 0) {
+        matches.sort(function(a, b) { return a.start - b.start; });
+        var rootMeanings = matches.map(function(m) { return rawName.substring(m.start, m.end) + ': ' + m.meaning; });
+        tooltipText += (fossil && fossil.etymology ? '' : 'Name meaning: ') + rootMeanings.join(', ');
+    }
 
-    // Sort by start position
-    matches.sort(function(a, b) { return a.start - b.start; });
+    if (!tooltipText) return safeName;
 
-    // Remove overlapping matches (keep longer ones)
-    var cleaned = [matches[0]];
-    for (var i = 1; i < matches.length; i++) {
-        var last = cleaned[cleaned.length - 1];
-        if (matches[i].start >= last.end) {
-            cleaned.push(matches[i]);
+    // 3. Return a SINGLE unified hover element
+    // Only the WHOLE name triggers the tooltip. No nested spans with titles.
+    var cursor = 0;
+    var annotatedName = '';
+    var cleaned = [];
+    if (matches.length > 0) {
+        cleaned = [matches[0]];
+        for (var i = 1; i < matches.length; i++) {
+            if (matches[i].start >= cleaned[cleaned.length - 1].end) cleaned.push(matches[i]);
         }
     }
 
-    // Build annotated HTML
-    var result = '';
-    var cursor = 0;
     cleaned.forEach(function(m) {
-        result += escapeHtml(rawName.substring(cursor, m.start));
-        result += '<span class="etym-hint" data-meaning="' + escapeHtml(m.meaning) + '">' +
-                  escapeHtml(rawName.substring(m.start, m.end)) + '</span>';
+        annotatedName += escapeHtml(rawName.substring(cursor, m.start));
+        // Subtle dotted underline only for the roots
+        annotatedName += '<span class="root-underline">' + escapeHtml(rawName.substring(m.start, m.end)) + '</span>';
         cursor = m.end;
     });
-    result += escapeHtml(rawName.substring(cursor));
-    return result;
+    annotatedName += escapeHtml(rawName.substring(cursor));
+
+    // The whole name is wrapped in one container for a single clean tooltip
+    var cssClass = fossil && fossil.etymology ? 'etym-unified-summary' : 'etym-unified-roots';
+    return '<span class="' + cssClass + '" data-meaning="' + escapeHtml(tooltipText) + '">' + annotatedName + '</span>';
 }
 
 // Map exact millions of years ago to proper Epoch, Period, and Age
@@ -1036,6 +1149,7 @@ window.app = {
                 document.getElementById('f-est-currency').value = f.estimatedCurrency || 'USD';
                 document.getElementById('f-link').value = f.sourceUrl || '';
                 document.getElementById('f-notes').value = f.notes || '';
+                document.getElementById('f-etymology').value = f.etymology || '';
                 document.getElementById('f-tags').value = (f.tags || []).join(', ');
 
                 if (f.images && Array.isArray(f.images)) {
@@ -1053,6 +1167,7 @@ window.app = {
             document.getElementById('f-est-value').value = '';
             document.getElementById('f-est-currency').value = 'USD';
             document.getElementById('f-link').value = '';
+            document.getElementById('f-etymology').value = '';
             document.getElementById('f-tags').value = '';
 
             // Auto-load last used geography/geology for batch logging
@@ -1072,6 +1187,106 @@ window.app = {
 
     closeModal: function() {
         document.getElementById('fossil-modal').close();
+    },
+
+    fetchScientificInfo: async function() {
+        var name = document.getElementById('f-specimen').value;
+        if (!name) { alert('Please enter a specimen name first.'); return; }
+        
+        var genus = name.split(' ')[0];
+        var btn = event ? event.currentTarget : null;
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading-spinner" style="width:12px; height:12px; border-width:2px;"></span> Fetching...';
+        }
+
+        try {
+            // Parallel fetch
+            var results = await Promise.allSettled([
+                window.app.fetchTaxonomy(genus),
+                window.app.fetchEtymology(genus)
+            ]);
+            
+            var tax = results[0].status === 'fulfilled' ? results[0].value : null;
+            var etym = results[1].status === 'fulfilled' ? results[1].value : null;
+
+            if (tax) {
+                if (tax.period) document.getElementById('f-period').value = tax.period;
+                if (tax.age) {
+                    document.getElementById('f-age').value = tax.age;
+                    document.getElementById('f-age-slider').value = Math.min(tax.age, 541);
+                    window.app.updateDropdownsFromAge();
+                }
+            }
+
+            if (etym) {
+                document.getElementById('f-etymology').value = etym;
+            } else if (!tax) {
+                alert('No definitive scientific data found for "' + genus + '".');
+            }
+        } catch (err) {
+            console.error('Fetch failed', err);
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Fetch info';
+            }
+        }
+    },
+
+    fetchTaxonomy: async function(name) {
+        try {
+            var url = 'https://paleobiodb.org/data1.2/taxa/list.json?name=' + encodeURIComponent(name) + '&rel=all';
+            var resp = await fetch(url);
+            var data = await resp.json();
+            if (data.records && data.records.length > 0) {
+                var r = data.records[0];
+                // PBDB doesn't give a simple "Period", but we can try to find one via age
+                var age = (r.eag + r.lag) / 2;
+                return { age: age };
+            }
+        } catch (e) { console.error('PBDB error', e); }
+        return null;
+    },
+
+    fetchEtymology: async function(name) {
+        try {
+            var url = 'https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(name);
+            var resp = await fetch(url);
+            if (!resp.ok) return null;
+            var data = await resp.json();
+            var summary = data.extract || '';
+            
+            // 1. Clean summary and split into sentences
+            var cleanSummary = summary.replace(/\([^)]*\)/g, '').replace(/\s+/g, ' '); 
+            var sentences = cleanSummary.split(/[.!?] /);
+            
+            // 2. High priority keywords
+            var etymSentence = sentences.find(function(s) {
+                var l = s.toLowerCase();
+                return l.includes('derived from') || l.includes('named in honor') || l.includes('meaning') || l.includes('named after') || l.includes('from the greek') || l.includes('from the latin');
+            });
+
+            // 3. Medium priority (mentions greek/latin without "from")
+            if (!etymSentence) {
+                etymSentence = sentences.find(function(s) {
+                    var l = s.toLowerCase();
+                    return l.includes('greek') || l.includes('latin') || l.includes('ancient greek');
+                });
+            }
+
+            // 4. Fallback: First sentence (usually "Genus is a...")
+            if (!etymSentence && sentences[0]) {
+                etymSentence = sentences[0];
+            }
+
+            if (etymSentence) {
+                var final = etymSentence.trim();
+                if (!final.endsWith('.')) final += '.';
+                return final;
+            }
+        } catch (e) { console.error('Wikipedia error', e); }
+        return null;
     },
 
     updateModalFlag: function() {
@@ -1336,6 +1551,7 @@ window.app = {
             estimatedCurrency: document.getElementById('f-est-currency').value,
             sourceUrl: document.getElementById('f-link').value,
             notes: document.getElementById('f-notes').value,
+            etymology: document.getElementById('f-etymology').value,
             tags: (document.getElementById('f-tags').value || '').split(/[,\s]+/).map(function(t) { return t.trim().toLowerCase().replace(/^#/, ''); }).filter(function(t) { return t.length > 0; }),
             images: currentImages,
             createdAt: isEditing ? undefined : Date.now()  // timestamp for sort
@@ -1437,6 +1653,31 @@ window.app = {
                 window.app.renderFossils();
             });
         }
+    },
+
+    batchFetchEtymologies: async function() {
+        var missing = fossils.filter(function(f) { return !f.etymology; });
+        if (missing.length === 0) { alert('All specimens already have etymologies!'); return; }
+        
+        if (!confirm('Attempt to fetch etymologies for ' + missing.length + ' specimens from Wikipedia? This may take a minute.')) return;
+        
+        var count = 0;
+        for (var f of missing) {
+            var genus = (f.specimen || '').split(' ')[0];
+            if (!genus) continue;
+            
+            var etym = await window.app.fetchEtymology(genus);
+            if (etym) {
+                f.etymology = etym;
+                await updateFossil(f);
+                count++;
+            }
+            // Small delay to be nice to Wikipedia
+            await new Promise(function(r) { setTimeout(r, 200); });
+        }
+        
+        alert('Successfully fetched and saved ' + count + ' new etymologies.');
+        window.app.renderFossils();
     },
 
     changeImage: function(id, dir) {
@@ -1946,6 +2187,13 @@ window.app = {
 
                     dataHtml +=         '</div>' +
                                     '</div>' +
+                                    // Batch Fetch Etymology Card
+                                    '<div class="data-card" style="background: var(--bg-warm); padding: 1.5rem; border-radius: 1rem; border: 1px solid var(--border-color); text-align: center; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 0.75rem;">' +
+                                        '<div style="color: var(--accent);"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div>' +
+                                        '<div style="font-size: 0.9rem; opacity: 0.7; font-weight: 600; text-transform: uppercase;">Missing Translations</div>' +
+                                        '<div style="font-size: 1.5rem; font-weight: 800; color: var(--text-main);">' + fossils.filter(function(f){return !f.etymology;}).length + '</div>' +
+                                        '<button type="button" class="btn-primary" onclick="app.batchFetchEtymologies()" style="font-size: 0.75rem; padding: 0.4rem 0.8rem; width: 100%;">Fetch All from Wikipedia</button>' +
+                                    '</div>' +
                                    '</div>';
                     dataContainer.innerHTML = dataHtml;
                 }
@@ -2056,7 +2304,7 @@ window.app = {
                             '<input type="checkbox" class="wishlist-checkbox" title="Mark as Found" onchange="app.markAsFound(event, \'' + f.id + '\', \'' + escapeHtml(f.specimen) + '\')">' +
                         '</div>' +
                         '<div class="wishlist-info">' +
-                            '<h3 class="wishlist-title">' + annotateSpecimenName(f.specimen) + '</h3>' +
+                            '<h3 class="wishlist-title">' + annotateSpecimenName(f.specimen, f) + '</h3>' +
                             '<div class="wishlist-meta">' +
                                 '<span class="badge badge-wishlist">' + escapeHtml(f.category) + '</span>' +
                                 (f.geologicalPeriod ? '<span>&middot; ' + escapeHtml(f.geologicalPeriod) + '</span>' : '') +
@@ -2139,7 +2387,7 @@ window.app = {
                         '<div class="card-img-container" data-current-index="0" style="position: relative;">' + imgHtml + '</div>' +
                         '<div class="card-content">' +
                             '<div style="font-size: 0.7rem; color: var(--text-secondary); opacity: 0.8; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.2rem;">' + escapeHtml(f.id) + '</div>' +
-                            '<h3 class="card-title">' + annotateSpecimenName(f.specimen) + '</h3>' +
+                            '<h3 class="card-title">' + annotateSpecimenName(f.specimen, f) + '</h3>' +
                             (f.anatomy ? '<div style="margin-top: -0.25rem; margin-bottom: 0.5rem;"><span style="display: inline-flex; align-items: center; gap: 0.35rem; background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 0.15rem 0.5rem; border-radius: 1rem; font-size: 0.75rem; font-weight: 600;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg> ' + escapeHtml(f.anatomy) + '</span></div>' : '') +
                             '<p class="card-meta"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg> ' + escapeHtml(f.category) + '</p>' +
                             '<p class="card-meta" style="margin-top: 0.5rem;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> ' + locationHtmlStr + '</p>' +
