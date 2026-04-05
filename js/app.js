@@ -726,6 +726,7 @@ var renderFossilsDebounced = debounce(function() {
     window.app.renderFossils();
 }, 250);
 var isStratColumnOpen = false;
+var isDataInsightsOpen = false;
 var chartCountry = null;
 var chartPeriod = null;
 var exchangeRates = null;
@@ -943,18 +944,51 @@ window.app = {
 
     toggleVisuals: function() {
         isStratColumnOpen = !isStratColumnOpen;
-        var btn = document.getElementById('btn-toggle-visuals');
-        if (btn) btn.classList.toggle('active', isStratColumnOpen);
+        if (isStratColumnOpen) isDataInsightsOpen = false; // Close data if opening strat
+
+        var btnStrat = document.getElementById('btn-toggle-visuals');
+        var btnData = document.getElementById('btn-toggle-data');
+        if (btnStrat) btnStrat.classList.toggle('active', isStratColumnOpen);
+        if (btnData) btnData.classList.remove('active');
         
         var chartsContainer = document.getElementById('stats-charts-container');
         var stratContainer = document.getElementById('strat-column-container');
+        var dataContainer = document.getElementById('data-insights-container');
         
         if (isStratColumnOpen) {
             if (chartsContainer) chartsContainer.style.display = 'none';
             if (stratContainer) stratContainer.style.display = 'block';
+            if (dataContainer) dataContainer.style.display = 'none';
         } else {
             if (chartsContainer) chartsContainer.style.display = 'flex';
             if (stratContainer) stratContainer.style.display = 'none';
+        }
+        
+        if (isStatsOpen) {
+            window.app.renderFossils();
+        }
+    },
+
+    toggleData: function() {
+        isDataInsightsOpen = !isDataInsightsOpen;
+        if (isDataInsightsOpen) isStratColumnOpen = false; // Close strat if opening data
+
+        var btnData = document.getElementById('btn-toggle-data');
+        var btnStrat = document.getElementById('btn-toggle-visuals');
+        if (btnData) btnData.classList.toggle('active', isDataInsightsOpen);
+        if (btnStrat) btnStrat.classList.remove('active');
+        
+        var chartsContainer = document.getElementById('stats-charts-container');
+        var stratContainer = document.getElementById('strat-column-container');
+        var dataContainer = document.getElementById('data-insights-container');
+        
+        if (isDataInsightsOpen) {
+            if (chartsContainer) chartsContainer.style.display = 'none';
+            if (stratContainer) stratContainer.style.display = 'none';
+            if (dataContainer) dataContainer.style.display = 'block';
+        } else {
+            if (chartsContainer) chartsContainer.style.display = 'flex';
+            if (dataContainer) dataContainer.style.display = 'none';
         }
         
         if (isStatsOpen) {
@@ -1648,6 +1682,12 @@ window.app = {
                 var maxCatCount = 0;
                 var mostCommonCat = null;
 
+                var totalWeight = 0;
+                var weightCount = 0;
+                var totalSizeCm = 0;
+                var sizeCount = 0;
+                var tagCounts = {};
+
                 for (var i = 0; i < filtered.length; i++) {
                     var f = filtered[i];
 
@@ -1685,6 +1725,29 @@ window.app = {
                     // Tally Period
                     var per = f.geologicalPeriod ? f.geologicalPeriod : 'Unknown';
                     periodCounts[per] = (periodCounts[per] || 0) + 1;
+
+                    // Tally Weight
+                    if (f.weight > 0) {
+                        totalWeight += f.weight;
+                        weightCount++;
+                    }
+
+                    // Tally Size (Normalize to cm)
+                    if (f.size > 0) {
+                        var s = f.size;
+                        if (f.sizeUnit === 'inch') {
+                            s *= 2.54;
+                        }
+                        totalSizeCm += s;
+                        sizeCount++;
+                    }
+
+                    // Tally Tags
+                    if (f.tags && Array.isArray(f.tags)) {
+                        f.tags.forEach(function(t) {
+                            tagCounts[t] = (tagCounts[t] || 0) + 1;
+                        });
+                    }
                 }
                 
                 function calculateTotalSEK(map) {
@@ -1808,11 +1871,95 @@ window.app = {
                     periodChartWrapper.insertAdjacentHTML('beforeend', periodListHtml);
                 }
 
+                // --- DATA INSIGHTS VIEW ---
+                var dataContainer = document.getElementById('data-insights-container');
+                if (dataContainer) {
+                    var avgSize = sizeCount > 0 ? (totalSizeCm / sizeCount).toFixed(2) : 0;
+                    var weightStr = totalWeight >= 1000 ? (totalWeight / 1000).toFixed(2) + ' kg' : totalWeight.toFixed(1) + ' g';
+                    
+                    // --- CALCULATE MISSING PERIODS ---
+                    var missingByEra = {};
+                    var totalMissing = 0;
+                    for (var era in PERIODS_AND_EPOCHS) {
+                        var eraMissing = [];
+                        for (var per in PERIODS_AND_EPOCHS[era]) {
+                            if (!periodCounts[per]) {
+                                eraMissing.push(per);
+                                totalMissing++;
+                            }
+                        }
+                        if (eraMissing.length > 0) {
+                            missingByEra[era] = eraMissing;
+                        }
+                    }
+
+                    // --- CALCULATE TOP TAGS ---
+                    var topTags = Object.entries(tagCounts)
+                        .sort(function(a, b) { return b[1] - a[1]; })
+                        .slice(0, 8);
+
+                    var dataHtml = '<div class="data-insights-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; padding: 1rem 0;">' +
+                                    // Weight Card
+                                    '<div class="data-card" style="background: var(--bg-warm); padding: 1.5rem; border-radius: 1rem; border: 1px solid var(--border-color); text-align: center; box-shadow: var(--shadow-sm);">' +
+                                        '<div style="color: var(--accent); margin-bottom: 0.5rem;"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg></div>' +
+                                        '<div style="font-size: 0.9rem; opacity: 0.7; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Total Collection Weight</div>' +
+                                        '<div style="font-size: 2.25rem; font-weight: 800; color: var(--text-main); margin-top: 0.5rem;">' + weightStr + '</div>' +
+                                        '<div style="font-size: 0.8rem; opacity: 0.6; margin-top: 0.25rem;">From ' + weightCount + ' weighed specimens</div>' +
+                                    '</div>' +
+                                    // Size Card
+                                    '<div class="data-card" style="background: var(--bg-warm); padding: 1.5rem; border-radius: 1rem; border: 1px solid var(--border-color); text-align: center; box-shadow: var(--shadow-sm);">' +
+                                        '<div style="color: var(--accent); margin-bottom: 0.5rem;"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></div>' +
+                                        '<div style="font-size: 0.9rem; opacity: 0.7; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Average Specimen Size</div>' +
+                                        '<div style="font-size: 2.25rem; font-weight: 800; color: var(--text-main); margin-top: 0.5rem;">' + avgSize + ' cm</div>' +
+                                        '<div style="font-size: 0.8rem; opacity: 0.6; margin-top: 0.25rem;">Based on ' + sizeCount + ' measured specimens</div>' +
+                                    '</div>' +
+                                    // Missing Periods Card
+                                    '<div class="data-card" style="background: var(--bg-warm); padding: 1.5rem; border-radius: 1rem; border: 1px solid var(--border-color); text-align: left; box-shadow: var(--shadow-sm);">' +
+                                        '<div style="color: var(--danger); margin-bottom: 0.5rem;"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>' +
+                                        '<div style="font-size: 0.9rem; opacity: 0.7; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Lacking Fossils From</div>' +
+                                        '<div style="margin-top: 1rem; max-height: 120px; overflow-y: auto; padding-right: 0.5rem;">';
+                                        
+                                        for (var era in missingByEra) {
+                                            dataHtml += '<div style="margin-bottom: 0.5rem;">' +
+                                                            '<div style="font-size: 0.7rem; font-weight: 800; color: var(--accent); text-transform: uppercase; margin-bottom: 0.25rem;">' + era + '</div>' +
+                                                            '<div style="font-size: 0.85rem; color: var(--text-primary); opacity: 0.9;">' + missingByEra[era].join(', ') + '</div>' +
+                                                        '</div>';
+                                        }
+                                        if (totalMissing === 0) {
+                                            dataHtml += '<div style="font-size: 0.85rem; color: #439775; font-weight: 600;">You collection is geologically complete!</div>';
+                                        }
+
+                    dataHtml +=         '</div>' +
+                                    '</div>' +
+                                    // Top Tags Card
+                                    '<div class="data-card" style="background: var(--bg-warm); padding: 1.5rem; border-radius: 1rem; border: 1px solid var(--border-color); text-align: left; box-shadow: var(--shadow-sm);">' +
+                                        '<div style="color: var(--accent); margin-bottom: 0.5rem;"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg></div>' +
+                                        '<div style="font-size: 0.9rem; opacity: 0.7; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Most Frequent Tags</div>' +
+                                        '<div style="margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem;">';
+                                        
+                                        topTags.forEach(function(tagPair) {
+                                            dataHtml += '<span class="tag-pill" style="margin: 0; background: var(--bg-surface); border: 1px solid var(--border-color); cursor: pointer;" onclick="document.getElementById(\'search\').value = \'#' + tagPair[0] + '\'; app.renderFossils();">#' + tagPair[0] + ' <small style="opacity: 0.6; margin-left: 2px;">' + tagPair[1] + '</small></span>';
+                                        });
+                                        if (topTags.length === 0) {
+                                            dataHtml += '<div style="font-size: 0.85rem; opacity: 0.6;">No tags used yet.</div>';
+                                        }
+
+                    dataHtml +=         '</div>' +
+                                    '</div>' +
+                                   '</div>';
+                    dataContainer.innerHTML = dataHtml;
+                }
+
+                // --- STRATIGRAPHIC COLUMN ---
+                // (Existing strat logic follows...)
+
                 if (isStatsOpen) {
                     statsContainer.style.display = 'flex';
                     
                     if (isStratColumnOpen) {
                         window.app.renderStratigraphicColumn(filtered);
+                    } else if (isDataInsightsOpen) {
+                        // Data Insights rendered above in this function
                     } else {
                         // Render Charts
                         try {
