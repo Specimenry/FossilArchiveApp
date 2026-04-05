@@ -1895,6 +1895,17 @@ window.app = {
                 return matchSearch && matchCat && matchPeriod && matchWishlist;
             });
 
+            // --- UPDATE SEARCH COUNT ---
+            var countEl = document.getElementById('search-count');
+            if (countEl) {
+                countEl.innerText = filtered.length;
+                if (searchQ || catQ || periodQ) {
+                    countEl.classList.add('active');
+                } else {
+                    countEl.classList.remove('active');
+                }
+            }
+
             // --- SORT ---
             // Helper: convert a fossil's price to SEK for normalized comparison
             var toSEK = function(f) {

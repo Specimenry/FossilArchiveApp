@@ -280,7 +280,7 @@ button:focus-visible {
 
 .search-wrapper input {
     width: 100%;
-    padding: 0.6rem 0.75rem 0.6rem 2.5rem !important;
+    padding: 0.6rem 3.5rem 0.6rem 2.5rem !important;
 }
 
 .search-wrapper .search-icon {
@@ -330,6 +330,28 @@ button:focus-visible {
 
 .toggle-btn.active:hover {
     background: var(--accent-light);
+}
+
+/* Search Count Badge */
+.search-count {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: var(--accent);
+    background: var(--accent-bg);
+    padding: 0.2rem 0.5rem;
+    border-radius: 1rem;
+    pointer-events: none;
+    display: none; /* hidden by default */
+    border: 1px solid var(--accent-ring);
+    z-index: 2;
+}
+
+.search-count.active {
+    display: block;
 }
 
 /* --- Filter Selects --- */
@@ -1593,10 +1615,19 @@ dialog::backdrop {
 
 .strat-era-group {
     display: flex;
-    border-radius: var(--radius-md);
-    overflow: hidden;
     box-shadow: var(--shadow-sm);
     background-color: var(--bg-surface);
+    overflow: visible; /* Fix for tooltips being hidden */
+}
+
+.strat-era-label {
+    border-top-left-radius: var(--radius-md);
+    border-bottom-left-radius: var(--radius-md);
+}
+
+.strat-periods .strat-block:last-child {
+    border-top-right-radius: var(--radius-md);
+    border-bottom-right-radius: var(--radius-md);
 }
 
 .strat-era-label {
