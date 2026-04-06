@@ -133,6 +133,79 @@ function getFlagHtml(countryName) {
     }
     return '';
 }
+var PREHISTORIC_SIZES = {
+    // Large Theropods
+    "tyrannosaurus": 12.3, "spinosaurus": 14.0, "giganotosaurus": 13.0, "carcharodontosaurus": 12.0, "allosaurus": 8.5,
+    // Sauropods
+    "argentinosaurus": 35.0, "patagotitan": 37.0, "diplodocus": 24.0, "brachiosaurus": 20.0, "apatosaurus": 21.0,
+    "dreadnoughtus": 26.0, "brontosaurus": 22.0,
+    // Other Dinosaurs
+    "triceratops": 8.0, "stegosaurus": 9.0, "ankylosaurus": 7.5, "parasaurolophus": 9.5, "iguanodon": 10.0,
+    "velociraptor": 2.0, "utahraptor": 6.0, "deinonychus": 3.4, "pachycephalosaurus": 4.5, "therizinosaurus": 10.0,
+    // Marine Reptiles
+    "mosasaurus": 17.0, "megalodon": 15.5, "plesiosaurus": 3.5, "liopleurodon": 7.0, "elamosaurus": 13.0,
+    "shastasaurus": 21.0, "basilosaurus": 18.0, "livyatan": 15.0, "dunkleosteus": 6.0,
+    // Mammals
+    "mammuthus": 4.0, "mammut": 3.0, "smilodon": 2.2, "megatherium": 6.0, "paraceratherium": 4.8,
+    "woolly mammoth": 3.5, "saber-toothed tiger": 2.2, "glyptodon": 3.3, "elasmotherium": 4.5,
+    "mammoth": 3.5, "mastodon": 3.0,
+    // Pterosaurs
+    "quetzalcoatlus": 11.0, "pteranodon": 6.0, "alanqa": 5.0, "hatzegopteryx": 11.0,
+    // Common Invertebrates (Average sizes for typical specimens)
+    "ammonite": 0.15, "trilobite": 0.05, "belemnite": 0.2, "orthoceras": 0.2, "gryphaea": 0.08,
+    "micraster": 0.06, "hemiaster": 0.04, "phylloceras": 0.12, "dactylioceras": 0.09,
+    "hildoceras": 0.1, "peronopsis": 0.005, "calymene": 0.06, "paradoxides": 0.3,
+    "elrathia": 0.02, "flexicalymene": 0.05, "phacops": 0.05, "greenops": 0.03,
+    "manticoceras": 0.15, "psiloceras": 0.12, "pleuroceras": 0.15, "parkinsonia": 0.25,
+    "perisphinctes": 0.2, "macraster": 0.07, "clypeaster": 0.15, "echinocorys": 0.08,
+    "modiolus": 0.06, "rhynchonella": 0.03, "terebratula": 0.04, "spirifer": 0.05,
+    "goniatite": 0.04, "nautilus": 0.2, "baculites": 1.0, "scaphites": 0.1,
+    "turrilites": 0.25, "ostrea": 0.1, "pecten": 0.1, "trigonia": 0.08,
+    "acanthoceras": 0.3, "ancyloceras": 0.2, "asteroceras": 0.2, "beudanticeras": 0.15,
+    "douvilleiceras": 0.2, "euhoplites": 0.1, "kosmoceras": 0.08, "oppelia": 0.1,
+    "oxynoticeras": 0.2, "peltoceras": 0.15, "quenstedtoceras": 0.12, "sigaloceras": 0.1,
+    "zarafasaurus": 7.0, "zarafasaurus oceanis": 7.0,
+    "maroccosuchus": 3.5, "maroccosuchus zennaroi": 3.5,
+    "isurus crassus": 3.5, "isurus subserratus": 4.0,
+    "ammonite sp.": 0.15,
+    // Sharks & Marine
+    "carcharocles": 15.5, "otodus": 15.5, "megalodon": 15.5, "carcharodon": 6.0,
+    "isurus": 3.5, "isurus hastalis": 6.0, "cosmopolitodus": 5.0, "cosmopolitodus hastalis": 6.0,
+    "carcharias taurus": 2.5, "cretolamna": 2.5, "ctealamna": 2.5, "squalicorax": 4.0,
+    "galeocerdo": 5.5, "hemipristis": 5.0, "hexanchus": 5.0, "odontaspis": 3.2,
+    "striatolamia": 3.0, "sand tiger shark": 2.5, "great white shark": 5.0,
+    "mako shark": 3.5, "bull shark": 2.5, "tiger shark": 5.0,
+    // Ammonites (Common UK/Europe/US)
+    "dactylioceras": 0.09, "hildoceras": 0.1, "perisphinctes": 0.2, "kosmoceras": 0.08,
+    "parkinsonia": 0.25, "pleuroceras": 0.15, "asteroceras": 0.2, "amaltheus": 0.1,
+    "lytoceras": 0.3, "phylloceras": 0.12, "douvilleiceras": 0.2, "acanthoceras": 0.3,
+    "schloenbachia": 0.1, "hoplocrioceras": 0.4, "deshayesites": 0.15, "anarcestes": 0.05,
+    "clymenia": 0.05, "goniatite": 0.04, "nautilus": 0.2, "baculites": 1.0,
+    "scaphites": 0.1, "turrilites": 0.25, "ostrea": 0.1, "pecten": 0.1, "trigonia": 0.08,
+    "gryphaea": 0.08, "devil's toenail": 0.08, "micraster": 0.06, "hemiaster": 0.04,
+    "echinocorys": 0.08, "clypeaster": 0.15, "macraster": 0.07, "knightia": 0.15, "diplomystus": 0.45,
+    "pristiophorus": 1.4, "onchopristis": 8.0, "pappocetus": 2.5, "oreodont": 1.0, "brontothere": 4.5,
+    // Trilobites (Common Morocco/US/Russia)
+    "calymene": 0.06, "paradoxides": 0.3, "elrathia": 0.02, "phacops": 0.05,
+    "dalmanites": 0.1, "flexicalymene": 0.05, "asaphus": 0.1, "ogygiocarella": 0.15,
+    "ellipsocephalus": 0.03, "conocoryphe": 0.04, "greenops": 0.03, "gerastos": 0.02,
+    "crophaspis": 0.02, "drotops": 0.12, "scutellum": 0.06, "acaste": 0.02,
+    "onnia": 0.03, "trinucleus": 0.02, "cambropallas": 0.2, "acadoparadoxides": 0.3,
+    // Mammals & Megafauna
+    "mammuthus": 4.0, "mammut": 3.0, "mammoth": 3.5, "mastodon": 3.0, "smilodon": 2.2,
+    "saber-tooth": 2.2, "megatherium": 6.0, "glyptodon": 3.3, "elasmotherium": 4.5,
+    "coelodonta": 3.5, "woolly rhino": 3.5, "dire wolf": 1.5, "canis dirus": 1.5,
+    "cave bear": 3.0, "ursus spelaeus": 3.0, "megaloceros": 2.1, "irish elk": 2.1,
+    // Others
+    "sarcosuchus": 9.5, "deinosuchus": 10.5, "titanoboa": 12.8, "megalania": 6.0, "carbonemys": 1.7,
+    "helicoprion": 7.5, "cameroceras": 6.0, "archelon": 4.5, "dunkleosteus": 6.0, "basilosaurus": 18.0,
+    "prognathodon curii": 10.0, "prognathodon": 10.0,
+    // Genus & Aliases
+    "t-rex": 12.3, "t.rex": 12.3, "trex": 12.3, "meg": 15.5,
+    "carcharhinus leucas": 2.5, "acreolamna": 3.0, "alopias": 4.0, "serratolamna": 3.0,
+    "lapparentosaurus": 15.0, "archaeodontosaurus": 15.0, "psittacosaurus": 2.0, "hadrosaur": 10.0, "ouranosaurid": 7.5
+};
+
 var ETYMOLOGY = [
     // Multi-syllable compound roots (longest first)
     { root: 'madagascariensis', meaning: 'from Madagascar' },
@@ -1193,6 +1266,7 @@ window.app = {
             if (f) {
                 document.getElementById('fossil-id').value = f.id;
                 document.getElementById('f-specimen').value = f.specimen || '';
+                document.getElementById('f-animal-size').value = f.animalSize || '';
                 document.getElementById('f-anatomy').value = f.anatomy || '';
                 document.getElementById('f-category').value = f.category || '';
                 document.getElementById('f-wishlist').value = f.isWishlist ? 'true' : 'false';
@@ -1225,6 +1299,8 @@ window.app = {
                 }
             }
         } else {
+            document.getElementById('f-specimen').value = '';
+            document.getElementById('f-animal-size').value = '';
             document.getElementById('fossil-id').value = '';
             document.getElementById('f-anatomy').value = '';
             document.getElementById('f-age').value = 0;
@@ -1256,7 +1332,7 @@ window.app = {
         document.getElementById('fossil-modal').close();
     },
 
-    fetchScientificInfo: async function() {
+    fetchScientificInfo: async function(event) {
         var name = document.getElementById('f-specimen').value;
         if (!name) { alert('Please enter a specimen name first.'); return; }
         
@@ -1277,6 +1353,9 @@ window.app = {
             var tax = results[0].status === 'fulfilled' ? results[0].value : null;
             var etym = results[1].status === 'fulfilled' ? results[1].value : null;
 
+            // 1. Check local size database first
+            var localSize = window.app.autoSizeLookup();
+
             if (tax) {
                 if (tax.period) document.getElementById('f-period').value = tax.period;
                 if (tax.age) {
@@ -1288,6 +1367,13 @@ window.app = {
 
             if (etym) {
                 document.getElementById('f-etymology').value = etym;
+                // If not found in local DB, try to extract from Wikipedia text
+                if (!localSize) {
+                    var extractedSize = window.app.extractSizeFromText(etym);
+                    if (extractedSize) {
+                        document.getElementById('f-animal-size').value = extractedSize;
+                    }
+                }
             } else if (!tax) {
                 alert('No definitive scientific data found for "' + genus + '".');
             }
@@ -1299,6 +1385,96 @@ window.app = {
                 btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Fetch info';
             }
         }
+    },
+
+    autoSizeLookup: function() {
+        var nameElem = document.getElementById('f-specimen');
+        var sizeElem = document.getElementById('f-animal-size');
+        if (!nameElem || !sizeElem) return null;
+
+        var name = nameElem.value;
+        if (!name) return null;
+        
+        var nameLower = name.toLowerCase().trim();
+        var words = nameLower.split(/\s+/);
+        
+        // Strategy: 
+        // 1. Check full string (e.g. "Woolly Mammoth")
+        // 2. Check each word (e.g. "Megalodon" in "Otodus Megalodon")
+        var size = PREHISTORIC_SIZES[nameLower];
+        
+        if (!size) {
+            for (var i = 0; i < words.length; i++) {
+                var word = words[i].replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, ""); // strip punctuation
+                if (PREHISTORIC_SIZES[word]) {
+                    size = PREHISTORIC_SIZES[word];
+                    break;
+                }
+            }
+        }
+
+        if (size) {
+            sizeElem.value = size;
+        }
+        return size;
+    },
+
+    getScaleDescription: function(size) {
+        if (!size) return '';
+        var s = parseFloat(size);
+        if (s < 0.03) return 'Penny sized';
+        if (s < 0.15) return 'Palm sized';
+        if (s < 0.5) return 'Hand sized';
+        if (s < 1.5) return 'Dog sized';
+        if (s < 2.5) return 'Human sized';
+        if (s < 6) return 'Car sized';
+        if (s < 15) return 'Bus sized';
+        return 'Colossal';
+    },
+
+    extractSizeFromText: function(text) {
+        if (!text) return null;
+        
+        // 1. Aggressive cleaning of non-size numbers (Million years, weights, depths)
+        var cleanText = text
+            .replace(/\d+(?:\.\d+)?\s*(?:million years|mya|Ma)\b/gi, '') // ages
+            .replace(/\b(?:at depths? of|down to|below sea level)\s*(?:of\s+)?(?:\d+(?:\.\d+)?\s*(?:m|ft)\s*)+\b/gi, '') // very specific depths
+            .replace(/\d+(?:\.\d+)?\s*(?:kg|lbs?|tonnes?|pounds?)\b/gi, ''); // weights
+
+        // 2. Multipurpose regex for units
+        var sizeRegex = /(?:(?:up to|reach|attaining|measured|around|estimated|approximately|approx|length of|height of|diameter of|across|wide|width|long|average|mean|total length|tl|sl|diameter|size|d|w)\s+)?(?:(\d+(?:\.\d+)?)(?:\s*(?:-|–|to)\s*(\d+(?:\.\d+)?))?)\s*(m|meter|meters|cm|centimeter|centimeters|mm|millimeter|millimeters|ft|feet|in|inch|inches)\b/gi;
+
+        var matches = Array.from(cleanText.matchAll(sizeRegex));
+        if (matches.length === 0) return null;
+
+        // NEW LOGIC: Take the FIRST significant adult size mentioned.
+        // REJECTION: Only reject if the number is IMMEDIATELY preceded by 'depth of' (within 15 chars).
+        for (var i = 0; i < matches.length; i++) {
+            var match = matches[i];
+            var startIdx = match.index;
+            var prep = cleanText.substring(Math.max(0, startIdx - 15), startIdx).toLowerCase();
+            
+            if (prep.includes('depth') || prep.includes('deep') || prep.includes('weigh')) {
+                continue;
+            }
+
+            var minVal = parseFloat(match[1]);
+            var maxVal = match[2] ? parseFloat(match[2]) : minVal;
+            var val = (minVal + maxVal) / 2; // Use average of the range for realism
+            var unit = match[3].toLowerCase();
+            var meters = val;
+
+            if (unit.startsWith('cm')) meters = val / 100;
+            else if (unit.startsWith('mm')) meters = val / 1000;
+            else if (unit.startsWith('f')) meters = val * 0.3048;
+            else if (unit.startsWith('i')) meters = val * 0.0254;
+
+            if (meters > 0.001 && meters < 40) {
+                return Math.round(meters * 10) / 10; 
+            }
+        }
+        
+        return null;
     },
 
     fetchTaxonomy: async function(name) {
@@ -1598,6 +1774,7 @@ window.app = {
         var fossil = {
             id: isEditing ? idVal : generateCatalogId(document.getElementById('f-category').value, fossils),
             specimen: document.getElementById('f-specimen').value,
+            animalSize: parseFloat(document.getElementById('f-animal-size').value) || null,
             anatomy: document.getElementById('f-anatomy').value,
             category: document.getElementById('f-category').value,
             isWishlist: document.getElementById('f-wishlist').value === 'true',
@@ -1747,6 +1924,112 @@ window.app = {
         window.app.renderFossils();
     },
 
+    batchFetchMissingSizes: async function() {
+        var allSpecimens = fossils; 
+        if (allSpecimens.length === 0) { alert('Your collection is empty!'); return; }
+        
+        var btn = document.getElementById('btn-batch-size');
+        var originalHtml = btn ? btn.innerHTML : '';
+        
+        if (!confirm('Re-fetch and update sizes for all ' + allSpecimens.length + ' specimens? This will overwrite existing data with the latest estimates.')) return;
+        
+        var count = 0;
+        var i = 0;
+        for (var f of allSpecimens) {
+            i++;
+            if (btn) btn.innerHTML = '<span class="loading-spinner"></span> Updating... ' + i + '/' + allSpecimens.length;
+            
+            var name = (f.specimen || '').trim();
+            if (!name) continue;
+
+            // 1. Sanitize: Remove bracketed text, common tags like "cf.", "sp.", "?"
+            var cleanName = name.replace(/\([^)]*\)/g, '').replace(/\b(?:cf\.|sp\.|\?)\b/g, '').replace(/\s+/g, ' ').trim();
+            if (!cleanName) continue;
+
+            // 2. Precise and Fuzzy local lookup
+            var searchLower = cleanName.toLowerCase();
+            var localSize = null;
+            
+            // Exact Match
+            if (PREHISTORIC_SIZES[searchLower]) {
+                localSize = PREHISTORIC_SIZES[searchLower];
+            } else {
+                // Fuzzy/Contains Match: Scan for any known name in the db
+                // CRITICAL: We sort keys by length (longest first) to catch "Isurus hastalis" before "Isurus".
+                var sortedKeys = Object.keys(PREHISTORIC_SIZES).sort(function(a, b) { return b.length - a.length; });
+                for (var j = 0; j < sortedKeys.length; j++) {
+                    var key = sortedKeys[j];
+                    if (searchLower.indexOf(key) !== -1) {
+                        localSize = PREHISTORIC_SIZES[key];
+                        break;
+                    }
+                }
+            }
+            
+            if (localSize) {
+                f.animalSize = localSize;
+                await updateFossil(f);
+                count++;
+                continue;
+            }
+
+            // Wikipedia API Headers (Required to avoid blocking)
+            var wikiHeaders = { 'Api-User-Agent': 'FossilArchiveApp/1.0 (contact@fossilarchive.app) MediaWiki/1.3' };
+
+            // 3. Wikipedia Fallback Strategy (Triple-Query Search -> Extract)
+            var found = false;
+            var words = cleanName.split(/\s+/);
+            var searchQueries = [];
+            
+            if (words.length > 0) searchQueries.push(cleanName + ' size');
+            if (words.length > 0) searchQueries.push(cleanName);
+            if (words.length > 1) searchQueries.push(words[0]); 
+
+            for (var sq of searchQueries) {
+                try {
+                    // A. Search for the best matching page title
+                    var searchUrl = 'https://en.wikipedia.org/w/api.php?action=query&list=search&format=json&origin=*&srsearch=' + encodeURIComponent(sq);
+                    var sResp = await fetch(searchUrl, { headers: wikiHeaders });
+                    if (sResp.ok) {
+                        var sData = await sResp.json();
+                        if (sData.query && sData.query.search && sData.query.search.length > 0) {
+                            var bestTitle = sData.query.search[0].title;
+                            if (btn) btn.innerHTML = '<span class="loading-spinner"></span> ' + bestTitle + '... ' + i + '/' + allSpecimens.length;
+                            
+                            // B. Fetch DEEP extract (2,500 chars) for this title
+                            var fetchUrl = 'https://en.wikipedia.org/w/api.php?action=query&prop=extracts&format=json&exchars=2500&explaintext=1&origin=*&titles=' + encodeURIComponent(bestTitle);
+                            var fResp = await fetch(fetchUrl, { headers: wikiHeaders });
+                            if (fResp.ok) {
+                                var fData = await fResp.json();
+                                var pages = fData.query.pages;
+                                var pageId = Object.keys(pages)[0];
+                                var extract = pages[pageId].extract || '';
+                                
+                                var size = window.app.extractSizeFromText(extract);
+                                if (size) {
+                                    f.animalSize = size;
+                                    await updateFossil(f);
+                                    count++;
+                                    found = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                } catch (e) { console.error('Search fetch error (' + sq + ')', e); }
+                if (found) break;
+            }
+
+            // Small delay to keep the UI responsive and respect API limits
+            await new Promise(function(r) { setTimeout(r, 150); });
+        }
+        
+        if (btn) btn.innerHTML = originalHtml;
+        var successRate = Math.round((count / allSpecimens.length) * 100);
+        alert('Batch update complete! Updated ' + count + ' out of ' + allSpecimens.length + ' specimens (' + successRate + '% success rate).');
+        window.app.renderFossils();
+    },
+
     changeImage: function(id, dir) {
         var f = fossils.find(function(x) { return x.id === id; });
         if (!f || !f.images || f.images.length <= 1) return;
@@ -1779,6 +2062,7 @@ window.app = {
         if (!f) return;
         document.getElementById('modal-title').innerText = 'Duplicate Fossil';
         document.getElementById('f-specimen').value = f.specimen || '';
+        document.getElementById('f-animal-size').value = f.animalSize || '';
         document.getElementById('f-anatomy').value = f.anatomy || '';
         document.getElementById('f-category').value = f.category || '';
         document.getElementById('f-wishlist').value = f.isWishlist ? 'true' : 'false';
@@ -2466,7 +2750,13 @@ window.app = {
                         '</div>' +
                         '<div class="card-img-container" data-current-index="0" style="position: relative;">' + imgHtml + '</div>' +
                         '<div class="card-content">' +
-                            '<div style="font-size: 0.7rem; color: var(--text-secondary); opacity: 0.8; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.2rem;">' + escapeHtml(f.id) + '</div>' +
+                            '<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.2rem;">' +
+                                '<div style="font-size: 0.7rem; color: var(--text-secondary); opacity: 0.8; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;">' + escapeHtml(f.id) + '</div>' +
+                                (f.animalSize ? '<div class="animal-size-tag">' +
+                                    '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m10 10-2 2 2 2"/><path d="m14 14 2-2-2-2"/><path d="M12 2a10 10 0 1 1 0 20 10 10 0 0 1 0-20Z"/></svg>' +
+                                    f.animalSize + 'm (' + window.app.getScaleDescription(f.animalSize) + ')' +
+                                '</div>' : '') +
+                            '</div>' +
                             '<h3 class="card-title">' + annotateSpecimenName(f.specimen, f) + '</h3>' +
                             (f.anatomy ? '<div style="margin-top: -0.25rem; margin-bottom: 0.5rem;"><span style="display: inline-flex; align-items: center; gap: 0.35rem; background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 0.15rem 0.5rem; border-radius: 1rem; font-size: 0.75rem; font-weight: 600;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg> ' + escapeHtml(f.anatomy) + '</span></div>' : '') +
                             '<p class="card-meta"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg> ' + escapeHtml(f.category) + '</p>' +
@@ -2994,6 +3284,7 @@ function showToast(msg) {
         setTimeout(function() { toast.remove(); }, 400);
     }, 4000);
 }
+
 
 
 

@@ -1940,6 +1940,23 @@ dialog::backdrop {
     100% { opacity: 0.5; }
 }
 
-[data-theme=" dark\] .treemap-rect {
+[data-theme="dark"] .treemap-rect {
  stroke: var(--bg-main);
 }
+
+/* --- Animal Size Visualization --- */
+.animal-size-tag {
+    background: rgba(var(--accent-rgb), 0.1);
+    color: var(--accent);
+    padding: 0.15rem 0.6rem;
+    border-radius: 0.5rem;
+    font-size: 0.65rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    border: 1px solid rgba(var(--accent-rgb), 0.2);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
