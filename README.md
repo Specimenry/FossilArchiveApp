@@ -7,15 +7,19 @@ The Fossil Archive is a fully offline-capable, local-first database built on sta
 ## Features ✨
 
 - **Local-First Privacy**: No servers, no accounts, and no data tracking. Everything lives directly in your browser.
+- **Mobile-First Responsive Design**: A fully responsive interface featuring a Floating Action Button (FAB) stack for critical controls, ensuring seamless use across desktop, tablet, and mobile devices.
 - **Scientific Etymology Tooltips**: Integrated paleontological dictionary that automatically annotates specimen names. Hover over roots like *saurus*, *pteryx*, or *idae* to see their scientific meanings and origins.
 - **Interactive Geological Timeline**: Each specimen features a high-fidelity timeline bar, visualizing its position in Earth's 541-million-year history (Phanerozoic Eon) relative to the Present.
+- **Stratigraphic Column Visualizer**: A vertical timeline representing the Phanerozoic Eon on your dashboard. It highlights collected geological periods, reveals gaps in your collection, and features educational tooltips, gamifying the collecting experience.
 - **Detailed Taxonomic & Geological Data**: Built-in support for intricate geological periods, epochs, stages (custom stratigraphic ages), and estimated age in millions of years (Ma).
-- **Collection Insights (Dashboard)**: Dynamic charts and statistics summarizing your collection's taxonomic diversity, geographical distribution, and estimated valuation.
-- **Collection vs. Wishlist**: Seamlessly manage both the fossils you currently own and the ones you are actively hunting for.
+- **Data Insights Dashboard**: Comprehensive, dynamic charts and statistics summarizing your collection's taxonomic diversity, geographical distribution, and estimated valuation.
+- **"Sea Monsters" Theme**: Immersive visual styling with period-specific color tints and gradients for Ordovician, Devonian, and Cretaceous specimens, evoking classic paleontology documentaries.
+- **Collection vs. Wishlist**: Seamlessly manage both the fossils you currently own and the ones you are actively hunting for. Rank your wishlist intuitively using built-in **drag-and-drop** functionality.
 - **Advanced Filtering & Sorting**: Quickly search through notes and localities, or filter by taxonomy and geological age. Sort by purchase price, age, or recently added.
 - **Intelligent Image Handling**:
   - Upload multiple photos per specimen (including seamless, client-side HEIC conversion for iPhone photos).
-  - Background image compression shrinks 10MB raw photos into highly optimized thumbnails, guaranteeing a smooth and fast scrolling experience even with hundreds of cataloged items.
+  - Background image compression shrinks heavy raw photos into highly optimized thumbnails, guaranteeing a smooth and fast scrolling experience even with hundreds of cataloged items.
+- **Duplication Tool**: Streamlines data entry by allowing you to quickly copy existing fossil specimens with shared properties (location, period, etc.).
 - **Import / Export**: Full JSON backups to easily transfer your collection between devices, plus a CSV import tool to migrate existing spreadsheets into your vault.
 - **Mass Management**: Select multiple fossils to quickly delete or process batches.
 
@@ -27,7 +31,7 @@ Because the application runs entirely locally, there is no complicated backend s
 
 1. Download or clone this repository to your computer.
 2. Open the index file: Simply double-click on `index.html` (or drag it into your browser) to launch the app.
-3. Add a Fossil: Click the **+ Add Fossil** button in the top right to log your first specimen.
+3. Add a Fossil: Click the **+ Add Fossil** button in the top right (or the floating action button on mobile) to log your first specimen.
 4. Upload Images: You can upload JPEGs, PNGs, WebP files, or even raw HEIC photos straight from an iPhone. The app automatically resizes and optimizes them behind the scenes.
 
 *(Note: While the app is perfectly functional running purely from the `file://` protocol, you may want to serve it using a simple local HTTP server like `python -m http.server` for the most accurate behavior depending on your browser's local security policies).*
