@@ -939,6 +939,7 @@ var chartPeriod = null;
 var exchangeRates = null;
 var lightboxFossilId = null;
 var lightboxIdx = 0;
+var lightboxFilteredList = []; // The current filtered+sorted fossil list, used for inter-fossil navigation
 
 function fetchExchangeRates() {
     var cached = localStorage.getItem('exchangeRates_SEK');
@@ -1003,6 +1004,8 @@ document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') { window.app.closeLightbox(); }
     else if (e.key === 'ArrowLeft') { window.app.lightboxNav(-1); }
     else if (e.key === 'ArrowRight') { window.app.lightboxNav(1); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); window.app.lightboxFossilNav(-1); }
+    else if (e.key === 'ArrowDown') { e.preventDefault(); window.app.lightboxFossilNav(1); }
 });
 
 // =========================================================================
@@ -1039,6 +1042,7 @@ window.app = {
         var loc = document.getElementById('lightbox-location');
         var counter = document.getElementById('lightbox-counter');
 
+        img.style.display = '';
         img.src = f.images[lightboxIdx];
         title.textContent = f.specimen || 'Unknown Specimen';
 
@@ -1058,14 +1062,131 @@ window.app = {
 
         counter.textContent = f.images.length > 1 ? 'Photo ' + (lightboxIdx + 1) + ' of ' + f.images.length : '';
 
-        // Show/hide nav arrows
+        // Show/hide within-fossil nav arrows
         var prevBtn = overlay.querySelector('.lightbox-nav.prev');
         var nextBtn = overlay.querySelector('.lightbox-nav.next');
         prevBtn.style.display = f.images.length > 1 ? 'flex' : 'none';
         nextBtn.style.display = f.images.length > 1 ? 'flex' : 'none';
 
+        // Render fossil carousel strip
+        window.app._renderLightboxCarousel();
+
         overlay.classList.add('active');
         document.body.style.overflow = 'hidden';
+    },
+
+    // Render the inter-fossil carousel strip
+    _renderLightboxCarousel: function() {
+        var strip = document.getElementById('lightbox-fossil-strip');
+        var fossilNavPrev = document.getElementById('lightbox-fossil-prev');
+        var fossilNavNext = document.getElementById('lightbox-fossil-next');
+        var fossilPos = document.getElementById('lightbox-fossil-pos');
+        if (!strip) return;
+
+        var list = lightboxFilteredList;
+        if (!list || list.length === 0) {
+            strip.style.display = 'none';
+            if (fossilNavPrev) fossilNavPrev.style.display = 'none';
+            if (fossilNavNext) fossilNavNext.style.display = 'none';
+            return;
+        }
+
+        var currentIdx = -1;
+        for (var i = 0; i < list.length; i++) {
+            if (list[i].id === lightboxFossilId) { currentIdx = i; break; }
+        }
+        if (currentIdx === -1) { strip.style.display = 'none'; return; }
+
+        // Update fossil position indicator
+        if (fossilPos) {
+            fossilPos.textContent = (currentIdx + 1) + ' / ' + list.length;
+        }
+
+        // Show/hide fossil nav arrows
+        var showFossilNav = list.length > 1;
+        if (fossilNavPrev) fossilNavPrev.style.display = showFossilNav ? 'flex' : 'none';
+        if (fossilNavNext) fossilNavNext.style.display = showFossilNav ? 'flex' : 'none';
+
+        // Build carousel: show up to 5 fossils centered on current
+        var VISIBLE = 5;
+        var half = Math.floor(VISIBLE / 2);
+        var items = [];
+        for (var j = -half; j <= half; j++) {
+            var idx = currentIdx + j;
+            if (idx < 0 || idx >= list.length) {
+                items.push(null);
+            } else {
+                items.push({ fossil: list[idx], offset: j });
+            }
+        }
+
+        var html = '';
+        items.forEach(function(item) {
+            if (!item) {
+                html += '<div class="lb-strip-slot lb-strip-empty"></div>';
+                return;
+            }
+            var fo = item.fossil;
+            var isCurrent = (item.offset === 0);
+            var thumb = (fo.images && fo.images.length > 0) ? fo.images[0] : null;
+            var cls = 'lb-strip-slot' + (isCurrent ? ' lb-strip-current' : '');
+            var onclick = isCurrent ? '' : 'onclick="app.openLightbox(\'' + fo.id + '\', 0)"';
+            html += '<div class="' + cls + '" ' + onclick + ' title="' + escapeHtml(fo.specimen || '') + '">';
+            if (thumb) {
+                html += '<img src="' + thumb + '" alt="' + escapeHtml(fo.specimen || '') + '" loading="lazy">';
+            } else {
+                html += '<div class="lb-strip-placeholder"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>';
+            }
+            if (isCurrent) {
+                html += '<div class="lb-strip-label">' + escapeHtml(fo.specimen || 'Unknown') + '</div>';
+            }
+            html += '</div>';
+        });
+
+        strip.innerHTML = html;
+        strip.style.display = 'flex';
+    },
+
+    // Navigate to the previous/next fossil in the filtered list
+    lightboxFossilNav: function(dir) {
+        if (!lightboxFossilId || !lightboxFilteredList || lightboxFilteredList.length < 2) return;
+        var currentIdx = -1;
+        for (var i = 0; i < lightboxFilteredList.length; i++) {
+            if (lightboxFilteredList[i].id === lightboxFossilId) { currentIdx = i; break; }
+        }
+        if (currentIdx === -1) return;
+        var nextIdx = (currentIdx + dir + lightboxFilteredList.length) % lightboxFilteredList.length;
+        var nextFossil = lightboxFilteredList[nextIdx];
+        if (!nextFossil || !nextFossil.images || nextFossil.images.length === 0) {
+            // Fossil has no images — still navigate but handle gracefully
+            lightboxFossilId = nextFossil.id;
+            lightboxIdx = 0;
+            var img = document.getElementById('lightbox-img');
+            var title = document.getElementById('lightbox-title');
+            var counter = document.getElementById('lightbox-counter');
+            var detail = document.getElementById('lightbox-detail');
+            var loc = document.getElementById('lightbox-location');
+            img.src = '';
+            img.style.display = 'none';
+            title.textContent = nextFossil.specimen || 'Unknown Specimen';
+            var detailParts = [];
+            if (nextFossil.category) detailParts.push(nextFossil.category);
+            if (nextFossil.geologicalPeriod) detailParts.push(nextFossil.geologicalPeriod);
+            detail.textContent = detailParts.join(' · ');
+            var locParts = [];
+            if (nextFossil.location) locParts.push(nextFossil.location);
+            if (nextFossil.country) locParts.push(nextFossil.country);
+            loc.textContent = locParts.length > 0 ? '📍 ' + locParts.join(', ') : '';
+            counter.textContent = 'No photos';
+            var overlay = document.getElementById('lightbox');
+            var prevBtn = overlay.querySelector('.lightbox-nav.prev');
+            var nextBtn = overlay.querySelector('.lightbox-nav.next');
+            prevBtn.style.display = 'none';
+            nextBtn.style.display = 'none';
+            window.app._renderLightboxCarousel();
+            return;
+        }
+        window.app.openLightbox(nextFossil.id, 0);
     },
 
     closeLightbox: function() {
@@ -2849,6 +2970,9 @@ window.app = {
             // --- RENDER CARDS ---
             grid.classList.toggle('wishlist-mode', wlQ);
             var fragment = document.createDocumentFragment();
+
+            // Store filtered list for lightbox inter-fossil navigation
+            lightboxFilteredList = filtered.slice();
 
             if (filtered.length === 0) {
                 var empty = document.createElement('div');

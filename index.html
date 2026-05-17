@@ -358,15 +358,33 @@
     <!-- Lightbox Overlay -->
     <div id="lightbox" class="lightbox-overlay" onclick="if(event.target===this) app.closeLightbox();">
         <div class="lightbox-inner">
-            <button class="lightbox-close" onclick="app.closeLightbox()" title="Close">&times;</button>
-            <button class="lightbox-nav prev" onclick="app.lightboxNav(-1)">&#10094;</button>
-            <img id="lightbox-img" src="" alt="Full-size fossil image" />
-            <button class="lightbox-nav next" onclick="app.lightboxNav(1)">&#10095;</button>
+            <button class="lightbox-close" onclick="app.closeLightbox()" title="Close (Esc)">&times;</button>
+
+            <!-- Image row: arrows are flex siblings of the image, always visible -->
+            <div class="lightbox-img-row">
+                <button class="lightbox-nav prev" onclick="app.lightboxNav(-1)" title="Previous photo (←)">&#10094;</button>
+                <img id="lightbox-img" src="" alt="Full-size fossil image" />
+                <button class="lightbox-nav next" onclick="app.lightboxNav(1)" title="Next photo (→)">&#10095;</button>
+            </div>
+
+            <!-- Fossil info -->
             <div class="lightbox-info">
                 <h3 id="lightbox-title"></h3>
                 <p id="lightbox-detail"></p>
                 <p id="lightbox-location"></p>
                 <div class="lightbox-counter" id="lightbox-counter"></div>
+            </div>
+
+            <!-- Inter-fossil carousel -->
+            <div class="lightbox-fossil-nav-bar">
+                <button id="lightbox-fossil-prev" class="lightbox-fossil-arrow" onclick="app.lightboxFossilNav(-1)" title="Previous fossil (↑)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                </button>
+                <div id="lightbox-fossil-strip" class="lightbox-fossil-strip"></div>
+                <button id="lightbox-fossil-next" class="lightbox-fossil-arrow" onclick="app.lightboxFossilNav(1)" title="Next fossil (↓)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                </button>
+                <div id="lightbox-fossil-pos" class="lightbox-fossil-pos"></div>
             </div>
         </div>
     </div>
