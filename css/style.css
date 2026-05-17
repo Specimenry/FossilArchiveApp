@@ -75,12 +75,19 @@ body {
 
 /* --- Header --- */
 header {
-    background-color: var(--bg-surface);
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     border-bottom: 1px solid var(--border-color);
     position: sticky;
     top: 0;
     z-index: 50;
     box-shadow: var(--shadow-sm);
+    transition: background 0.3s ease, border-color 0.3s ease;
+}
+
+[data-theme="dark"] header {
+    background: rgba(20, 29, 38, 0.85);
 }
 
 .header-inner {
@@ -236,8 +243,20 @@ button:focus-visible {
 
 /* --- Filter Bar --- */
 .filter-bar {
-    background: var(--bg-warm);
+    background: rgba(245, 240, 234, 0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 73px;
+    z-index: 45;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+    transition: background 0.3s ease, border-color 0.3s ease;
+}
+
+[data-theme="dark"] .filter-bar {
+    background: rgba(26, 36, 47, 0.85);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
 }
 
 .filter-inner {
@@ -757,10 +776,16 @@ main {
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     position: relative;
-    transition: var(--transition), box-shadow 0.4s ease, border-color 0.4s ease;
+    transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.35s ease, border-color 0.35s ease;
     box-shadow: var(--shadow-sm);
     display: flex;
     flex-direction: column;
+    animation: cardAppear 0.4s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+@keyframes cardAppear {
+    from { opacity: 0; transform: translateY(20px) scale(0.96); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 /* Sea Monsters: Water Tints for Cards */
@@ -808,9 +833,13 @@ main {
 }
 
 .fossil-card:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--shadow-lg);
-    border-color: var(--border-hover);
+    transform: translateY(-6px) scale(1.015);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+    border-color: var(--accent);
+}
+
+[data-theme="dark"] .fossil-card:hover {
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(76, 161, 163, 0.2);
 }
 
 .card-img-container {

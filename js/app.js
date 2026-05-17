@@ -1013,6 +1013,11 @@ document.addEventListener('keydown', function(e) {
 // =========================================================================
 window.app = {
 
+    // --- Notifications ---
+    showToast: function(msg, type, duration) {
+        showToast(msg, type, duration);
+    },
+
     // --- Theme ---
     toggleTheme: function() {
         var current = document.documentElement.getAttribute('data-theme');
@@ -1604,7 +1609,7 @@ window.app = {
 
     fetchScientificInfo: async function(event) {
         var name = document.getElementById('f-specimen').value;
-        if (!name) { alert('Please enter a specimen name first.'); return; }
+        if (!name) { window.app.showToast('Please enter a specimen name first.', 'warning'); return; }
         
         var genus = name.split(' ')[0];
         var btn = event ? event.currentTarget : null;
@@ -1645,7 +1650,7 @@ window.app = {
                     }
                 }
             } else if (!tax) {
-                alert('No definitive scientific data found for "' + genus + '".');
+                window.app.showToast('No definitive scientific data found for "' + genus + '".', 'info');
             }
         } catch (err) {
             console.error('Fetch failed', err);
@@ -1978,7 +1983,7 @@ window.app = {
                 }
             } else {
                 if (isHeic && typeof heic2any === 'undefined') {
-                    alert('Connecting to the internet is required to process HEIC iPhone photos.');
+                    window.app.showToast('Connecting to the internet is required to process HEIC iPhone photos.', 'warning');
                 }
                 await processFile(file);
             }
@@ -2171,7 +2176,7 @@ window.app = {
 
     batchFetchEtymologies: async function() {
         var missing = fossils.filter(function(f) { return !f.etymology; });
-        if (missing.length === 0) { alert('All specimens already have etymologies!'); return; }
+        if (missing.length === 0) { window.app.showToast('All specimens already have etymologies!', 'info'); return; }
         
         if (!confirm('Attempt to fetch etymologies for ' + missing.length + ' specimens from Wikipedia? This may take a minute.')) return;
         
@@ -2190,13 +2195,13 @@ window.app = {
             await new Promise(function(r) { setTimeout(r, 200); });
         }
         
-        alert('Successfully fetched and saved ' + count + ' new etymologies.');
+        window.app.showToast('Successfully fetched and saved ' + count + ' new etymologies.', 'success');
         window.app.renderFossils();
     },
 
     batchFetchMissingSizes: async function() {
         var allSpecimens = fossils; 
-        if (allSpecimens.length === 0) { alert('Your collection is empty!'); return; }
+        if (allSpecimens.length === 0) { window.app.showToast('Your collection is empty!', 'warning'); return; }
         
         var btn = document.getElementById('btn-batch-size');
         var originalHtml = btn ? btn.innerHTML : '';
@@ -2296,7 +2301,7 @@ window.app = {
         
         if (btn) btn.innerHTML = originalHtml;
         var successRate = Math.round((count / allSpecimens.length) * 100);
-        alert('Batch update complete! Updated ' + count + ' out of ' + allSpecimens.length + ' specimens (' + successRate + '% success rate).');
+        window.app.showToast('Batch update complete! Updated ' + count + ' out of ' + allSpecimens.length + ' specimens (' + successRate + '% success rate).', 'success');
         window.app.renderFossils();
     },
 
@@ -3388,13 +3393,13 @@ window.app = {
                 });
 
                 chain.then(function() {
-                    alert('Successfully restored ' + successCount + ' fossil(s) from backup!');
+                    window.app.showToast('Successfully restored ' + successCount + ' fossil(s) from backup!', 'success');
                     window.app.renderFossils();
                     document.getElementById('file-restore-json').value = '';
                 });
 
             } catch (err) {
-                alert('Error reading JSON backup: ' + err.message);
+                window.app.showToast('Error reading JSON backup: ' + err.message, 'error');
                 document.getElementById('file-restore-json').value = '';
             }
         };
@@ -3653,7 +3658,7 @@ window.app = {
                 });
 
                 chain.then(function() {
-                    alert('Successfully imported ' + successCount + ' fossil(s)!');
+                    window.app.showToast('Successfully imported ' + successCount + ' fossil(s)!', 'success');
                     window.app.renderFossils();
                     document.getElementById('file-import').value = '';
                 });
@@ -3789,26 +3794,56 @@ function migrateToCatalogIds() {
     });
 }
 
-function showToast(msg) {
+function showToast(msg, type, duration) {
+    type = type || 'success';
+    duration = duration || 4000;
+    
+    var toastContainer = document.getElementById('toast-hub');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.id = 'toast-hub';
+        toastContainer.style.cssText = 'position:fixed; bottom:30px; right:30px; z-index:100000; display:flex; flex-direction:column; gap:10px; pointer-events:none;';
+        document.body.appendChild(toastContainer);
+    }
+    
+    var icons = {
+        success: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="color:#2ecc71; flex-shrink:0;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>',
+        error: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="color:#e74c3c; flex-shrink:0;"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>',
+        warning: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="color:#f39c12; flex-shrink:0;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>',
+        info: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="color:#3498db; flex-shrink:0;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>'
+    };
+    
+    var borderColors = {
+        success: 'rgba(46, 204, 113, 0.4)',
+        error: 'rgba(231, 76, 60, 0.4)',
+        warning: 'rgba(243, 156, 18, 0.4)',
+        info: 'rgba(52, 152, 219, 0.4)'
+    };
+
     var toast = document.createElement('div');
-    toast.style.cssText = 'position:fixed; bottom:30px; right:30px; background:var(--accent); color:#fff; padding:1rem 1.5rem; border-radius:var(--radius-md); box-shadow:0 10px 30px rgba(0,0,0,0.3); z-index:10001; font-weight:700; display:flex; align-items:center; gap:0.75rem; animation:toastSlideIn 0.4s ease-out;';
-    toast.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> ' + msg;
+    toast.className = 'premium-toast toast-' + type;
+    toast.style.cssText = 'pointer-events:auto; background:var(--bg-surface); color:var(--text-primary); padding:1rem 1.5rem; border-radius:var(--radius-md); box-shadow:var(--shadow-lg); border:1px solid ' + borderColors[type] + '; font-weight:600; font-size:0.9rem; display:flex; align-items:center; gap:0.85rem; backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); animation:toastSlideIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275); position:relative; overflow:hidden; min-width:280px; max-width:420px;';
+    
+    var contentHtml = '<div style="display:flex; align-items:center; gap:0.85rem; width:100%;">' + (icons[type] || icons.info) + '<span style="flex:1; line-height:1.4;">' + msg + '</span></div>';
+    contentHtml += '<div style="position:absolute; bottom:0; left:0; height:3px; background:' + borderColors[type].replace('0.4', '0.8') + '; animation:toastProgress ' + duration + 'ms linear forwards; width:100%;"></div>';
+    
+    toast.innerHTML = contentHtml;
     
     // Auto-inject animation if missing
     if (!document.getElementById('toast-animation')) {
         var s = document.createElement('style');
         s.id = 'toast-animation';
-        s.innerHTML = '@keyframes toastSlideIn { from { transform:translateX(100%); opacity:0; } to { transform:translateX(0); opacity:1; } }';
+        s.innerHTML = '@keyframes toastSlideIn { from { transform:translateX(100%) scale(0.9); opacity:0; } to { transform:translateX(0) scale(1); opacity:1; } } @keyframes toastProgress { from { width:100%; } to { width:0%; } }';
         document.head.appendChild(s);
     }
     
-    document.body.appendChild(toast);
+    toastContainer.appendChild(toast);
     setTimeout(function() {
-        toast.style.transform = 'translateX(120%)';
+        toast.style.transform = 'translateX(120%) scale(0.9)';
         toast.style.opacity = '0';
-        toast.style.transition = 'all 0.4s ease-in';
+        toast.style.transition = 'all 0.35s cubic-bezier(0.6, -0.28, 0.735, 0.045)';
         setTimeout(function() { toast.remove(); }, 400);
-    }, 4000);
+    }, duration);
 }
 
 
