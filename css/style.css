@@ -332,7 +332,7 @@ button:focus-visible {
     gap: 0.4rem;
 }
 
-.toggle-btn:first-child {
+.toggle-btn:not(:last-child) {
     border-right: 1px solid var(--border-color);
 }
 
@@ -1416,6 +1416,18 @@ main {
 [data-theme="dark"] .badge-self-found {
     background: rgba(45, 179, 161, 0.12);
     color: #2db3a1;
+}
+
+.badge-sold {
+    background: rgba(220, 95, 60, 0.1);
+    color: #dc5f3c;
+    border-color: rgba(220, 95, 60, 0.2);
+}
+
+[data-theme="dark"] .badge-sold {
+    background: rgba(235, 115, 80, 0.12);
+    color: #eb7350;
+    border-color: rgba(235, 115, 80, 0.25);
 }
 
 .card-tags {

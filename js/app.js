@@ -871,6 +871,11 @@ function normalizeCSVRow(row) {
     mapped.notes       = keyMap['notes'] || keyMap['description'] || keyMap['comments'] || '';
     mapped.ageMa       = parseFloat(keyMap['agema'] || keyMap['age ma'] || keyMap['age (ma)'] || '0') || 0;
 
+    var sold = (keyMap['issold'] || keyMap['sold'] || keyMap['is sold'] || '').toLowerCase();
+    mapped.isSold  = (sold === 'true' || sold === '1' || sold === 'yes');
+    mapped.salePrice = parseFloat(keyMap['saleprice'] || keyMap['sale price'] || keyMap['soldprice'] || keyMap['sold price'] || '') || null;
+    mapped.saleCurrency = (keyMap['salecurrency'] || keyMap['sale currency'] || keyMap['soldcurrency'] || keyMap['sold currency'] || 'USD').toUpperCase();
+
     return mapped;
 }
 
@@ -905,9 +910,161 @@ function fetchTaxonomyData(specimenName) {
 }
 
 
-// =========================================================================
-// APP STATE
-// =========================================================================
+var GEOLOGICAL_HISTORY_DATA = {
+    'Quaternary': {
+        era: 'Cenozoic',
+        time: '2.58 Ma – Present',
+        climate: 'Glacial cycles (Ice Ages) alternating with warmer interglacials.',
+        continent: 'Modern positions; extensive ice sheets covered northern landmasses.',
+        evolution: 'Rapid evolution of hominids, leading to Homo sapiens. Extinction of megafauna (mammoths, saber-toothed cats) at the end of the last glaciation.',
+        description: 'The Quaternary represents the most recent geological period, characterized by repeated glaciations and the rise of human civilization. Fossils from this era are usually highly preserved bones, teeth, and shells.'
+    },
+    'Neogene': {
+        era: 'Cenozoic',
+        time: '23.03 – 2.58 Ma',
+        climate: 'Moderate cooling; seasonal cycles become more pronounced.',
+        continent: 'North and South America connect via the Isthmus of Panama; India continues pushing into Asia.',
+        evolution: 'Grasslands expand extensively, driving the evolution of grazing mammals, horses, and songbirds. Apex marine predators like the Megalodon shark rule the oceans.',
+        description: 'During the Neogene, continents took on virtually modern shapes. The cooler, drier climate favored grasslands over forests, prompting mammals and birds to adapt rapidly to open savannas.'
+    },
+    'Paleogene': {
+        era: 'Cenozoic',
+        time: '66.0 – 23.03 Ma',
+        climate: 'Warm and tropical early on (PETM thermal maximum), cooling to temperate climates later.',
+        continent: 'Atlantic Ocean continues widening; Australia begins drifting away from Antarctica.',
+        evolution: 'Following the K-Pg extinction, mammals and birds diversify from tiny nocturnal creatures into the dominant terrestrial vertebrates (early horses, whales, primates).',
+        description: 'The Paleogene marks the beginning of the Cenozoic Era. With the dinosaurs gone, Earth\'s ecological niches were open, triggering an evolutionary explosion of mammals, birds, and modern flowering plants.'
+    },
+    'Cretaceous': {
+        era: 'Mesozoic',
+        time: '145.0 – 66.0 Ma',
+        climate: 'Very warm, greenhouse climate with high sea levels and no polar ice caps.',
+        continent: 'Supercontinent Gondwana splits completely; massive inland seaways divide North America.',
+        evolution: 'Dinosaurs like T-Rex and Triceratops dominate the land. Marine reptiles like mosasaurs rule the seas. Flowering plants (angiosperms) and social insects emerge. Ends with the catastrophic K-Pg asteroid impact.',
+        description: 'The Cretaceous was the longest period of the Mesozoic. It was a lush, warm world of giants. The period ended abruptly 66 million years ago, wiping out the non-avian dinosaurs, pterosaurs, and ammonites.'
+    },
+    'Jurassic': {
+        era: 'Mesozoic',
+        time: '201.3 – 145.0 Ma',
+        climate: 'Warm and moist; arid deserts of the Triassic transform into lush rainforests.',
+        continent: 'Supercontinent Pangaea splits into two large landmasses: Laurasia and Gondwana.',
+        evolution: 'Sauropods (giant long-necked herbivores) and theropods (allosaurs) dominate. Pterosaurs rule the skies. Archaeopteryx, the first bird, emerges. Abundant ammonites and belemnites fill the oceans.',
+        description: 'The Jurassic was the golden age of dinosaurs. The split of Pangaea created new coastlines, transforming the climate from dry deserts into humid, tropical environments teeming with diverse lifeforms.'
+    },
+    'Triassic': {
+        era: 'Mesozoic',
+        time: '252.17 – 201.3 Ma',
+        climate: 'Hot, dry, and highly arid inland, with massive monsoonal rainfall on the coasts.',
+        continent: 'Pangaea remains assembled as a single supercontinent but begins rifting late in the period.',
+        evolution: 'First dinosaurs, pterosaurs, and true mammals appear. Therapsids (mammal-like reptiles) recover, and marine reptiles like ichthyosaurs populate the seas.',
+        description: 'The Triassic emerged from the ashes of the Permian extinction. It was a transition period where life slowly recovered, paving the way for the age of dinosaurs. It ended with another major extinction event.'
+    },
+    'Permian': {
+        era: 'Paleozoic',
+        time: '298.9 – 252.17 Ma',
+        climate: 'Extreme continental interiors; dry deserts dominate the massive supercontinent.',
+        continent: 'All of Earth\'s major landmasses collide to form the massive C-shaped supercontinent Pangaea.',
+        evolution: 'Synapsids (sail-backed Dimetrodon) dominate land. Seed plants like conifers diversify. Ends with the Permian-Triassic extinction ("The Great Dying"), wiping out 95% of marine and 70% of land species.',
+        description: 'The Permian was the final period of the Paleozoic Era. Life was dominated by early mammal ancestors and diverse seed plants. The period ended with the largest mass extinction event in Earth\'s history.'
+    },
+    'Carboniferous': {
+        era: 'Paleozoic',
+        time: '358.9 – 298.9 Ma',
+        climate: 'Hot and humid, turning colder and glaciated in the southern hemisphere later.',
+        continent: 'Laurasia and Gondwana collide, forming early stages of Pangaea.',
+        evolution: 'Vast lycopod and fern swamps cover the equator, producing Earth\'s coal deposits. High oxygen levels fuel giant insects (Meganeura). First reptiles evolve, and amphibians proliferate.',
+        description: 'The Carboniferous is famous for its dense coal forests. The high atmospheric oxygen levels allowed arthropods to grow to massive sizes. The first amniotes (reptiles) evolved, laying shelled eggs on dry land.'
+    },
+    'Devonian': {
+        era: 'Paleozoic',
+        time: '419.2 – 358.9 Ma',
+        climate: 'Warm and dry; sea levels are high, creating warm, shallow inland reefs.',
+        continent: 'North America and Europe collide to form Euramerica; Gondwana sits to the south.',
+        evolution: 'The "Age of Fishes" — jawed fish, placoderms (Dunkleosteus), and sharks dominate. First vascular forests expand, pulling CO2 from the air. Early tetrapods (Tiktaalik) take their first steps onto land.',
+        description: 'The Devonian was a time of immense evolutionary transition. Marine life exploded with diverse armored fishes, while the land was colonized by early trees, arachnids, and our own tetrapod ancestors.'
+    },
+    'Silurian': {
+        era: 'Paleozoic',
+        time: '443.8 – 419.2 Ma',
+        climate: 'Warm, greenhouse climate; sea levels stabilize after the Ordovician glaciation melt.',
+        continent: 'Continents drift closer together near the equator.',
+        evolution: 'First vascular land plants (Cooksonia) establish terrestrial ecosystems. Jawed fishes emerge and diversify. Coral reefs expand, and early arachnids (scorpions) colonize the land.',
+        description: 'The Silurian recovered from a massive ice age. The stabilizing climate allowed early plants to colonize riverbanks, and jawed fishes gained a permanent evolutionary foothold in the oceans.'
+    },
+    'Ordovician': {
+        era: 'Paleozoic',
+        time: '485.4 – 443.8 Ma',
+        climate: 'Warm and tropical early on, followed by severe global cooling and massive glaciation at the end.',
+        continent: 'Gondwana sits in the southern hemisphere; other landmasses are scattered near the equator.',
+        evolution: 'Invertebrates flourish (ammonites, straight cephalopods like Orthoceras, trilobites, brachiopods). First jawless fishes appear. Ends with the second largest mass extinction due to a massive glaciation.',
+        description: 'The Ordovician saw a massive diversification of marine life. Trilobites, brachiopods, and giant straight nautiloids ruled the seas. The period ended with an ice age that wiped out 85% of marine species.'
+    },
+    'Cambrian': {
+        era: 'Paleozoic',
+        time: '541.0 – 485.4 Ma',
+        climate: 'Warm and humid, with no polar ice.',
+        continent: 'Gondwana is the largest continent, surrounded by smaller scattered landmasses.',
+        evolution: 'The "Cambrian Explosion" — the rapid appearance of almost all major animal phyla in the fossil record. Trilobites, Anomalocaris, and early chordates (Pikaia) evolve in the oceans.',
+        description: 'The Cambrian is the dawn of complex multicellular life. In a geological blink of an eye, marine ecosystems transformed from simple microbial mats into diverse food webs populated by bizarre armored creatures.'
+    }
+};
+
+var KEY_SPECIMENS = [
+    // Quaternary
+    { name: 'Woolly Mammoth', category: 'Vertebrate', period: 'Quaternary', description: 'The iconic ice age giant, close relative of modern elephants.', importance: 'Ice Age Megafauna' },
+    { name: 'Smilodon', category: 'Vertebrate', period: 'Quaternary', description: 'The famous saber-toothed cat with massive canine teeth.', importance: 'Ice Age Apex Predator' },
+    
+    // Neogene
+    { name: 'Megalodon', category: 'Vertebrate', period: 'Neogene', description: 'The legendary colossal prehistoric shark.', importance: 'Apex Predator of the Cenozoic' },
+    { name: 'Hipparion', category: 'Vertebrate', period: 'Neogene', description: 'An early three-toed horse that spread across grasslands.', importance: 'Neogene Evolutionary Index' },
+
+    // Paleogene
+    { name: 'Basilosaurus', category: 'Vertebrate', period: 'Paleogene', description: 'A colossal predatory ancient whale with vestigial hind limbs.', importance: 'Early Marine Mammal Pioneer' },
+    { name: 'Knightia', category: 'Vertebrate', period: 'Paleogene', description: 'A classic schooling Eocene herring fossil from the Green River Formation.', importance: 'Green River Index Fish' },
+
+    // Cretaceous
+    { name: 'Tyrannosaurus Rex', category: 'Vertebrate', period: 'Cretaceous', description: 'The famous "king of the tyrant lizards."', importance: 'Iconic Mesozoic Carnivore' },
+    { name: 'Triceratops', category: 'Vertebrate', period: 'Cretaceous', description: 'Famous three-horned herbivorous dinosaur.', importance: 'Late Cretaceous Index Herbivore' },
+    { name: 'Spinosaurus', category: 'Vertebrate', period: 'Cretaceous', description: 'The largest known carnivorous dinosaur, adapted to semi-aquatic life.', importance: 'Unique Piscivorous Theropod' },
+    { name: 'Ammonite', category: 'Invertebrate', period: 'Cretaceous', description: 'Coiled marine cephalopods related to modern nautiluses.', importance: 'Mesozoic Index Marine Fossil' },
+
+    // Jurassic
+    { name: 'Archaeopteryx', category: 'Vertebrate', period: 'Jurassic', description: 'The transitional link between dinosaurs and birds.', importance: 'Key Evolutionary Milestone' },
+    { name: 'Allosaurus', category: 'Vertebrate', period: 'Jurassic', description: 'The dominant large theropod dinosaur of the Jurassic.', importance: 'Apex Jurassic Carnivore' },
+    { name: 'Brachiosaurus', category: 'Vertebrate', period: 'Jurassic', description: 'A giant sauropod dinosaur with longer front limbs than hind limbs.', importance: 'Iconic Jurassic Giant' },
+
+    // Triassic
+    { name: 'Coelophysis', category: 'Vertebrate', period: 'Triassic', description: 'One of the earliest and most successful theropod dinosaurs.', importance: 'Dawn of Dinosaurs Index' },
+    { name: 'Ichthyosaurus', category: 'Vertebrate', period: 'Triassic', description: 'A dolphin-like marine reptile that ruled Triassic seas.', importance: 'Triassic Marine Pioneer' },
+
+    // Permian
+    { name: 'Dimetrodon', category: 'Vertebrate', period: 'Permian', description: 'The famous synapsid with a large neural-spine sail.', importance: 'Iconic Permian Land Vertebrate' },
+    { name: 'Helicoprion', category: 'Vertebrate', period: 'Permian', description: 'An ancient shark-like fish with a circular buzzsaw whorl of teeth.', importance: 'Permian Marine Mystery' },
+
+    // Carboniferous
+    { name: 'Pecopteris', category: 'Plant', period: 'Carboniferous', description: 'A common seed fern leaf fossil from the ancient coal swamps.', importance: 'Carboniferous Flora Index Fossil' },
+    { name: 'Meganeura', category: 'Invertebrate', period: 'Carboniferous', description: 'A giant dragonfly-like insect with a wingspan up to 70 cm.', importance: 'Carboniferous Giant Insect' },
+
+    // Devonian
+    { name: 'Phacops', category: 'Invertebrate', period: 'Devonian', description: 'A classic Devonian trilobite capable of rolling into a ball.', importance: 'Devonian Marine Index Fossil' },
+    { name: 'Dunkleosteus', category: 'Vertebrate', period: 'Devonian', description: 'A massive armored prehistoric predator fish with razor bone plates.', importance: 'Age of Fishes Apex Predator' },
+
+    // Silurian
+    { name: 'Eurypterus', category: 'Invertebrate', period: 'Silurian', description: 'An iconic sea scorpion that ruled shallow coastal waters.', importance: 'Silurian Apex Predator' },
+    { name: 'Cooksonia', category: 'Plant', period: 'Silurian', description: 'One of the earliest known land plants with Y-branched stems.', importance: 'Dawn of Land Plants' },
+
+    // Ordovician
+    { name: 'Orthoceras', category: 'Invertebrate', period: 'Ordovician', description: 'A straight-shelled nautiloid cephalopod.', importance: 'Ordovician Ocean Predator' },
+    { name: 'Flexicalymene', category: 'Invertebrate', period: 'Ordovician', description: 'A common and beautiful trilobite found rolled or flat.', importance: 'Ordovician Index Invertebrate' },
+
+    // Cambrian
+    { name: 'Elrathia kingii', category: 'Invertebrate', period: 'Cambrian', description: 'One of the most famous and recognizable trilobites.', importance: 'Cambrian Explosion Index Fossil' },
+    { name: 'Anomalocaris', category: 'Invertebrate', period: 'Cambrian', description: 'The largest predator of the Cambrian seas, with circular mouthparts.', importance: 'First Apex Predator of Earth' },
+
+    // Precambrian / Ediacaran
+    { name: 'Ediacaran Dickinsonia', category: 'Invertebrate', period: 'Ediacaran', description: 'An enigmatic oval, ribbed organism representing Earth\'s earliest complex life.', importance: 'Precambrian Metazoan Pioneer' }
+];
+
 var fossils = [];
 var selectedFossils = new Set();
 var expandedTaxonomyIds = new Set();
@@ -929,7 +1086,7 @@ function debounce(fn, wait) {
 var renderFossilsDebounced = debounce(function() {
     window.app.renderFossils();
 }, 250);
-var isStratColumnOpen = false;
+
 var isDataInsightsOpen = false;
 var isTreemapOpen = false;
 var isEarthHistoryOpen = false;
@@ -1016,6 +1173,54 @@ window.app = {
     // --- Notifications ---
     showToast: function(msg, type, duration) {
         showToast(msg, type, duration);
+    },
+
+    toggleSalePriceField: function() {
+        var wishlistSelect = document.getElementById('f-wishlist');
+        var salePriceGroup = document.getElementById('group-sale-price');
+        if (wishlistSelect && salePriceGroup) {
+            if (wishlistSelect.value === 'sold') {
+                salePriceGroup.style.display = 'block';
+            } else {
+                salePriceGroup.style.display = 'none';
+            }
+        }
+    },
+
+    markAsSoldQuick: function(id, specimen) {
+        var priceInput = prompt('Enter sale price for "' + specimen + '" (leave blank if unknown):');
+        if (priceInput === null) return; // user cancelled
+        
+        var price = parseFloat(priceInput) || null;
+        var currency = 'USD';
+        if (price !== null) {
+            var currInput = prompt('Enter currency (USD, EUR, SEK):', 'USD');
+            if (currInput) currency = currInput.toUpperCase();
+        }
+        
+        var f = fossils.find(function(x) { return x.id === id; });
+        if (f) {
+            f.isSold = true;
+            f.salePrice = price;
+            f.saleCurrency = currency;
+            updateFossil(f).then(function() {
+                window.app.showToast('"' + specimen + '" marked as sold.', 'success');
+                window.app.renderFossils();
+            });
+        }
+    },
+
+    restoreToCollectionQuick: function(id, specimen) {
+        if (confirm('Are you sure you want to restore "' + specimen + '" back to your active collection?')) {
+            var f = fossils.find(function(x) { return x.id === id; });
+            if (f) {
+                f.isSold = false;
+                updateFossil(f).then(function() {
+                    window.app.showToast('"' + specimen + '" restored to collection.', 'success');
+                    window.app.renderFossils();
+                });
+            }
+        }
     },
 
     // --- Theme ---
@@ -1275,33 +1480,30 @@ window.app = {
         }
     },
 
-    toggleVisuals: function() {
-        isStratColumnOpen = !isStratColumnOpen;
-        if (isStratColumnOpen) {
-            isDataInsightsOpen = false;
-            isTreemapOpen = false;
-        }
-
-        var btnStrat = document.getElementById('btn-toggle-visuals');
-        var btnData = document.getElementById('btn-toggle-data');
+    showMainCharts: function() {
+        isDataInsightsOpen = false;
+        isTreemapOpen = false;
+        isEarthHistoryOpen = false;
+        
+        var btnCharts = document.getElementById('btn-toggle-charts');
         var btnTreemap = document.getElementById('btn-toggle-treemap');
-        if (btnStrat) btnStrat.classList.toggle('active', isStratColumnOpen);
-        if (btnData) btnData.classList.remove('active');
+        var btnEarth = document.getElementById('btn-toggle-earth-history');
+        var btnData = document.getElementById('btn-toggle-data');
+        
+        if (btnCharts) btnCharts.classList.add('active');
         if (btnTreemap) btnTreemap.classList.remove('active');
+        if (btnEarth) btnEarth.classList.remove('active');
+        if (btnData) btnData.classList.remove('active');
         
         var chartsContainer = document.getElementById('stats-charts-container');
-        var stratContainer = document.getElementById('strat-column-container');
         var dataContainer = document.getElementById('data-insights-container');
         var treemapContainer = document.getElementById('treemap-container');
+        var earthContainer = document.getElementById('earth-history-container');
         
-        if (isStratColumnOpen) {
-            if (chartsContainer) chartsContainer.style.display = 'none';
-            if (stratContainer) stratContainer.style.display = 'block';
-            if (dataContainer) dataContainer.style.display = 'none';
-            if (treemapContainer) treemapContainer.style.display = 'none';
-        } else {
-            if (chartsContainer) chartsContainer.style.display = 'flex';
-        }
+        if (chartsContainer) chartsContainer.style.display = 'flex';
+        if (dataContainer) dataContainer.style.display = 'none';
+        if (treemapContainer) treemapContainer.style.display = 'none';
+        if (earthContainer) earthContainer.style.display = 'none';
         
         if (isStatsOpen) {
             window.app.renderFossils();
@@ -1311,27 +1513,29 @@ window.app = {
     toggleData: function() {
         isDataInsightsOpen = !isDataInsightsOpen;
         if (isDataInsightsOpen) {
-            isStratColumnOpen = false; 
             isTreemapOpen = false;
+            isEarthHistoryOpen = false;
         }
 
+        var btnCharts = document.getElementById('btn-toggle-charts');
         var btnData = document.getElementById('btn-toggle-data');
-        var btnStrat = document.getElementById('btn-toggle-visuals');
         var btnTreemap = document.getElementById('btn-toggle-treemap');
+        var btnEarth = document.getElementById('btn-toggle-earth-history');
         if (btnData) btnData.classList.toggle('active', isDataInsightsOpen);
-        if (btnStrat) btnStrat.classList.remove('active');
+        if (btnCharts) btnCharts.classList.toggle('active', !isDataInsightsOpen);
         if (btnTreemap) btnTreemap.classList.remove('active');
+        if (btnEarth) btnEarth.classList.remove('active');
         
         var chartsContainer = document.getElementById('stats-charts-container');
-        var stratContainer = document.getElementById('strat-column-container');
         var dataContainer = document.getElementById('data-insights-container');
         var treemapContainer = document.getElementById('treemap-container');
+        var earthContainer = document.getElementById('earth-history-container');
         
         if (isDataInsightsOpen) {
             if (chartsContainer) chartsContainer.style.display = 'none';
-            if (stratContainer) stratContainer.style.display = 'none';
             if (dataContainer) dataContainer.style.display = 'block';
             if (treemapContainer) treemapContainer.style.display = 'none';
+            if (earthContainer) earthContainer.style.display = 'none';
         } else {
             if (chartsContainer) chartsContainer.style.display = 'flex';
             if (dataContainer) dataContainer.style.display = 'none';
@@ -1345,32 +1549,30 @@ window.app = {
     toggleTreemap: function() {
         isTreemapOpen = !isTreemapOpen;
         if (isTreemapOpen) {
-            isStratColumnOpen = false;
             isDataInsightsOpen = false;
             isEarthHistoryOpen = false;
         }
 
+        var btnCharts = document.getElementById('btn-toggle-charts');
         var btnTreemap = document.getElementById('btn-toggle-treemap');
         var btnData = document.getElementById('btn-toggle-data');
-        var btnStrat = document.getElementById('btn-toggle-visuals');
         var btnEarth = document.getElementById('btn-toggle-earth-history');
         if (btnTreemap) btnTreemap.classList.toggle('active', isTreemapOpen);
+        if (btnCharts) btnCharts.classList.toggle('active', !isTreemapOpen);
         if (btnData) btnData.classList.remove('active');
-        if (btnStrat) btnStrat.classList.remove('active');
         if (btnEarth) btnEarth.classList.remove('active');
         
         var chartsContainer = document.getElementById('stats-charts-container');
-        var stratContainer = document.getElementById('strat-column-container');
         var dataContainer = document.getElementById('data-insights-container');
         var treemapContainer = document.getElementById('treemap-container');
         var earthContainer = document.getElementById('earth-history-container');
         
         if (isTreemapOpen) {
             if (chartsContainer) chartsContainer.style.display = 'none';
-            if (stratContainer) stratContainer.style.display = 'none';
             if (dataContainer) dataContainer.style.display = 'none';
             if (earthContainer) earthContainer.style.display = 'none';
             if (treemapContainer) treemapContainer.style.display = 'block';
+            window.app.renderMissingSpecimens();
         } else {
             if (chartsContainer) chartsContainer.style.display = 'flex';
             if (treemapContainer) treemapContainer.style.display = 'none';
@@ -1384,34 +1586,31 @@ window.app = {
     toggleEarthHistory: function() {
         isEarthHistoryOpen = !isEarthHistoryOpen;
         if (isEarthHistoryOpen) {
-            isStratColumnOpen = false;
             isDataInsightsOpen = false;
             isTreemapOpen = false;
         }
 
+        var btnCharts = document.getElementById('btn-toggle-charts');
         var btnEarth = document.getElementById('btn-toggle-earth-history');
         var btnTreemap = document.getElementById('btn-toggle-treemap');
         var btnData = document.getElementById('btn-toggle-data');
-        var btnStrat = document.getElementById('btn-toggle-visuals');
         
         if (btnEarth) btnEarth.classList.toggle('active', isEarthHistoryOpen);
+        if (btnCharts) btnCharts.classList.toggle('active', !isEarthHistoryOpen);
         if (btnTreemap) btnTreemap.classList.remove('active');
         if (btnData) btnData.classList.remove('active');
-        if (btnStrat) btnStrat.classList.remove('active');
         
         var chartsContainer = document.getElementById('stats-charts-container');
-        var stratContainer = document.getElementById('strat-column-container');
         var dataContainer = document.getElementById('data-insights-container');
         var treemapContainer = document.getElementById('treemap-container');
         var earthContainer = document.getElementById('earth-history-container');
         
         if (isEarthHistoryOpen) {
             if (chartsContainer) chartsContainer.style.display = 'none';
-            if (stratContainer) stratContainer.style.display = 'none';
             if (dataContainer) dataContainer.style.display = 'none';
             if (treemapContainer) treemapContainer.style.display = 'none';
             if (earthContainer) earthContainer.style.display = 'block';
-            window.app.renderEarthHistory(0); // Start at present day
+            window.app.renderEarthHistory('Quaternary');
         } else {
             if (chartsContainer) chartsContainer.style.display = 'flex';
             if (earthContainer) earthContainer.style.display = 'none';
@@ -1422,106 +1621,394 @@ window.app = {
         }
     },
 
-    renderEarthHistory: function(ma) {
+    renderEarthHistory: function(selectedPeriodName) {
         var container = document.getElementById('earth-history-container');
         if (!container) return;
+        
+        // If no period is selected, default to Quaternary
+        selectedPeriodName = selectedPeriodName || 'Quaternary';
+        
+        var period = GEOLOGICAL_HISTORY_DATA[selectedPeriodName];
+        if (!period) return;
+        
+        // Count owned fossils per period (from all fossils)
+        var counts = {};
+        for (var pName in GEOLOGICAL_HISTORY_DATA) {
+            counts[pName] = fossils.filter(function(f) {
+                if (f.isWishlist) return false;
+                var fp = f.geologicalPeriod ? f.geologicalPeriod.trim().toLowerCase() : '';
+                return fp === pName.toLowerCase();
+            }).length;
+        }
 
-        var currentMa = parseInt(ma, 10);
+        var html = '<div class="earth-history-info-section" style="padding: 1.5rem; background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">';
+        
+        // Header
+        html += '<h3 style="font-family: \'Playfair Display\', Georgia, serif; font-size: 1.4rem; color: var(--text-primary); margin-bottom: 0.75rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; display: flex; align-items: center; justify-content: space-between;">' +
+                    '<span style="display: flex; align-items: center; gap: 0.5rem;">' +
+                        '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>' +
+                        'Earth History & Deep Time Encyclopedia' +
+                    '</span>' +
+                    '<button class="btn-secondary" onclick="app.showMainCharts()" style="font-size: 0.75rem; padding: 0.25rem 0.6rem; cursor: pointer; display: flex; align-items: center; gap: 0.25rem;">' +
+                        '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg> Back to Dashboard' +
+                    '</button>' +
+                '</h3>';
+        
+        html += '<p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.25rem; line-height: 1.5;">' +
+                    'Explore the deep geologic history of Earth. Select a geological period from the timeline sidebar on the left to read about its climate, continents, and major evolutionary milestones, and view specimens from your own collection!' +
+                '</p>';
+        
+        // Two-column layout
+        html += '<div class="geological-grid" style="display: flex; gap: 1.5rem; flex-wrap: wrap;">';
+        
+        // Left Column: Period List (Sidebar)
+        html += '<div class="geological-sidebar" style="flex: 1; min-width: 250px; display: flex; flex-direction: column; gap: 0.5rem; max-height: 500px; overflow-y: auto; padding-right: 0.5rem; border-right: 1px solid var(--border-color);">';
+        
+        // Group by Era
+        var eras = ['Cenozoic', 'Mesozoic', 'Paleozoic'];
+        eras.forEach(function(era) {
+            html += '<div class="geological-era-group" style="margin-bottom: 0.75rem;">';
+            var eraColor = '#a878d0';
+            if (era === 'Cenozoic') eraColor = '#e6a817';
+            else if (era === 'Mesozoic') eraColor = '#439775';
+            else if (era === 'Paleozoic') eraColor = '#3a8fb7';
 
-        // High-Accuracy Map Snapshots (Scientifically Verified)
-        var mapSteps = [
-            { ma: 0,   img: 'img/paleo_0.png',   title: 'Present Day', desc: 'Continents in modern positions.' },
-            { ma: 30,  img: 'img/paleo_30.png',  title: 'Oligocene Epoch', desc: 'India is colliding with Asia. The Southern Ocean has fully opened.' },
-            { ma: 60,  img: 'img/paleo_60.png',  title: 'Paleogene Period', desc: 'Continents nearing modern positions. The Atlantic is very narrow.' },
-            { ma: 100, img: 'img/paleo_100.png', title: 'Mid-Cretaceous', desc: 'High sea levels flooded much of the continents.' },
-            { ma: 150, img: 'img/paleo_150.png', title: 'Late Jurassic', desc: 'The Atlantic is opening; Gondwana is fragmenting.' },
-            { ma: 200, img: 'img/paleo_200.png', title: 'Early Triassic', desc: 'Pangaea is a single landmass but rifting has begun.' },
-            { ma: 250, img: 'img/paleo_250.png', title: 'Late Permian', desc: 'The supercontinent PANGAEA is fully assembled.' }
-        ];
-
-        // NEAREST NEIGHBOR SNAP
-        var currentMap = mapSteps.reduce(function(prev, curr) {
-            return (Math.abs(curr.ma - currentMa) < Math.abs(prev.ma - currentMa) ? curr : prev);
+            html += '<h4 style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: ' + eraColor + '; letter-spacing: 0.05em; margin-bottom: 0.35rem; display: flex; align-items: center; justify-content: space-between;">' +
+                        '<span>' + era + ' Era</span>' +
+                    '</h4>';
+            
+            for (var pName in GEOLOGICAL_HISTORY_DATA) {
+                var pData = GEOLOGICAL_HISTORY_DATA[pName];
+                if (pData.era === era) {
+                    var isActive = pName === selectedPeriodName;
+                    var activeStyle = isActive ? 'background: var(--accent-bg); border-color: var(--accent); color: var(--accent); font-weight: 700;' : 'background: var(--bg-warm); border-color: var(--border-color); color: var(--text-primary);';
+                    var badgeCount = counts[pName] > 0 ? '<span class="badge" style="font-size: 0.6rem; padding: 1px 6px; background: ' + (isActive ? 'var(--accent)' : 'var(--border-color)') + '; color: ' + (isActive ? '#fff' : 'var(--text-secondary)') + '; border: none;">' + counts[pName] + '</span>' : '';
+                    
+                    html += '<button onclick="app.renderEarthHistory(\'' + pName + '\')" style="width: 100%; text-align: left; padding: 0.5rem 0.75rem; font-size: 0.8rem; border-radius: var(--radius-sm); border: 1px solid; cursor: pointer; transition: all 0.15s ease; display: flex; align-items: center; justify-content: space-between; ' + activeStyle + '" onmouseover="this.style.borderColor=\'var(--accent)\'" onmouseout="if(\'' + pName + '\' !== \'' + selectedPeriodName + '\') this.style.borderColor=\'var(--border-color)\'">' +
+                                '<span>' + pName + ' <small style="font-size: 0.65rem; opacity: 0.7; font-weight: 400; display: block;">' + pData.time + '</small></span>' +
+                                badgeCount +
+                            '</button>';
+                }
+            }
+            html += '</div>';
         });
+        
+        html += '</div>'; // End Left Column
+        
+        // Right Column: Period Detail View
+        var eraColor = '#a878d0';
+        if (period.era === 'Cenozoic') eraColor = '#e6a817';
+        else if (period.era === 'Mesozoic') eraColor = '#439775';
+        else if (period.era === 'Paleozoic') eraColor = '#3a8fb7';
 
-        // Dynamic Geological Labels based on Millions of Years Ago
-        var displayEra = '';
-        if (currentMa < 23) displayEra = 'Neogene (Miocene)';
-        else if (currentMa < 34) displayEra = 'Paleogene (Oligocene)';
-        else if (currentMa < 66) displayEra = 'Paleogene (Eocene/Paleocene)';
-        else if (currentMa < 145) displayEra = 'Cretaceous Period';
-        else if (currentMa < 201) displayEra = 'Jurassic Period';
-        else if (currentMa < 252) displayEra = 'Triassic Period';
-        else displayEra = 'Permian Period';
+        html += '<div class="geological-details" style="flex: 2; min-width: 320px; display: flex; flex-direction: column; gap: 1rem;">';
+        
+        html += '<div style="background: var(--bg-warm); padding: 1.25rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">';
+        html += '<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">' +
+                    '<span class="badge" style="background: ' + eraColor + '; color: #fff; border: none; font-size: 0.65rem; padding: 2px 8px;">' + period.era + ' Era</span>' +
+                    '<span style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary);">' + period.time + '</span>' +
+                '</div>';
+        html += '<h2 style="font-family: \'Playfair Display\', Georgia, serif; font-size: 1.8rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.75rem;">' + selectedPeriodName + ' Period</h2>';
+        html += '<p style="font-size: 0.9rem; color: var(--text-primary); line-height: 1.6; margin-bottom: 1rem;">' + period.description + '</p>';
+        html += '</div>';
+        
+        // Climate, Continents, and Evolution Sections
+        html += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">';
+        
+        // Climate Card
+        html += '<div style="border: 1px solid var(--border-color); padding: 1rem; border-radius: var(--radius-sm); background: var(--bg-surface);">';
+        html += '<h4 style="font-size: 0.8rem; text-transform: uppercase; font-weight: 700; color: var(--accent); margin-bottom: 0.35rem; display: flex; align-items: center; gap: 4px;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg> Climate</h4>';
+        html += '<p style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.4;">' + period.climate + '</p>';
+        html += '</div>';
 
-        // Fossil count buffer
-        var count = fossils.filter(function(f) {
+        // Continents Card
+        html += '<div style="border: 1px solid var(--border-color); padding: 1rem; border-radius: var(--radius-sm); background: var(--bg-surface);">';
+        html += '<h4 style="font-size: 0.8rem; text-transform: uppercase; font-weight: 700; color: var(--accent); margin-bottom: 0.35rem; display: flex; align-items: center; gap: 4px;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg> Geography</h4>';
+        html += '<p style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.4;">' + period.continent + '</p>';
+        html += '</div>';
+
+        // Evolution Card
+        html += '<div style="border: 1px solid var(--border-color); padding: 1rem; border-radius: var(--radius-sm); background: var(--bg-surface);">';
+        html += '<h4 style="font-size: 0.8rem; text-transform: uppercase; font-weight: 700; color: var(--accent); margin-bottom: 0.35rem; display: flex; align-items: center; gap: 4px;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Biota & Evolution</h4>';
+        html += '<p style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.4;">' + period.evolution + '</p>';
+        html += '</div>';
+
+        html += '</div>'; // End Detail Cards
+        
+        // Show specimens from active collection representing this period
+        var periodFossils = fossils.filter(function(f) {
             if (f.isWishlist) return false;
-            var fMa = parseFloat(f.ageMa || 0);
-            return Math.abs(fMa - currentMa) < 40;
-        }).length;
-
-        var html = '<div class="earth-history-container">';
-        html += '<div class="paleo-viewer">';
-        
-        // Map Frame
-        html += '<div class="paleo-map-frame">';
-        mapSteps.forEach(function(step) {
-            var active = (step.ma === currentMap.ma) ? 'active' : '';
-            // Layering protection: ensure active map is always on top during transitions
-            html += '<img src="' + step.img + '" class="paleo-map-image ' + active + '" alt="' + step.title + '" style="z-index: ' + (active ? 10 : 1) + '">';
+            var fp = f.geologicalPeriod ? f.geologicalPeriod.trim().toLowerCase() : '';
+            return fp === selectedPeriodName.toLowerCase();
         });
-        html += '</div>';
-
-        // Info Panel
-        html += '<div class="paleo-info-panel">';
-        html += '<div class="paleo-ma-label">' + currentMa + ' Million Years Ago</div>';
-        html += '<h2 class="paleo-era-title">' + displayEra + '</h2>';
-        html += '<div style="font-size: 0.65rem; font-weight: 800; color: var(--text-secondary); margin-bottom: 0.5rem; text-transform: uppercase;">Map Reference: ' + currentMap.title + '</div>';
-        html += '<p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 1rem;">' + currentMap.desc + '</p>';
         
-        html += '<div class="paleo-stat-card">';
-        html += '<div class="paleo-stat-value">' + count + '</div>';
-        html += '<div class="paleo-stat-desc">Your Specimens from this era</div>';
-        html += '</div>';
-        html += '</div>';
-
-        html += '</div>';
-
-        // Timeline Slider
-        html += '<div class="paleo-timeline-container">';
-        html += '<div class="paleo-timeline-track">';
+        html += '<div style="border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: 0.5rem;">';
+        html += '<h4 style="font-family: \'Playfair Display\', Georgia, serif; font-size: 1.15rem; color: var(--text-primary); margin-bottom: 0.75rem;">Represented Specimens (' + periodFossils.length + ')</h4>';
+        if (periodFossils.length > 0) {
+            html += '<div style="display: flex; flex-wrap: wrap; gap: 0.5rem; max-height: 120px; overflow-y: auto;">';
+            periodFossils.forEach(function(f) {
+                html += '<span class="badge" style="background: var(--bg-warm); color: var(--text-primary); border-color: var(--border-color); text-transform: none; display: flex; align-items: center; gap: 4px; padding: 0.25rem 0.65rem; border-radius: 4px; font-size: 0.75rem;">' +
+                            '<strong>' + escapeHtml(f.specimen) + '</strong>' +
+                            (f.anatomy ? ' <small style="opacity: 0.7;">(' + escapeHtml(f.anatomy) + ')</small>' : '') +
+                        '</span>';
+            });
+            html += '</div>';
+        } else {
+            html += '<div style="font-size: 0.85rem; color: var(--text-secondary); font-style: italic; background: var(--bg-warm); padding: 0.75rem; border-radius: var(--radius-sm); text-align: center; border: 1px dashed var(--border-color);">' +
+                        'No specimens from the ' + selectedPeriodName + ' in your active collection. Collect index fossils to bridge this gap!' +
+                    '</div>';
+        }
+        html += '</div>'; // End Specimens
         
-        var historicalEvents = [
-            { ma: 2.5,  title: 'Quaternary Glaciation' },
-            { ma: 34,   title: 'The Grande Coupure' },
-            { ma: 56,   title: 'PETM Peak Warmth' },
-            { ma: 66,   title: 'K-Pg Extinction' },
-            { ma: 120,  title: 'Mid-Cretaceous Greenhouses' },
-            { ma: 183,  title: 'Toarcian Anoxia' },
-            { ma: 201,  title: 'Triassic-Jurassic Extinction' },
-            { ma: 252,  title: 'Permian "Great Dying"' }
-        ];
-        
-        historicalEvents.forEach(function(e) {
-            var pos = (e.ma / 250) * 100;
-            html += '<div class="extinction-marker" style="left: ' + pos + '%;" data-title="' + e.title + '"></div>';
-        });
-
-        html += '<input type="range" class="paleo-slider" min="0" max="250" value="' + currentMa + '" oninput="app.renderEarthHistory(this.value)">';
-        
-        [0, 25, 50, 75, 100, 125, 150, 175, 201, 225, 250].forEach(function(val) {
-            var pos = (val / 250) * 100;
-            var isKey = [0, 66, 145, 201, 250].indexOf(val) !== -1;
-            var style = isKey ? 'font-weight: 900; color: var(--accent);' : '';
-            html += '<div class="timeline-marker" style="left: ' + pos + '%; ' + style + '">' + val + ' Ma</div>';
-        });
-
-        html += '</div>';
-        html += '</div>';
-        html += '</div>';
+        html += '</div>'; // End Right Column
+        html += '</div>'; // End Geological Grid
+        html += '</div>'; // End main outer div
         
         container.innerHTML = html;
+    },
+
+    renderMissingSpecimens: function() {
+        var container = document.getElementById('treemap-container');
+        if (!container) return;
+        
+        var ownedFossils = fossils.filter(function(f) { return !f.isWishlist && !f.isSold; });
+        var wishlistedFossils = fossils.filter(function(f) { return f.isWishlist && !f.isSold; });
+        
+        var collectedList = [];
+        var wishlistedList = [];
+        var missingCandidates = [];
+        
+        KEY_SPECIMENS.forEach(function(spec) {
+            var owned = ownedFossils.some(function(f) {
+                var sName = f.specimen ? f.specimen.toLowerCase() : '';
+                return sName.indexOf(spec.name.toLowerCase()) !== -1;
+            });
+            var wishlisted = wishlistedFossils.some(function(f) {
+                var sName = f.specimen ? f.specimen.toLowerCase() : '';
+                return sName.indexOf(spec.name.toLowerCase()) !== -1;
+            });
+            
+            if (owned) {
+                collectedList.push(spec);
+            } else if (wishlisted) {
+                wishlistedList.push(spec);
+            } else {
+                missingCandidates.push(spec);
+            }
+        });
+
+        // Compute collection statistics for dynamic recommendations
+        var ownedPeriods = new Set();
+        ownedFossils.forEach(function(f) {
+            if (f.geologicalPeriod) {
+                ownedPeriods.add(f.geologicalPeriod.trim().toLowerCase());
+            }
+        });
+
+        var ownedCategories = new Set();
+        ownedFossils.forEach(function(f) {
+            if (f.category) {
+                ownedCategories.add(f.category.trim().toLowerCase());
+            }
+        });
+
+        // Generate dynamic suggestions with reasoning
+        var recommendations = missingCandidates.map(function(spec) {
+            var periodLower = spec.period ? spec.period.trim().toLowerCase() : '';
+            var catLower = spec.category ? spec.category.trim().toLowerCase() : '';
+
+            // Rule 1: Geologic Time Gap
+            if (!ownedPeriods.has(periodLower)) {
+                return {
+                    spec: spec,
+                    badge: '🌍 Geologic Time Gap',
+                    badgeColor: 'var(--danger)', // Brick red
+                    badgeBg: 'rgba(235, 94, 85, 0.08)',
+                    badgeBorder: 'rgba(235, 94, 85, 0.25)',
+                    rationale: 'Your archive currently has 0 specimens from the ' + spec.period + ' period. Collecting this will fill a major temporal gap!',
+                    priority: 1
+                };
+            }
+
+            // Rule 2: Taxonomic Gap
+            if (!ownedCategories.has(catLower)) {
+                return {
+                    spec: spec,
+                    badge: '🌿 Taxonomic Gap',
+                    badgeColor: 'var(--accent)', // Purple/blue
+                    badgeBg: 'rgba(120, 80, 160, 0.08)',
+                    badgeBorder: 'rgba(120, 80, 160, 0.25)',
+                    rationale: 'You have 0 owned ' + spec.category + ' specimens. Broaden your collection taxonomy by targeting this ' + spec.category.toLowerCase() + '.',
+                    priority: 2
+                };
+            }
+
+            // Rule 3: Ecosystem Companion
+            if (ownedPeriods.has(periodLower)) {
+                var companionCount = ownedFossils.filter(function(x) { 
+                    var xp = x.geologicalPeriod ? x.geologicalPeriod.trim().toLowerCase() : '';
+                    return xp === periodLower; 
+                }).length;
+                return {
+                    spec: spec,
+                    badge: '🦖 Ecosystem Companion',
+                    badgeColor: '#e6a817', // Amber/gold
+                    badgeBg: 'rgba(230, 168, 23, 0.08)',
+                    badgeBorder: 'rgba(230, 168, 23, 0.25)',
+                    rationale: 'You own ' + companionCount + ' specimen(s) from the ' + spec.period + '. Add ' + spec.name + ' to complete your ' + spec.period + ' drawer!',
+                    priority: 3
+                };
+            }
+
+            // Rule 4: Evolutionary Landmark (Default)
+            return {
+                spec: spec,
+                badge: '⚡ Evolutionary Landmark',
+                badgeColor: '#2db3a1', // Teal
+                badgeBg: 'rgba(45, 179, 161, 0.08)',
+                badgeBorder: 'rgba(45, 179, 161, 0.25)',
+                rationale: 'A legendary index fossil demonstrating key prehistoric evolutionary milestones.',
+                priority: 4
+            };
+        });
+
+        // Sort recommendations: Gaps first, then companions, then standard landmarks
+        recommendations.sort(function(a, b) {
+            return a.priority - b.priority;
+        });
+
+        var html = '<div class="missing-specimens-section" style="padding: 1.5rem; background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">';
+        
+        // Header
+        html += '<h3 style="font-family: \'Playfair Display\', Georgia, serif; font-size: 1.4rem; color: var(--text-primary); margin-bottom: 0.75rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; display: flex; align-items: center; justify-content: space-between;">' +
+                    '<span style="display: flex; align-items: center; gap: 0.5rem;">' +
+                        '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>' +
+                        'Specimen Discovery & Gaps Album' +
+                    '</span>' +
+                    '<button class="btn-secondary" onclick="app.showMainCharts()" style="font-size: 0.75rem; padding: 0.25rem 0.6rem; cursor: pointer; display: flex; align-items: center; gap: 0.25rem;">' +
+                        '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg> Back to Dashboard' +
+                    '</button>' +
+                '</h3>';
+        
+        html += '<p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.5rem; line-height: 1.5;">' +
+                    'Track important evolutionary index fossils in Earth\'s history. This album lists legendary specimens that are currently missing from your active collection. You can add them to your Wishlist with a single click to help complete your archive!' +
+                '</p>';
+                
+        // Progress Bar
+        var totalKey = KEY_SPECIMENS.length;
+        var collectedCount = collectedList.length;
+        var progressPercent = Math.round((collectedCount / totalKey) * 100);
+        html += '<div style="margin-bottom: 1.5rem;">' +
+                    '<div style="display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.35rem;">' +
+                        '<span>Collection Completion Progress</span>' +
+                        '<span>' + collectedCount + ' / ' + totalKey + ' Specimens (' + progressPercent + '%)</span>' +
+                    '</div>' +
+                    '<div style="width: 100%; height: 8px; background: var(--bg-warm); border-radius: 4px; overflow: hidden; border: 1px solid var(--border-color);">' +
+                        '<div style="width: ' + progressPercent + '%; height: 100%; background: var(--accent); transition: width 0.3s ease;"></div>' +
+                    '</div>' +
+                '</div>';
+                
+        // Section 1: Dynamic Recommendations & Gaps
+        html += '<div style="margin-bottom: 2rem;">';
+        html += '<h4 style="font-family: \'Playfair Display\', Georgia, serif; font-size: 1.15rem; color: var(--text-primary); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">' +
+                    '<span style="color: var(--danger); font-size: 1.3rem;">&bull;</span> Recommended Discovery Targets (' + recommendations.length + ')' +
+                '</h4>';
+        if (recommendations.length > 0) {
+            html += '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem;">';
+            recommendations.forEach(function(rec) {
+                html += '<div style="border: 1px solid var(--border-color); border-left: 4px solid ' + rec.badgeColor + '; background: var(--bg-warm); padding: 1rem; border-radius: var(--radius-sm); display: flex; flex-direction: column; justify-content: space-between; transition: all 0.15s ease;">' +
+                            '<div>' +
+                                '<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 4px;">' +
+                                    '<span style="font-size: 0.65rem; background: ' + rec.badgeBg + '; color: ' + rec.badgeColor + '; border: 1px solid ' + rec.badgeBorder + '; padding: 2px 8px; border-radius: 99px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">' +
+                                        rec.badge +
+                                    '</span>' +
+                                    '<span style="font-size: 0.65rem; background: var(--border-color); color: var(--text-secondary); padding: 2px 6px; border-radius: 99px; text-transform: uppercase; font-weight: 700;">' + rec.spec.period + '</span>' +
+                                '</div>' +
+                                '<h5 style="font-family: \'Playfair Display\', Georgia, serif; font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.25rem;">' + rec.spec.name + '</h5>' +
+                                '<div style="font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.5rem; font-style: italic;">' + rec.spec.importance + ' · <span style="text-transform: capitalize;">' + rec.spec.category + '</span></div>' +
+                                '<p style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.4; margin-bottom: 0.75rem;">' + rec.spec.description + '</p>' +
+                                '<p style="font-size: 0.75rem; color: var(--text-primary); background: var(--bg-surface); padding: 0.5rem; border-radius: 4px; border: 1px solid var(--border-color); line-height: 1.3; margin-bottom: 1rem; font-style: italic; font-weight: 500;">' +
+                                    '💡 <strong>Why this?</strong> ' + rec.rationale +
+                                '</p>' +
+                            '</div>' +
+                            '<button onclick="app.addSpecimenToWishlist(\'' + rec.spec.name.replace(/'/g, "\\'") + '\', \'' + rec.spec.category + '\', \'' + rec.spec.period + '\')" style="width: 100%; border: 1px solid var(--accent); color: var(--accent); background: transparent; padding: 0.4rem; font-size: 0.75rem; font-weight: 700; cursor: pointer; border-radius: 4px; transition: all 0.2s;" onmouseover="this.style.background=\'var(--accent-bg)\'" onmouseout="this.style.background=\'transparent\'">+ Add to Wishlist</button>' +
+                        '</div>';
+            });
+            html += '</div>';
+        } else {
+            html += '<div style="font-size: 0.85rem; color: var(--text-secondary); font-style: italic; background: var(--bg-warm); padding: 0.75rem; border-radius: var(--radius-sm); text-align: center; border: 1px dashed var(--border-color);">You have targeted or collected all iconic specimens! Marvelous achievement!</div>';
+        }
+        html += '</div>';
+        
+        // Section 2: Wishlisted Index Specimens
+        if (wishlistedList.length > 0) {
+            html += '<div style="margin-bottom: 2rem;">';
+            html += '<h4 style="font-family: \'Playfair Display\', Georgia, serif; font-size: 1.15rem; color: var(--text-primary); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">' +
+                        '<span style="color: var(--wishlist-color); font-size: 1.3rem;">&bull;</span> Wishlisted Index Specimens (' + wishlistedList.length + ')' +
+                    '</h4>';
+            html += '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;">';
+            wishlistedList.forEach(function(spec) {
+                html += '<div style="border: 1px dashed var(--wishlist-color); background: rgba(120, 80, 160, 0.03); padding: 1rem; border-radius: var(--radius-sm); display: flex; flex-direction: column; justify-content: space-between; opacity: 0.9;">' +
+                            '<div>' +
+                                '<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.35rem;">' +
+                                    '<span style="font-size: 0.65rem; background: var(--wishlist-bg); color: var(--wishlist-color); padding: 2px 6px; border-radius: 99px; text-transform: uppercase; font-weight: 700;">' + spec.period + '</span>' +
+                                    '<span style="font-size: 0.65rem; background: var(--wishlist-bg); color: var(--wishlist-color); padding: 2px 6px; border-radius: 99px; text-transform: uppercase; font-weight: 700;">Wishlisted</span>' +
+                                '</div>' +
+                                '<h5 style="font-family: \'Playfair Display\', Georgia, serif; font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.25rem;">' + spec.name + '</h5>' +
+                                '<div style="font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.5rem; font-style: italic;">' + spec.importance + '</div>' +
+                                '<p style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.4;">' + spec.description + '</p>' +
+                            '</div>' +
+                        '</div>';
+            });
+            html += '</div>';
+            html += '</div>';
+        }
+        
+        // Section 3: Collected Specimens
+        if (collectedList.length > 0) {
+            html += '<div style="margin-bottom: 0.5rem;">';
+            html += '<h4 style="font-family: \'Playfair Display\', Georgia, serif; font-size: 1.15rem; color: var(--text-primary); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">' +
+                        '<span style="color: #2db3a1; font-size: 1.3rem;">&bull;</span> Collected Specimens (' + collectedList.length + ')' +
+                    '</h4>';
+            html += '<div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">';
+            collectedList.forEach(function(spec) {
+                html += '<span class="badge" style="background: rgba(45, 179, 161, 0.08); color: #2db3a1; border-color: rgba(45, 179, 161, 0.25); text-transform: none; display: inline-flex; align-items: center; gap: 6px; padding: 0.35rem 0.75rem; border-radius: 4px; font-size: 0.8rem; font-weight: 600;">' +
+                            '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' +
+                            spec.name + 
+                            ' <small style="opacity: 0.7; font-weight: 400;">(' + spec.period + ')</small>' +
+                        '</span>';
+            });
+            html += '</div>';
+            html += '</div>';
+        }
+        
+        html += '</div>';
+        container.innerHTML = html;
+    },
+
+    addSpecimenToWishlist: function(name, category, period) {
+        var newFossil = {
+            id: generateCatalogId(category, fossils),
+            specimen: name,
+            category: category,
+            isWishlist: true,
+            isSold: false,
+            geologicalPeriod: period,
+            ageMa: PERIOD_AGES[period] || 0,
+            notes: 'Added automatically from Geologic Discovery Recommendations.',
+            tags: ['discovery', 'index-fossil'],
+            images: [],
+            createdAt: Date.now()
+        };
+        
+        addFossil(newFossil).then(function() {
+            window.app.showToast('"' + name + '" added to your Wishlist!', 'success');
+            getAllFossils().then(function(allFossils) {
+                fossils = allFossils;
+                window.app.renderMissingSpecimens();
+                window.app.renderFossils();
+            });
+        });
     },
 
     // --- Modal ---
@@ -1544,7 +2031,16 @@ window.app = {
                 document.getElementById('f-animal-size').value = f.animalSize || '';
                 document.getElementById('f-anatomy').value = f.anatomy || '';
                 document.getElementById('f-category').value = f.category || '';
-                document.getElementById('f-wishlist').value = f.isWishlist ? 'true' : 'false';
+                if (f.isSold) {
+                    document.getElementById('f-wishlist').value = 'sold';
+                    document.getElementById('f-sale-price').value = f.salePrice || '';
+                    document.getElementById('f-sale-currency').value = f.saleCurrency || 'USD';
+                } else {
+                    document.getElementById('f-wishlist').value = f.isWishlist ? 'true' : 'false';
+                    document.getElementById('f-sale-price').value = '';
+                    document.getElementById('f-sale-currency').value = 'USD';
+                }
+                window.app.toggleSalePriceField();
                 document.getElementById('f-self-found').checked = !!f.isSelfFound;
                 document.getElementById('f-period').value = f.geologicalPeriod || '';
                 window.app.updateEpochs(f.epoch);
@@ -1595,6 +2091,10 @@ window.app = {
             document.getElementById('f-formation').value = localStorage.getItem('last_formation') || '';
             document.getElementById('f-period').value = localStorage.getItem('last_period') || '';
             document.getElementById('f-self-found').checked = false;
+            document.getElementById('f-wishlist').value = 'false';
+            document.getElementById('f-sale-price').value = '';
+            document.getElementById('f-sale-currency').value = 'USD';
+            window.app.toggleSalePriceField();
             
             window.app.updateEpochs(localStorage.getItem('last_epoch') || '');
             window.app.updateStratAges(localStorage.getItem('last_stratAge') || '');
@@ -1918,6 +2418,9 @@ window.app = {
         currentView = view;
         document.getElementById('btn-collection').classList.toggle('active', view === 'false');
         document.getElementById('btn-wishlist').classList.toggle('active', view === 'true');
+        if (document.getElementById('btn-sold')) {
+            document.getElementById('btn-sold').classList.toggle('active', view === 'sold');
+        }
         window.app.renderFossils();
     },
 
@@ -2053,6 +2556,9 @@ window.app = {
             anatomy: document.getElementById('f-anatomy').value,
             category: document.getElementById('f-category').value,
             isWishlist: document.getElementById('f-wishlist').value === 'true',
+            isSold: document.getElementById('f-wishlist').value === 'sold',
+            salePrice: document.getElementById('f-wishlist').value === 'sold' ? parseFloat(document.getElementById('f-sale-price').value) || null : null,
+            saleCurrency: document.getElementById('f-wishlist').value === 'sold' ? document.getElementById('f-sale-currency').value : 'USD',
             isSelfFound: document.getElementById('f-self-found').checked,
             geologicalPeriod: document.getElementById('f-period').value,
             epoch: document.getElementById('f-epoch').value,
@@ -2340,7 +2846,16 @@ window.app = {
         document.getElementById('f-animal-size').value = f.animalSize || '';
         document.getElementById('f-anatomy').value = f.anatomy || '';
         document.getElementById('f-category').value = f.category || '';
-        document.getElementById('f-wishlist').value = f.isWishlist ? 'true' : 'false';
+        if (f.isSold) {
+            document.getElementById('f-wishlist').value = 'sold';
+            document.getElementById('f-sale-price').value = f.salePrice || '';
+            document.getElementById('f-sale-currency').value = f.saleCurrency || 'USD';
+        } else {
+            document.getElementById('f-wishlist').value = f.isWishlist ? 'true' : 'false';
+            document.getElementById('f-sale-price').value = '';
+            document.getElementById('f-sale-currency').value = 'USD';
+        }
+        window.app.toggleSalePriceField();
         document.getElementById('f-self-found').checked = !!f.isSelfFound;
         document.getElementById('f-period').value = f.geologicalPeriod || '';
         window.app.updateEpochs(f.epoch);
@@ -2451,6 +2966,7 @@ window.app = {
             var periodQ   = document.getElementById('filter-period').value;
             var sortQ     = document.getElementById('filter-sort').value;
             var wlQ       = currentView === 'true';
+            var soldQ     = currentView === 'sold';
 
             // --- FILTER ---
             var filtered = fossils.filter(function(f) {
@@ -2499,8 +3015,15 @@ window.app = {
 
                 var matchCat      = !catQ    || f.category === catQ;
                 var matchPeriod   = !periodQ || f.geologicalPeriod === periodQ;
-                var matchWishlist = !!f.isWishlist === wlQ;
-                return matchSearch && matchCat && matchPeriod && matchWishlist;
+                var matchView = false;
+                if (currentView === 'sold') {
+                    matchView = !!f.isSold;
+                } else if (currentView === 'true') {
+                    matchView = !!f.isWishlist && !f.isSold;
+                } else {
+                    matchView = !f.isWishlist && !f.isSold;
+                }
+                return matchSearch && matchCat && matchPeriod && matchView;
             });
 
             // --- UPDATE SEARCH COUNT ---
@@ -2672,45 +3195,91 @@ window.app = {
                 // Redesigned Quick Stats (Better visuals)
                 var statsHtml = '<div class="stats-summary-pills" style="display: flex; flex-wrap: wrap; gap: 0.65rem; align-items: center; justify-content: flex-start;">';
                 
-                // Count Pill
-                statsHtml += '<div class="stats-pill" style="display: flex; align-items: center; gap: 0.5rem; background: var(--bg-warm); padding: 0.4rem 0.85rem; border-radius: 2rem; border: 1px solid var(--border-color); font-size: 0.85rem; font-weight: 500;">' +
-                                '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2v11z"/></svg>' +
-                                '<span><strong>' + filtered.length + '</strong> Specimens</span>' +
-                              '</div>';
+                if (currentView === 'sold') {
+                    var saleValueByCurrency = {};
+                    filtered.forEach(function(f) {
+                        if (f.isSold && f.salePrice > 0) {
+                            var saleCurr = f.saleCurrency || 'USD';
+                            saleValueByCurrency[saleCurr] = (saleValueByCurrency[saleCurr] || 0) + f.salePrice;
+                        }
+                    });
+                    var totalSaleSEK = calculateTotalSEK(saleValueByCurrency);
+                    var totalProfitSEK = totalSaleSEK - totalCostSEK;
 
-                // Top Origin Pill
-                if (mostCommonCountry && mostCommonCountry !== 'Unknown') {
-                    var summaryFlag = getFlagHtml(mostCommonCountry);
+                    // Count Pill
                     statsHtml += '<div class="stats-pill" style="display: flex; align-items: center; gap: 0.5rem; background: var(--bg-warm); padding: 0.4rem 0.85rem; border-radius: 2rem; border: 1px solid var(--border-color); font-size: 0.85rem; font-weight: 500;">' +
-                                    summaryFlag + '<span>Top Origin: <strong>' + (window.escapeHtml ? escapeHtml(mostCommonCountry) : mostCommonCountry) + '</strong></span>' +
+                                    '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2v11z"/></svg>' +
+                                    '<span><strong>' + filtered.length + '</strong> Sold Specimens</span>' +
                                   '</div>';
-                }
 
-                // Pricing Pillar (Cost)
-                if (totalCostSEK > 0) {
+                    // Acquisition Cost Pill
+                    if (totalCostSEK > 0) {
+                        statsHtml += '<div class="stats-pill" style="display: flex; align-items: center; gap: 0.5rem; background: var(--bg-warm); padding: 0.4rem 0.85rem; border-radius: 2rem; border: 1px solid var(--border-color); font-size: 0.85rem; font-weight: 500;">' +
+                                        '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b5d4d" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M16 8l-8 8M8 8l8 8"/></svg>' +
+                                        '<span>Acquisition Cost: <strong>' + Math.round(totalCostSEK).toLocaleString() + ' SEK</strong></span>' +
+                                      '</div>';
+                    }
+
+                    // Sales Revenue Pill
+                    if (totalSaleSEK > 0) {
+                        statsHtml += '<div class="stats-pill" style="display: flex; align-items: center; gap: 0.5rem; background: var(--bg-warm); padding: 0.4rem 0.85rem; border-radius: 2rem; border: 1px solid var(--border-color); font-size: 0.85rem; font-weight: 500;">' +
+                                        '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>' +
+                                        '<span>Sales Revenue: <strong>' + Math.round(totalSaleSEK).toLocaleString() + ' SEK</strong></span>' +
+                                      '</div>';
+                    }
+
+                    // Net Profit / ROI Pill
+                    if (totalSaleSEK > 0 && totalCostSEK > 0) {
+                        var percentProfit = Math.round((totalProfitSEK / totalCostSEK) * 100);
+                        var profitColor = totalProfitSEK >= 0 ? '#439775' : '#b33a3a';
+                        var profitBg = totalProfitSEK >= 0 ? 'rgba(67, 151, 117, 0.1)' : 'rgba(179, 58, 58, 0.1)';
+                        var profitBorder = totalProfitSEK >= 0 ? 'rgba(67, 151, 117, 0.2)' : 'rgba(179, 58, 58, 0.2)';
+                        statsHtml += '<div class="stats-pill" style="display: flex; align-items: center; gap: 0.5rem; background: ' + profitBg + '; color: ' + profitColor + '; padding: 0.4rem 0.85rem; border-radius: 2rem; border: 1px solid ' + profitBorder + '; font-size: 0.85rem; font-weight: 700;">' +
+                                        '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>' +
+                                        '<span>Net Profit: ' + (totalProfitSEK >= 0 ? '+' : '') + Math.round(totalProfitSEK).toLocaleString() + ' SEK (' + (totalProfitSEK >= 0 ? '↑' : '↓') + percentProfit + '%)</span>' +
+                                      '</div>';
+                    }
+                } else {
+                    // Count Pill
                     statsHtml += '<div class="stats-pill" style="display: flex; align-items: center; gap: 0.5rem; background: var(--bg-warm); padding: 0.4rem 0.85rem; border-radius: 2rem; border: 1px solid var(--border-color); font-size: 0.85rem; font-weight: 500;">' +
-                                    '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b5d4d" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M16 8l-8 8M8 8l8 8"/></svg>' +
-                                    '<span>Cost: <strong>' + Math.round(totalCostSEK).toLocaleString() + ' SEK</strong></span>' +
+                                    '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2v11z"/></svg>' +
+                                    '<span><strong>' + filtered.length + '</strong> Specimens</span>' +
                                   '</div>';
-                }
 
-                // Value Pillar (Total Estimated Value)
-                if (totalEstSEK > 0) {
-                    statsHtml += '<div class="stats-pill" style="display: flex; align-items: center; gap: 0.5rem; background: var(--bg-warm); padding: 0.4rem 0.85rem; border-radius: 2rem; border: 1px solid var(--border-color); font-size: 0.85rem; font-weight: 500;">' +
-                                    '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e6a817" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v12M17 12H7"/></svg>' +
-                                    '<span>Value: <strong>' + Math.round(totalEstSEK).toLocaleString() + ' SEK</strong></span>' +
-                                  '</div>';
-                }
+                    // Top Origin Pill
+                    if (mostCommonCountry && mostCommonCountry !== 'Unknown') {
+                        var summaryFlag = getFlagHtml(mostCommonCountry);
+                        statsHtml += '<div class="stats-pill" style="display: flex; align-items: center; gap: 0.5rem; background: var(--bg-warm); padding: 0.4rem 0.85rem; border-radius: 2rem; border: 1px solid var(--border-color); font-size: 0.85rem; font-weight: 500;">' +
+                                        summaryFlag + '<span>Top Origin: <strong>' + (window.escapeHtml ? escapeHtml(mostCommonCountry) : mostCommonCountry) + '</strong></span>' +
+                                      '</div>';
+                    }
 
-                // Appreciation Pill ( স্ট্যান্ডআউট / Standout )
-                if (totalAppreciation > 0) {
-                    var percentGain = Math.round((totalAppreciation / totalCostSEK) * 100);
-                    statsHtml += '<div class="stats-pill" style="display: flex; align-items: center; gap: 0.5rem; background: rgba(67, 151, 117, 0.1); color: #439775; padding: 0.4rem 0.85rem; border-radius: 2rem; border: 1px solid rgba(67, 151, 117, 0.2); font-size: 0.85rem; font-weight: 700;">' +
-                                    '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>' +
-                                    '<span>Appreciation: +' + Math.round(totalAppreciation).toLocaleString() + ' SEK (↑' + percentGain + '%)</span>' +
-                                  '</div>';
-                }
+                    // Pricing Pillar (Cost)
+                    if (totalCostSEK > 0) {
+                        statsHtml += '<div class="stats-pill" style="display: flex; align-items: center; gap: 0.5rem; background: var(--bg-warm); padding: 0.4rem 0.85rem; border-radius: 2rem; border: 1px solid var(--border-color); font-size: 0.85rem; font-weight: 500;">' +
+                                        '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b5d4d" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M16 8l-8 8M8 8l8 8"/></svg>' +
+                                        '<span>Cost: <strong>' + Math.round(totalCostSEK).toLocaleString() + ' SEK</strong></span>' +
+                                      '</div>';
+                    }
 
+                    // Value Pillar (Total Estimated Value)
+                    if (totalEstSEK > 0) {
+                        statsHtml += '<div class="stats-pill" style="display: flex; align-items: center; gap: 0.5rem; background: var(--bg-warm); padding: 0.4rem 0.85rem; border-radius: 2rem; border: 1px solid var(--border-color); font-size: 0.85rem; font-weight: 500;">' +
+                                        '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e6a817" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v12M17 12H7"/></svg>' +
+                                        '<span>Value: <strong>' + Math.round(totalEstSEK).toLocaleString() + ' SEK</strong></span>' +
+                                      '</div>';
+                    }
+
+                    // Appreciation Pill
+                    if (totalAppreciation > 0) {
+                        var percentGain = Math.round((totalAppreciation / totalCostSEK) * 100);
+                        statsHtml += '<div class="stats-pill" style="display: flex; align-items: center; gap: 0.5rem; background: rgba(67, 151, 117, 0.1); color: #439775; padding: 0.4rem 0.85rem; border-radius: 2rem; border: 1px solid rgba(67, 151, 117, 0.2); font-size: 0.85rem; font-weight: 700;">' +
+                                        '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>' +
+                                        '<span>Appreciation: +' + Math.round(totalAppreciation).toLocaleString() + ' SEK (↑' + percentGain + '%)</span>' +
+                                      '</div>';
+                    }
+                }
+                
                 statsHtml += '</div>';
 
                 var textContainer = document.getElementById('stats-summary-text');
@@ -3133,6 +3702,10 @@ window.app = {
                         var pText = 'Price: ' + f.price + ' ' + (f.currency || 'USD');
                         detailsArr.push(pText);
                     }
+                    if (f.isSold && f.salePrice > 0) {
+                        var sText = 'Sold for: ' + f.salePrice + ' ' + (f.saleCurrency || 'USD');
+                        detailsArr.push(sText);
+                    }
                     var detailsText = detailsArr.length > 0 ? '<p class="card-meta" style="margin-top: 0.25rem; font-weight: 500;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> ' + detailsArr.join(' &middot; ') + '</p>' : '';
 
                     cardInnerHtml =
@@ -3156,13 +3729,15 @@ window.app = {
                             ((f.tags && f.tags.length > 0) ? '<div class="card-tags">' + f.tags.map(function(t) { return '<span class="tag-pill" onclick="event.stopPropagation(); document.getElementById(\'search\').value = \'#' + t + '\'; app.renderFossils();">#' + t + '</span>'; }).join('') + '</div>' : '') +
                             '<div class="card-footer">' +
                                 '<div style="display: flex; gap: 0.5rem; align-items: center;">' +
-                                    '<span class="badge badge-owned">Owned</span>' +
+                                    (f.isSold ? '<span class="badge badge-sold">Sold</span>' : '<span class="badge badge-owned">Owned</span>') +
                                     (f.isSelfFound ? '<span class="badge badge-self-found" style="display: flex; align-items: center; gap: 4px;"><svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Found</span>' : '') +
                                 '</div>' +
                                 '<div class="card-actions">' +
                                     (speciesFirstWord ? '<button title="Read about ' + escapeHtml(speciesFirstWord) + ' on Wikipedia" onclick="window.open(\'https://en.wikipedia.org/wiki/Special:Search?search=\' + \'' + wikiQuery + '\', \'_blank\')"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg></button>' : '') +
                                     '<button class="btn-taxonomy ' + (expandedTaxonomyIds.has(f.id) ? 'active' : '') + '" title="Biological Taxonomy" onclick="app.toggleTaxonomy(\'' + f.id + '\')"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="M5 12h14"/><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button>' +
                                     '<button title="Edit" onclick="app.openModal(\'' + f.id + '\')"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>' +
+                                    (f.isSold ? '<button class="btn-restore-collection" title="Restore to Collection" onclick="app.restoreToCollectionQuick(\'' + f.id + '\', \'' + escapeHtml(f.specimen).replace(/'/g, "\\'") + '\')"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg></button>' : '') +
+                                    (!f.isSold && !f.isWishlist ? '<button class="btn-sell" title="Mark as Sold" onclick="app.markAsSoldQuick(\'' + f.id + '\', \'' + escapeHtml(f.specimen).replace(/'/g, "\\'") + '\')"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></button>' : '') +
                                     '<button title="Duplicate" onclick="app.duplicateFossil(\'' + f.id + '\')"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>' +
                                     '<button title="Print Label" onclick="app.printLabel(\'' + f.id + '\')"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg></button>' +
                                     '<button class="btn-delete" title="Delete" onclick="app.deleteFossilItem(\'' + f.id + '\')"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>' +
@@ -3445,7 +4020,8 @@ window.app = {
                     // Update only the treemap if it's still open
                     if (isTreemapOpen) {
                         var filtered = fossils.filter(function(x) {
-                             return currentView === 'true' ? x.isWishlist : !x.isWishlist;
+                             if (currentView === 'sold') return !!x.isSold;
+                             return currentView === 'true' ? (x.isWishlist && !x.isSold) : (!x.isWishlist && !x.isSold);
                         });
                         window.app.renderTaxonomyTreemap(filtered);
                     }
@@ -3650,6 +4226,9 @@ window.app = {
                                 weight: m.weight,
                                 price: m.price,
                                 notes: m.notes,
+                                isSold: m.isSold || false,
+                                salePrice: m.salePrice || null,
+                                saleCurrency: m.saleCurrency || 'USD',
                                 images: [],
                                 createdAt: Date.now()
                             });
