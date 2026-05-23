@@ -1151,6 +1151,16 @@ window.addEventListener('DOMContentLoaded', function() {
         setTimeout(optimizeExistingDatabase, 2000);
         // Automatic ID Migration (UUID -> Catalog) 1 second after load
         setTimeout(migrateToCatalogIds, 1000);
+        // Automatic Background Data Enrichment 3 seconds after load
+        setTimeout(enrichDatabaseInBackground, 3000);
+    });
+
+    // Close utilities dropdown on outside clicks
+    document.addEventListener('click', function() {
+        var menu = document.getElementById('enrich-dropdown');
+        if (menu && menu.classList.contains('active')) {
+            menu.classList.remove('active');
+        }
     });
 });
 
@@ -1478,6 +1488,36 @@ window.app = {
         if (isStatsOpen) {
             window.app.renderFossils();
         }
+    },
+
+    resetToHome: function() {
+        var searchInput = document.getElementById('search');
+        if (searchInput) searchInput.value = '';
+        
+        var filterCategory = document.getElementById('filter-category');
+        if (filterCategory) filterCategory.value = '';
+        
+        var filterPeriod = document.getElementById('filter-period');
+        if (filterPeriod) filterPeriod.value = '';
+        
+        var filterSort = document.getElementById('filter-sort');
+        if (filterSort) filterSort.value = 'newest';
+        
+        if (isStatsOpen) {
+            isStatsOpen = false;
+            var container = document.getElementById('stats-summary');
+            if (container) container.style.display = 'none';
+            ['btn-toggle-stats', 'btn-toggle-stats-desktop'].forEach(function(id) {
+                var btn = document.getElementById(id);
+                if (btn) btn.classList.remove('active');
+            });
+        }
+        
+        isDataInsightsOpen = false;
+        isTreemapOpen = false;
+        isEarthHistoryOpen = false;
+        
+        window.app.setView('false'); // return to active collection
     },
 
     showMainCharts: function() {
@@ -1900,11 +1940,14 @@ window.app = {
         var progressPercent = Math.round((collectedCount / totalKey) * 100);
         html += '<div style="margin-bottom: 1.5rem;">' +
                     '<div style="display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.35rem;">' +
-                        '<span>Collection Completion Progress</span>' +
+                        '<span>Prehistoric Milestones Album (Legendary Index Fossils)</span>' +
                         '<span>' + collectedCount + ' / ' + totalKey + ' Specimens (' + progressPercent + '%)</span>' +
                     '</div>' +
                     '<div style="width: 100%; height: 8px; background: var(--bg-warm); border-radius: 4px; overflow: hidden; border: 1px solid var(--border-color);">' +
                         '<div style="width: ' + progressPercent + '%; height: 100%; background: var(--accent); transition: width 0.3s ease;"></div>' +
+                    '</div>' +
+                    '<div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.35rem; line-height: 1.3;">' +
+                        'ℹ️ Tracks specifically your collection representation of the 27 legendary index species defined in our geologic discovery catalog.' +
                     '</div>' +
                 '</div>';
                 
@@ -1968,7 +2011,7 @@ window.app = {
         if (collectedList.length > 0) {
             html += '<div style="margin-bottom: 0.5rem;">';
             html += '<h4 style="font-family: \'Playfair Display\', Georgia, serif; font-size: 1.15rem; color: var(--text-primary); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">' +
-                        '<span style="color: #2db3a1; font-size: 1.3rem;">&bull;</span> Collected Specimens (' + collectedList.length + ')' +
+                        '<span style="color: #2db3a1; font-size: 1.3rem;">&bull;</span> Iconic Index Fossils Collected (' + collectedList.length + ' of ' + totalKey + ')' +
                     '</h4>';
             html += '<div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">';
             collectedList.forEach(function(spec) {
@@ -2677,6 +2720,14 @@ window.app = {
                 window.app.updateMassDeleteButton();
                 window.app.renderFossils();
             });
+        }
+    },
+
+    toggleEnrichDropdown: function(event) {
+        if (event) event.stopPropagation();
+        var menu = document.getElementById('enrich-dropdown');
+        if (menu) {
+            menu.classList.toggle('active');
         }
     },
 
@@ -3452,13 +3503,6 @@ window.app = {
 
                         dataHtml +=         '</div>' +
                                         '</div>' +
-                                        // Batch Fetch Etymology Card
-                                        '<div class="data-card" style="background: var(--bg-warm); padding: 1.5rem; border-radius: 1rem; border: 1px solid var(--border-color); text-align: center; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 0.75rem;">' +
-                                            '<div style="color: var(--accent);"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div>' +
-                                            '<div style="font-size: 0.9rem; opacity: 0.7; font-weight: 600; text-transform: uppercase;">Missing Translations</div>' +
-                                            '<div style="font-size: 1.5rem; font-weight: 800; color: var(--text-main);">' + fossils.filter(function(f){return !f.etymology;}).length + '</div>' +
-                                            '<button type="button" class="btn-primary" onclick="app.batchFetchEtymologies()" style="font-size: 0.75rem; padding: 0.4rem 0.8rem; width: 100%;">Fetch All from Wikipedia</button>' +
-                                        '</div>' +
                                        '</div>';
                     }
                     dataContainer.innerHTML = dataHtml;
@@ -3470,12 +3514,15 @@ window.app = {
                 if (isStatsOpen) {
                     statsContainer.style.display = 'flex';
                     
-                    if (isStratColumnOpen) {
-                        window.app.renderStratigraphicColumn(filtered);
-                    } else if (isDataInsightsOpen) {
+                    if (isDataInsightsOpen) {
                         // Logic is already handled above in the inline section
                     } else if (isTreemapOpen) {
-                        window.app.renderTaxonomyTreemap(filtered);
+                        window.app.renderMissingSpecimens();
+                    } else if (isEarthHistoryOpen) {
+                        // Refresh represented specimens list in earth history based on currently selected period
+                        var activePeriodBtn = document.querySelector('.geological-sidebar button[style*="background: var(--accent-bg)"]');
+                        var activePeriod = activePeriodBtn ? activePeriodBtn.textContent.trim().split('\n')[0].trim() : 'Quaternary';
+                        window.app.renderEarthHistory(activePeriod);
                     } else {
                         // Render Charts
                         try {
@@ -4019,11 +4066,7 @@ window.app = {
                 .then(function() {
                     // Update only the treemap if it's still open
                     if (isTreemapOpen) {
-                        var filtered = fossils.filter(function(x) {
-                             if (currentView === 'sold') return !!x.isSold;
-                             return currentView === 'true' ? (x.isWishlist && !x.isSold) : (!x.isWishlist && !x.isSold);
-                        });
-                        window.app.renderTaxonomyTreemap(filtered);
+                        window.app.renderMissingSpecimens();
                     }
                     setTimeout(fetchNext, 1000); // 1s second delay to be gentle with PBDB API
                 })
@@ -4581,6 +4624,102 @@ function optimizeExistingDatabase() {
             });
         }
     });
+}
+
+function enrichDatabaseInBackground() {
+    if (!fossils || fossils.length === 0) return;
+    
+    var needy = fossils.filter(function(f) {
+        return !f.etymology || !f.animalSize;
+    });
+    
+    if (needy.length === 0) return;
+    
+    var batch = needy.slice(0, 3);
+    
+    (async function() {
+        var updatedAny = false;
+        for (var f of batch) {
+            var name = (f.specimen || '').trim();
+            if (!name) continue;
+            
+            var genus = name.split(' ')[0];
+            var cleanName = name.replace(/\([^)]*\)/g, '').replace(/\b(?:cf\.|sp\.|\?)\b/g, '').replace(/\s+/g, ' ').trim();
+            
+            var wikiHeaders = { 'Api-User-Agent': 'FossilArchiveApp/1.0 (contact@fossilarchive.app) MediaWiki/1.3' };
+            var localUpdated = false;
+
+            if (!f.etymology && genus) {
+                try {
+                    var etym = await window.app.fetchEtymology(genus);
+                    if (etym) {
+                        f.etymology = etym;
+                        localUpdated = true;
+                    }
+                } catch (e) { console.error('BG Etymology fetch failed', e); }
+            }
+            
+            if (!f.animalSize && cleanName) {
+                var searchLower = cleanName.toLowerCase();
+                var localSize = null;
+                if (PREHISTORIC_SIZES[searchLower]) {
+                    localSize = PREHISTORIC_SIZES[searchLower];
+                } else {
+                    var sortedKeys = Object.keys(PREHISTORIC_SIZES).sort(function(a, b) { return b.length - a.length; });
+                    for (var j = 0; j < sortedKeys.length; j++) {
+                        var key = sortedKeys[j];
+                        if (searchLower.indexOf(key) !== -1) {
+                            localSize = PREHISTORIC_SIZES[key];
+                            break;
+                        }
+                    }
+                }
+                
+                if (localSize) {
+                    f.animalSize = localSize;
+                    localUpdated = true;
+                } else {
+                    try {
+                        var searchUrl = 'https://en.wikipedia.org/w/api.php?action=query&list=search&format=json&origin=*&srsearch=' + encodeURIComponent(cleanName);
+                        var sResp = await fetch(searchUrl, { headers: wikiHeaders });
+                        if (sResp.ok) {
+                            var sData = await sResp.json();
+                            if (sData.query && sData.query.search && sData.query.search.length > 0) {
+                                var bestTitle = sData.query.search[0].title;
+                                var fetchUrl = 'https://en.wikipedia.org/w/api.php?action=query&prop=extracts&format=json&exchars=2500&explaintext=1&origin=*&titles=' + encodeURIComponent(bestTitle);
+                                var fResp = await fetch(fetchUrl, { headers: wikiHeaders });
+                                if (fResp.ok) {
+                                    var fData = await fResp.json();
+                                    var pages = fData.query.pages;
+                                    var pageId = Object.keys(pages)[0];
+                                    var extract = pages[pageId].extract || '';
+                                    var size = window.app.extractSizeFromText(extract);
+                                    if (size) {
+                                        f.animalSize = size;
+                                        localUpdated = true;
+                                    }
+                                }
+                            }
+                        }
+                    } catch (e) { console.error('BG Size fetch failed', e); }
+                }
+            }
+            
+            if (localUpdated) {
+                await updateFossil(f);
+                updatedAny = true;
+            }
+            
+            await new Promise(function(r) { setTimeout(r, 250); });
+        }
+        
+        if (updatedAny) {
+            getAllFossils().then(function(allFossils) {
+                fossils = allFossils;
+                window.app.renderFossils();
+            });
+        }
+    })();
 }
 
 // =========================================================================

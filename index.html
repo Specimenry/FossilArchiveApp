@@ -14,7 +14,7 @@
 
     <header>
         <div class="header-inner">
-            <div class="header-brand">
+            <div class="header-brand" onclick="app.resetToHome()" style="cursor: pointer;" title="Reset Filters & Go Home">
                 <img src="img/logo_flat.png" alt="Fossil Archive logo" class="header-logo">
                 <h1>Fossil <span class="accent">Archive</span></h1>
             </div>
@@ -36,9 +36,20 @@
                 </button>
                 <input type="file" id="file-import" accept=".csv" style="display:none;" onchange="app.importCSV(event)">
 
-                <button id="btn-batch-size" class="btn-secondary" onclick="app.batchFetchMissingSizes()" title="Try to fetch sizes for all fossils missing them">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 21l2-2m-4.17 12.42L10 21m12.42-4.17l-12.42 12.41M11.44 11.44l12.41-12.41M21 10l-2 2m0 0l-2 2m2-2l2 2m-2-2l-2-2"/></svg> Fetch Sizes
-                </button>
+                <div class="dropdown" style="position: relative; display: inline-block;">
+                    <button type="button" id="btn-enrich-center" class="btn-secondary" onclick="app.toggleEnrichDropdown(event)" title="Archive Utilities Menu" style="white-space: nowrap; display: flex; align-items: center; gap: 0.25rem;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> 
+                        Utilities
+                    </button>
+                    <div id="enrich-dropdown" class="dropdown-menu" style="display: none; position: absolute; right: 0; top: 105%; background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius-md); box-shadow: var(--shadow-md); z-index: 1000; min-width: 200px; padding: 0.5rem 0;">
+                        <a href="#" onclick="app.batchFetchMissingSizes(); return false;" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1rem; font-size: 0.8rem; color: var(--text-primary); text-decoration: none; transition: background 0.15s;" onmouseover="this.style.background='var(--bg-warm)'" onmouseout="this.style.background='transparent'">
+                            📏 Fetch Sizes (All Fossils)
+                        </a>
+                        <a href="#" onclick="app.batchFetchEtymologies(); return false;" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1rem; font-size: 0.8rem; color: var(--text-primary); text-decoration: none; transition: background 0.15s;" onmouseover="this.style.background='var(--bg-warm)'" onmouseout="this.style.background='transparent'">
+                            📖 Fetch Etymologies (Missing)
+                        </a>
+                    </div>
+                </div>
 
                 <button id="btn-mass-tag" class="btn-secondary" style="display:none;" onclick="app.massTagSelected()">
                     Tag Selected
