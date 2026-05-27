@@ -62,6 +62,9 @@
                         <a href="#" id="link-compare-picker" onclick="app.toggleComparePickerMode(); return false;" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1rem; font-size: 0.8rem; color: var(--text-primary); text-decoration: none; transition: background 0.15s; border-top: 1px solid var(--border-color);" onmouseover="this.style.background='var(--bg-warm)'" onmouseout="this.style.background='transparent'">
                             ⚖️ Compare Mode: Off
                         </a>
+                        <a href="#" onclick="app.openDeepDive(); return false;" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1rem; font-size: 0.8rem; color: var(--text-primary); text-decoration: none; transition: background 0.15s; border-top: 1px solid var(--border-color);" onmouseover="this.style.background='var(--bg-warm)'" onmouseout="this.style.background='transparent'">
+                            🦕 Paleo Deep Dive
+                        </a>
                     </div>
                 </div>
 
@@ -160,6 +163,9 @@
                 <button type="button" id="btn-toggle-treemap" onclick="app.toggleTreemap()">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> Missing Specimens
                 </button>
+                <button type="button" id="btn-toggle-scoreboard" onclick="app.toggleScoreboard()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Leaderboard
+                </button>
                 <button type="button" id="btn-toggle-map" onclick="app.toggleFossilMap()">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg> Fossil Map
                 </button>
@@ -197,6 +203,10 @@
 
             <div id="fossil-map-container" class="dashboard-visual-container" style="display: none; height: 550px;">
                 <!-- Leaflet Map rendered by JS -->
+            </div>
+
+            <div id="scoreboard-container" class="dashboard-visual-container" style="display: none;">
+                <!-- Leaderboard dynamically rendered by JS -->
             </div>
         </div>
         <div id="fossil-grid" class="fossil-grid" aria-live="polite">
@@ -646,6 +656,113 @@
                     <div class="showcase-notes-container">
                         <span class="meta-label">Curation Notes & Scientific Context</span>
                         <p id="showcase-meta-notes" class="showcase-notes">Exhibits beautiful serrations along the posterior carina...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Prehistoric Life & Paleo-Habitat Deep Dive Overlay -->
+    <div id="deep-dive-modal" class="deep-dive-modal" style="display: none;">
+        <!-- Deep Dive Header -->
+        <div class="deep-dive-header">
+            <div class="deep-dive-brand">
+                <span class="deep-dive-badge">🦕 Prehistoric Life & Paleo-Habitat Deep Dive</span>
+                <div class="deep-dive-select-container">
+                    <span class="deep-dive-select-label">Curation Specimen:</span>
+                    <select id="deep-dive-picker" class="deep-dive-select" onchange="app.renderDeepDiveProfile(this.value)"></select>
+                </div>
+            </div>
+            <button onclick="app.closeDeepDive()" class="deep-dive-exit-btn" title="Exit Deep Dive (Esc)">&times; Close</button>
+        </div>
+
+        <!-- Deep Dive Body Dashboard -->
+        <div class="deep-dive-body">
+            <!-- Left Pane: Reconstruction & Simulation -->
+            <div class="deep-dive-stage-pane">
+                <!-- Scenic Era Habitat card -->
+                <div class="deep-dive-scenic-stage" id="deep-dive-scenic-stage">
+                    <div class="scenic-backdrop-glow"></div>
+                    <div class="scenic-content-wrapper">
+                        <div class="scenic-photo-circle" id="deep-dive-photo-circle">
+                            <!-- Circular Specimen photo rendered by JS -->
+                        </div>
+                        <div class="scenic-specimen-details">
+                            <span id="deep-dive-era-tag" class="scenic-badge">Mesozoic</span>
+                            <h2 id="deep-dive-specimen-name" class="scenic-title">Tyrannosaurus Rex</h2>
+                            <p id="deep-dive-specimen-sub" class="scenic-subtitle">Cretaceous Period · ~66.0 Ma</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- "Day in the Life" Behavior Simulator -->
+                <div class="deep-dive-simulator-card">
+                    <h3 class="simulator-title">🦖 "Day in the Life" Prehistoric Simulator</h3>
+                    <p class="simulator-desc">Run interactive, educational behavior simulations to see how this specimen survived in its ancient habitat.</p>
+                    <div class="simulator-actions">
+                        <button type="button" class="sim-btn hunt" onclick="app.simulatePrehistoricBehavior('hunt')">
+                            <span class="sim-icon">🔍</span> Forage & Hunt
+                        </button>
+                        <button type="button" class="sim-btn defend" onclick="app.simulatePrehistoricBehavior('defend')">
+                            <span class="sim-icon">🛡️</span> Defend Territory
+                        </button>
+                        <button type="button" class="sim-btn rest" onclick="app.simulatePrehistoricBehavior('rest')">
+                            <span class="sim-icon">⏳</span> Rest & Conserve
+                        </button>
+                    </div>
+                    <!-- Scrolling Simulation Monitor -->
+                    <div class="simulator-console" id="deep-dive-simulation-console">
+                        <div class="console-placeholder">🎮 Select a prehistoric behavior above to begin the simulation...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Scientific Dossier & Encyclopedia -->
+            <div class="deep-dive-dossier-pane">
+                <!-- Ecosystem & Climate Dossier -->
+                <div class="deep-dive-card">
+                    <h3 class="dossier-card-title"><span class="dossier-icon">🌍</span> Paleo-Environment & Ecosystem</h3>
+                    <div class="dossier-grid">
+                        <div class="dossier-item">
+                            <span class="dossier-label">Ancient Climate</span>
+                            <span id="deep-dive-dossier-climate" class="dossier-val">Warm Cretaceous Coastal Forest</span>
+                        </div>
+                        <div class="dossier-item">
+                            <span class="dossier-label">Average Temperature</span>
+                            <span id="deep-dive-dossier-temp" class="dossier-val">22°C (Warm & Humid)</span>
+                        </div>
+                        <div class="dossier-item">
+                            <span class="dossier-label">Atmospheric Oxygen Level</span>
+                            <span id="deep-dive-dossier-oxygen" class="dossier-val">150% of Modern levels (30%)</span>
+                        </div>
+                        <div class="dossier-item">
+                            <span class="dossier-label">Co-Existing Life</span>
+                            <span id="deep-dive-dossier-coexisting" class="dossier-val">Triceratops, Edmontosaurus, Pteranodon</span>
+                        </div>
+                    </div>
+                    <div class="dossier-notes-box">
+                        <span class="dossier-label">Ecology & Feeding Niche</span>
+                        <p id="deep-dive-dossier-ecology" class="dossier-notes">Active marine apex predator hunting ammonites...</p>
+                    </div>
+                </div>
+
+                <!-- Anatomical Superpowers & Functions -->
+                <div class="deep-dive-card">
+                    <h3 class="dossier-card-title"><span class="dossier-icon">📐</span> Preserved Anatomy & Adaptation</h3>
+                    <div class="anatomy-box">
+                        <span id="deep-dive-anatomy-part" class="anatomy-part-label">Preserved Part: Tooth</span>
+                        <p id="deep-dive-anatomy-desc" class="anatomy-desc">Exhibits heavy serrated borders optimized for tearing flesh and crushing bone...</p>
+                    </div>
+                </div>
+
+                <!-- Live Wikipedia Encyclopedia scroll -->
+                <div class="deep-dive-card wiki-card">
+                    <h3 class="dossier-card-title"><span class="dossier-icon">📖</span> Wikipedia Scientific Extract</h3>
+                    <div class="wiki-scroll" id="deep-dive-wiki-content">
+                        <div class="wiki-loader-spinner">
+                            <div class="spinner"></div>
+                            <span>Retrieving paleobiological records...</span>
+                        </div>
                     </div>
                 </div>
             </div>
