@@ -4,7 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Personal fossil collection archive and database">
-    <title>Fossil Archive — Personal Collection Database</title>
+    <title>Specimenry — Personal Collection Database</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="img/favicon.png">
     <link rel="stylesheet" href="css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
@@ -13,29 +16,36 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 </head>
 <body>
-
+ 
     <header>
         <div class="header-inner">
             <div class="header-brand" onclick="app.resetToHome()" style="cursor: pointer;" title="Reset Filters & Go Home">
-                <img src="img/logo_flat.png" alt="Fossil Archive logo" class="header-logo">
-                <h1>Fossil <span class="accent">Archive</span></h1>
+                <img src="img/logo_flat.png" alt="Specimenry logo" class="header-logo">
+                <h1>Specimen<span class="accent">ry</span></h1>
             </div>
             <div class="header-actions">
                 <button id="btn-toggle-theme" class="btn-icon" onclick="app.toggleTheme()" title="Toggle Dark Mode" aria-label="Toggle Dark Mode" style="margin-right: 0.5rem;">
                     <svg id="theme-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
                 </button>
                 <div style="width: 1px; height: 20px; background-color: var(--border-color); margin-right: 0.5rem;"></div>
-                <button id="btn-export" class="btn-icon" onclick="app.exportData()" title="Backup Database to JSON" aria-label="Export backup">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                </button>
-                <button id="btn-restore-json" class="btn-icon" onclick="document.getElementById('file-restore-json').click()" title="Restore JSON Backup" aria-label="Restore JSON backup">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-                </button>
+                <div class="dropdown" style="position: relative; display: inline-block; margin-right: 0.5rem;">
+                    <button type="button" id="btn-db-center" class="btn-secondary" onclick="app.toggleDbDropdown(event)" title="Database Options" style="white-space: nowrap; display: flex; align-items: center; gap: 0.25rem;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg>
+                        Database
+                    </button>
+                    <div id="db-dropdown" class="dropdown-menu" style="display: none; position: absolute; right: 0; top: 105%; background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius-md); box-shadow: var(--shadow-md); z-index: 1000; min-width: 200px; padding: 0.5rem 0;">
+                        <a href="#" id="btn-export" onclick="app.exportData(); return false;" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1rem; font-size: 0.8rem; color: var(--text-primary); text-decoration: none; transition: background 0.15s;" onmouseover="this.style.background='var(--bg-warm)'" onmouseout="this.style.background='transparent'">
+                            📥 Backup Database (JSON)
+                        </a>
+                        <a href="#" onclick="document.getElementById('file-restore-json').click(); return false;" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1rem; font-size: 0.8rem; color: var(--text-primary); text-decoration: none; transition: background 0.15s;" onmouseover="this.style.background='var(--bg-warm)'" onmouseout="this.style.background='transparent'">
+                            📤 Restore Database (JSON)
+                        </a>
+                        <a href="#" onclick="document.getElementById('file-import').click(); return false;" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1rem; font-size: 0.8rem; color: var(--text-primary); text-decoration: none; transition: background 0.15s;" onmouseover="this.style.background='var(--bg-warm)'" onmouseout="this.style.background='transparent'">
+                            📄 Import Spreadsheet (CSV)
+                        </a>
+                    </div>
+                </div>
                 <input type="file" id="file-restore-json" accept=".json" style="display:none;" onchange="app.importJSON(event)">
-
-                <button id="btn-import" class="btn-icon" onclick="document.getElementById('file-import').click()" title="Import CSV" aria-label="Import CSV file">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="9" x2="9" y2="21"/><line x1="15" y1="9" x2="15" y2="21"/></svg>
-                </button>
                 <input type="file" id="file-import" accept=".csv" style="display:none;" onchange="app.importCSV(event)">
 
                 <div class="dropdown" style="position: relative; display: inline-block;">
@@ -248,8 +258,9 @@
             </div>
 
             <div class="modal-body">
-                <!-- Section 1: Classification -->
-                <div id="tab-classification" class="tab-content">
+                <div class="tab-slider-wrapper" id="tab-slider-wrapper">
+                    <!-- Section 1: Classification -->
+                    <div id="tab-classification" class="tab-content active">
                     <div class="form-grid">
                         <div class="form-group full-width">
                             <label for="f-specimen">Specimen Name *</label>
@@ -309,12 +320,12 @@
                         </div>
 
                         <div class="form-group full-width">
-                            <label>Specimen Images</label>
-                            <div class="upload-area" onclick="document.getElementById('f-images').click()" onkeydown="if(event.key==='Enter')document.getElementById('f-images').click()" tabindex="0" role="button" aria-label="Click to upload images">
-                                <input type="file" id="f-images" accept="image/*" multiple onchange="app.handleImageUpload(event)" style="display:none;">
+                            <label>Specimen Media (Images & Videos)</label>
+                            <div class="upload-area" onclick="document.getElementById('f-images').click()" onkeydown="if(event.key==='Enter')document.getElementById('f-images').click()" tabindex="0" role="button" aria-label="Click to upload media">
+                                <input type="file" id="f-images" accept="image/*,video/*" multiple onchange="app.handleImageUpload(event)" style="display:none;">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                                <span class="upload-text">Click to upload images</span>
-                                <span class="upload-hint">JPG, PNG, WEBP · Multiple allowed</span>
+                                <span class="upload-text">Click to upload media</span>
+                                <span class="upload-hint">JPG, PNG, WEBP, MP4, WEBM · Multiple allowed</span>
                             </div>
                             <div id="image-preview" class="img-preview" aria-live="polite"></div>
                         </div>
@@ -322,7 +333,7 @@
                 </div>
 
                 <!-- Section 2: Geology & Location -->
-                <div id="tab-geology" class="tab-content" style="display: none;">
+                <div id="tab-geology" class="tab-content">
                     <div class="form-grid">
                         <div class="form-group">
                             <label for="f-period">Geological Period</label>
@@ -396,7 +407,7 @@
                 </div>
 
                 <!-- Section 3: Curation & Value -->
-                <div id="tab-curator" class="tab-content" style="display: none;">
+                <div id="tab-curator" class="tab-content">
                     <div class="form-grid">
                         <div class="form-group">
                             <label for="f-size">Size (Length)</label>
@@ -499,8 +510,9 @@
                     </div>
                 </div>
             </div>
+        </div>
 
-            <div class="modal-footer">
+        <div class="modal-footer">
                 <button type="button" class="btn-secondary" onclick="app.closeModal()">Cancel</button>
                 <button type="submit" class="btn-primary">Save Fossil</button>
             </div>
@@ -517,6 +529,7 @@
             <div class="lightbox-img-row">
                 <button class="lightbox-nav prev" onclick="app.lightboxNav(-1)" title="Previous photo (←)">&#10094;</button>
                 <img id="lightbox-img" src="" alt="Full-size fossil image" />
+                <video id="lightbox-video" style="display:none; max-width: 100%; max-height: 70vh; object-fit: contain; box-shadow: var(--shadow-lg);" controls></video>
                 <button class="lightbox-nav next" onclick="app.lightboxNav(1)" title="Next photo (→)">&#10095;</button>
             </div>
 
@@ -581,6 +594,7 @@
     <!-- Immersive Photo Zoom Overlay -->
     <div id="zoom-overlay" class="zoom-overlay" onclick="app.closeZoomOverlay()" title="Click anywhere to exit zoom">
         <img id="zoom-overlay-img" src="" alt="Specimen ultra zoom" />
+        <video id="zoom-overlay-video" style="display:none; max-width: 95vw; max-height: 95vh; object-fit: contain; border-radius: var(--radius-md); box-shadow: 0 20px 60px rgba(0,0,0,0.6);" autoplay muted loop playsinline controls></video>
         <div class="zoom-overlay-close">&times;</div>
     </div>
 
@@ -634,6 +648,7 @@
             <div class="showcase-img-pane">
                 <div class="showcase-img-wrapper">
                     <img id="showcase-img" src="" alt="Specimen showcase photo" onclick="app.openZoomOverlay(this.src)" title="Click to view ultra zoom" />
+                    <video id="showcase-video" style="display:none; max-width: 100%; max-height: 100%; object-fit: contain; border-radius: var(--radius-md); box-shadow: var(--shadow-lg);" autoplay muted loop playsinline></video>
                     <button class="showcase-nav-arrow prev" onclick="app.showcaseNav(-1)" title="Previous specimen (←)">&#10094;</button>
                     <button class="showcase-nav-arrow next" onclick="app.showcaseNav(1)" title="Next specimen (→)">&#10095;</button>
                 </div>
@@ -694,6 +709,14 @@
         <div class="deep-dive-body">
             <!-- Left Pane: Reconstruction & Simulation -->
             <div class="deep-dive-stage-pane">
+                <!-- Navigation Arrows with Stable Hover Containers to prevent flickering/jitter -->
+                <div class="deep-dive-nav-container prev">
+                    <button class="deep-dive-nav prev" id="deep-dive-prev-btn" onclick="app.navigateDeepDive(-1)" title="Previous Specimen (←)">&#10094; <span class="nav-species-name">Previous</span></button>
+                </div>
+                <div class="deep-dive-nav-container next">
+                    <button class="deep-dive-nav next" id="deep-dive-next-btn" onclick="app.navigateDeepDive(1)" title="Next Specimen (→)"><span class="nav-species-name">Next</span> &#10095;</button>
+                </div>
+
                 <!-- Scenic Era Habitat card -->
                 <div class="deep-dive-scenic-stage" id="deep-dive-scenic-stage">
                     <div class="scenic-backdrop-glow"></div>
@@ -713,6 +736,11 @@
                             <h2 id="deep-dive-specimen-name" class="scenic-title">Tyrannosaurus Rex</h2>
                             <p id="deep-dive-specimen-sub" class="scenic-subtitle">Cretaceous Period · ~66.0 Ma</p>
                         </div>
+                    </div>
+
+                    <!-- Keyboard Navigation Hint -->
+                    <div class="deep-dive-keyboard-hint" style="position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); font-size: 0.58rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: rgba(255,255,255,0.35); pointer-events: none; z-index: 10;">
+                        🎹 Use ← / → keys or arrows to browse
                     </div>
                 </div>
 

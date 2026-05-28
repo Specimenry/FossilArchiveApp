@@ -1,5 +1,5 @@
 // =========================================================================
-// FOSSIL ARCHIVE — app.js
+// SPECIMENRY — app.js
 // Local-only fossil collection database
 // =========================================================================
 
@@ -1183,6 +1183,11 @@ window.addEventListener('DOMContentLoaded', function() {
             exportBtn.style.position = 'relative';
             exportBtn.insertAdjacentHTML('beforeend', '<div class="pulse-dot" title="You haven\'t backed up in over 7 days!"></div>');
         }
+        var dbCenterBtn = document.getElementById('btn-db-center');
+        if (dbCenterBtn) {
+            dbCenterBtn.style.position = 'relative';
+            dbCenterBtn.insertAdjacentHTML('beforeend', '<div class="pulse-dot" title="You haven\'t backed up in over 7 days!"></div>');
+        }
     }
 
     populateDropdowns();
@@ -1197,11 +1202,15 @@ window.addEventListener('DOMContentLoaded', function() {
         setTimeout(enrichDatabaseInBackground, 3000);
     });
 
-    // Close utilities dropdown on outside clicks
+    // Close dropdowns on outside clicks
     document.addEventListener('click', function() {
         var menu = document.getElementById('enrich-dropdown');
         if (menu && menu.classList.contains('active')) {
             menu.classList.remove('active');
+        }
+        var dbMenu = document.getElementById('db-dropdown');
+        if (dbMenu && dbMenu.classList.contains('active')) {
+            dbMenu.classList.remove('active');
         }
         if (window.app && typeof window.app.closeAllCardMenus === 'function') {
             window.app.closeAllCardMenus();
@@ -1231,6 +1240,16 @@ document.addEventListener('keydown', function(e) {
     if (deepDiveModal && deepDiveModal.style.display === 'flex') {
         if (e.key === 'Escape') {
             window.app.closeDeepDive();
+            e.preventDefault();
+            return;
+        }
+        if (e.key === 'ArrowLeft') {
+            window.app.navigateDeepDive(-1);
+            e.preventDefault();
+            return;
+        }
+        if (e.key === 'ArrowRight') {
+            window.app.navigateDeepDive(1);
             e.preventDefault();
             return;
         }
@@ -1463,9 +1482,24 @@ async function fetchSmartCoordinates(location, formation, country) {
 // =========================================================================
 window.app = {
 
+    isVideo: function(imgSrc) {
+        if (!imgSrc) return false;
+        return imgSrc.startsWith('data:video/') || 
+               imgSrc.toLowerCase().endsWith('.mp4') || 
+               imgSrc.toLowerCase().endsWith('.webm') || 
+               imgSrc.toLowerCase().endsWith('.mov');
+    },
+
     // --- Modal Tab Sizing & Switching ---
     setModalTab: function(tabName) {
         var tabs = ['classification', 'geology', 'curator'];
+        var slider = document.getElementById('tab-slider-wrapper');
+        var tabIndex = tabs.indexOf(tabName);
+        
+        if (slider && tabIndex !== -1) {
+            slider.style.transform = 'translateX(' + (-tabIndex * (100 / 3)) + '%)';
+        }
+
         tabs.forEach(function(t) {
             var btn = document.getElementById('tab-btn-' + t);
             var content = document.getElementById('tab-' + t);
@@ -1475,14 +1509,18 @@ window.app = {
                     btn.style.borderBottom = '2px solid var(--accent)';
                     btn.style.color = 'var(--text-primary)';
                 }
-                if (content) content.style.display = 'block';
+                if (content) {
+                    content.classList.add('active');
+                }
             } else {
                 if (btn) {
                     btn.classList.remove('active');
                     btn.style.borderBottom = '2px solid transparent';
                     btn.style.color = 'var(--text-secondary)';
                 }
-                if (content) content.style.display = 'none';
+                if (content) {
+                    content.classList.remove('active');
+                }
             }
         });
     },
@@ -1591,17 +1629,35 @@ window.app = {
 
         var overlay = document.getElementById('lightbox');
         var img = document.getElementById('lightbox-img');
+        var vid = document.getElementById('lightbox-video');
         var title = document.getElementById('lightbox-title');
         var detail = document.getElementById('lightbox-detail');
         var loc = document.getElementById('lightbox-location');
         var counter = document.getElementById('lightbox-counter');
 
-        img.style.display = '';
-        img.src = f.images[lightboxIdx];
-        img.style.cursor = 'zoom-in';
-        img.onclick = function() {
-            window.app.openZoomOverlay(img.src);
-        };
+        var isVid = window.app.isVideo(f.images[lightboxIdx]);
+        if (isVid) {
+            img.style.display = 'none';
+            if (vid) {
+                vid.style.display = 'block';
+                vid.src = f.images[lightboxIdx];
+                vid.play().catch(function(e) { console.log("Video auto play blocked: ", e); });
+                vid.onclick = function() {
+                    window.app.openZoomOverlay(vid.src);
+                };
+            }
+        } else {
+            if (vid) {
+                vid.pause();
+                vid.style.display = 'none';
+            }
+            img.style.display = '';
+            img.src = f.images[lightboxIdx];
+            img.style.cursor = 'zoom-in';
+            img.onclick = function() {
+                window.app.openZoomOverlay(img.src);
+            };
+        }
         img.classList.toggle('enhanced-photo', isAutoEnhanceActive);
 
         var lightboxBtn = document.getElementById('lightbox-auto-enhance');
@@ -1874,7 +1930,12 @@ window.app = {
             html += '<div class="' + cls + '" ' + onclick + ' title="' + escapeHtml(fo.specimen || '') + '">';
             if (thumb) {
                 var imgCls = isAutoEnhanceActive ? 'class="enhanced-photo"' : '';
-                html += '<img src="' + thumb + '" ' + imgCls + ' alt="' + escapeHtml(fo.specimen || '') + '" loading="lazy">';
+                var isVid = window.app.isVideo(thumb);
+                if (isVid) {
+                    html += '<video src="' + thumb + '" style="width: 100%; height: 100%; object-fit: cover;" muted autoplay loop playsinline></video>';
+                } else {
+                    html += '<img src="' + thumb + '" ' + imgCls + ' alt="' + escapeHtml(fo.specimen || '') + '" loading="lazy">';
+                }
             } else {
                 html += '<div class="lb-strip-placeholder"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>';
             }
@@ -1903,6 +1964,11 @@ window.app = {
             lightboxFossilId = nextFossil.id;
             lightboxIdx = 0;
             var img = document.getElementById('lightbox-img');
+            var vid = document.getElementById('lightbox-video');
+            if (vid) {
+                vid.pause();
+                vid.style.display = 'none';
+            }
             var title = document.getElementById('lightbox-title');
             var counter = document.getElementById('lightbox-counter');
             var detail = document.getElementById('lightbox-detail');
@@ -1935,13 +2001,29 @@ window.app = {
         overlay.classList.remove('active');
         document.body.style.overflow = '';
         lightboxFossilId = null;
+        var vid = document.getElementById('lightbox-video');
+        if (vid) {
+            vid.pause();
+        }
     },
 
     openZoomOverlay: function(src) {
         var zoomOverlay = document.getElementById('zoom-overlay');
         var zoomImg = document.getElementById('zoom-overlay-img');
-        if (zoomOverlay && zoomImg) {
-            zoomImg.src = src;
+        var zoomVid = document.getElementById('zoom-overlay-video');
+        if (zoomOverlay && zoomImg && zoomVid) {
+            var isVid = window.app.isVideo(src);
+            if (isVid) {
+                zoomImg.style.display = 'none';
+                zoomVid.style.display = 'block';
+                zoomVid.src = src;
+                zoomVid.play().catch(function(e) { console.log(e); });
+            } else {
+                zoomVid.pause();
+                zoomVid.style.display = 'none';
+                zoomImg.style.display = 'block';
+                zoomImg.src = src;
+            }
             zoomOverlay.style.display = 'flex';
             // Trigger reflow for transition
             void zoomOverlay.offsetWidth;
@@ -1952,6 +2034,10 @@ window.app = {
 
     closeZoomOverlay: function() {
         var zoomOverlay = document.getElementById('zoom-overlay');
+        var zoomVid = document.getElementById('zoom-overlay-video');
+        if (zoomVid) {
+            zoomVid.pause();
+        }
         if (zoomOverlay) {
             zoomOverlay.classList.remove('active');
             if (window.app._zoomTimeout) {
@@ -2014,6 +2100,10 @@ window.app = {
             overlay.style.display = 'none';
         }
         document.body.style.overflow = '';
+        var showcaseVid = document.getElementById('showcase-video');
+        if (showcaseVid) {
+            showcaseVid.pause();
+        }
     },
 
     renderShowcaseSpecimen: function() {
@@ -2032,13 +2122,30 @@ window.app = {
         var metaAnatomy = document.getElementById('showcase-meta-anatomy');
         var metaNotes = document.getElementById('showcase-meta-notes');
 
-        // Populate Image (with fallback)
-        if (img) {
+        // Populate Image & Video (with fallback)
+        var vid = document.getElementById('showcase-video');
+        var hasMedia = f.images && f.images.length > 0;
+        var mediaSrc = hasMedia ? f.images[0] : 'img/placeholder.png';
+        var isVid = hasMedia ? window.app.isVideo(mediaSrc) : false;
+
+        if (img && vid) {
             img.style.opacity = '0';
+            vid.style.opacity = '0';
             setTimeout(function() {
-                img.src = (f.images && f.images.length > 0) ? f.images[0] : 'img/placeholder.png'; // fallback or placeholder
-                img.classList.toggle('enhanced-photo', isAutoEnhanceActive);
-                img.style.opacity = '1';
+                if (isVid) {
+                    img.style.display = 'none';
+                    vid.style.display = 'block';
+                    vid.src = mediaSrc;
+                    vid.play().catch(function(e) { console.log(e); });
+                    vid.style.opacity = '1';
+                } else {
+                    vid.pause();
+                    vid.style.display = 'none';
+                    img.style.display = 'block';
+                    img.src = mediaSrc;
+                    img.classList.toggle('enhanced-photo', isAutoEnhanceActive);
+                    img.style.opacity = '1';
+                }
             }, 150);
         }
 
@@ -2173,7 +2280,33 @@ window.app = {
         var f = fossils.find(function(x) { return x.id === lightboxFossilId; });
         if (!f || !f.images || f.images.length <= 1) return;
         lightboxIdx = (lightboxIdx + dir + f.images.length) % f.images.length;
-        document.getElementById('lightbox-img').src = f.images[lightboxIdx];
+        
+        var img = document.getElementById('lightbox-img');
+        var vid = document.getElementById('lightbox-video');
+        var isVid = window.app.isVideo(f.images[lightboxIdx]);
+        
+        if (isVid) {
+            img.style.display = 'none';
+            if (vid) {
+                vid.style.display = 'block';
+                vid.src = f.images[lightboxIdx];
+                vid.play().catch(function(e) { console.log(e); });
+                vid.onclick = function() {
+                    window.app.openZoomOverlay(vid.src);
+                };
+            }
+        } else {
+            if (vid) {
+                vid.pause();
+                vid.style.display = 'none';
+            }
+            img.style.display = '';
+            img.src = f.images[lightboxIdx];
+            img.onclick = function() {
+                window.app.openZoomOverlay(img.src);
+            };
+        }
+        
         var label = '';
         if (lightboxIdx === 0) label = ' (Fossil Specimen)';
         else if (lightboxIdx === 1) label = ' (Life Reconstruction)';
@@ -3078,7 +3211,10 @@ window.app = {
             if (f.weight) sizeText += ' / ' + f.weight + ' g';
 
             var thumbUrl = (f.images && f.images.length > 0) ? f.images[0] : '';
-            var thumbHtml = thumbUrl ? '<img src="' + thumbUrl + '" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd;">' : '<div style="width:50px; height:50px; display:flex; align-items:center; justify-content:center; background:#eee; color:#aaa; font-size:1.5rem; border-radius:4px;">🦴</div>';
+            var isVid = thumbUrl ? window.app.isVideo(thumbUrl) : false;
+            var thumbHtml = thumbUrl ? 
+                (isVid ? '<video src="' + thumbUrl + '" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd;" muted autoplay loop playsinline></video>' : '<img src="' + thumbUrl + '" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd;">') : 
+                '<div style="width:50px; height:50px; display:flex; align-items:center; justify-content:center; background:#eee; color:#aaa; font-size:1.5rem; border-radius:4px;">🦴</div>';
 
             var fossilYear = f.createdAt ? new Date(f.createdAt).getFullYear() : 2026;
             var customCatalogId = 'FA-' + fossilYear + '-' + String(idx + 1).padStart(4, '0');
@@ -3123,7 +3259,7 @@ window.app = {
             '</head>' +
             '<body>' +
             '<div class="header">' +
-                '<h1>Fossil Archive Collection Register</h1>' +
+                '<h1>Specimenry Collection Register</h1>' +
                 '<p>Official Curation Valuation Index & Insurance Inventory</p>' +
                 '<p style="font-size:0.7rem; color:#888; margin-top:0.25rem;">Date Generated: ' + new Date().toLocaleDateString() + ' · Base Currency: ' + activeBaseCurrency + '</p>' +
             '</div>' +
@@ -3299,7 +3435,12 @@ window.app = {
                 // 1. Picture Circle Thumbnail Stage
                 var imgHtml = '';
                 if (f.images && f.images.length > 0) {
-                    imgHtml = '<img src="' + f.images[0] + '" alt="' + escapeHtml(f.specimen) + '">';
+                    var isVid = window.app.isVideo(f.images[0]);
+                    if (isVid) {
+                        imgHtml = '<video src="' + f.images[0] + '" alt="' + escapeHtml(f.specimen) + '" muted autoplay loop playsinline style="width:100%; height:100%; object-fit:cover; border-radius:50%;"></video>';
+                    } else {
+                        imgHtml = '<img src="' + f.images[0] + '" alt="' + escapeHtml(f.specimen) + '">';
+                    }
                 } else {
                     var placeholderIcons = {
                         'Invertebrate': '🐚',
@@ -3487,8 +3628,9 @@ window.app = {
                 
                 if (!isMultiple) {
                     var flag = getFlagHtml(f.country);
+                    var isVid = (f.images && f.images.length > 0) ? window.app.isVideo(f.images[0]) : false;
                     var imageHtml = (f.images && f.images.length > 0) ? 
-                        '<div class="popup-img-wrapper"><img src="' + f.images[0] + '" class="popup-img"></div>' : '';
+                        (isVid ? '<div class="popup-img-wrapper"><video src="' + f.images[0] + '" class="popup-img" autoplay muted loop playsinline style="width:100%; height:100%; object-fit:cover;"></video></div>' : '<div class="popup-img-wrapper"><img src="' + f.images[0] + '" class="popup-img"></div>') : '';
                     
                     popupHtml += imageHtml +
                         '<div class="popup-content">' +
@@ -3511,8 +3653,9 @@ window.app = {
                     
                     orderedGroup.forEach(function(item, idx) {
                         var itemColor = getEraColor(item.geologicalPeriod);
+                        var isItemVid = (item.images && item.images.length > 0) ? window.app.isVideo(item.images[0]) : false;
                         var imgThumb = (item.images && item.images.length > 0) ? 
-                            '<img src="' + item.images[0] + '" class="popup-stacked-thumb">' : 
+                            (isItemVid ? '<video src="' + item.images[0] + '" class="popup-stacked-thumb" autoplay muted loop playsinline style="object-fit:cover;"></video>' : '<img src="' + item.images[0] + '" class="popup-stacked-thumb">') : 
                             '<div class="popup-stacked-thumb-placeholder" style="background: ' + itemColor + ';">🧬</div>';
                         var highlightStyle = idx === 0 ? 'background: var(--bg-warm); border-left: 3px solid var(--accent);' : '';
                             
@@ -4433,14 +4576,19 @@ window.app = {
                 var reader = new FileReader();
                 reader.onload = function(e) {
                     if (e.target.result) {
-                        downscaleImage(e.target.result, 1200, 0.85).then(function(optimizedStr) {
-                            currentImages.push(optimizedStr);
+                        if (file.type && file.type.startsWith('video/')) {
+                            currentImages.push(e.target.result);
                             resolve();
-                        }).catch(function(err) {
-                            console.error('Image optimization failed', err);
-                            currentImages.push(e.target.result); // Fallback to original
-                            resolve();
-                        });
+                        } else {
+                            downscaleImage(e.target.result, 1200, 0.85).then(function(optimizedStr) {
+                                currentImages.push(optimizedStr);
+                                resolve();
+                            }).catch(function(err) {
+                                console.error('Image optimization failed', err);
+                                currentImages.push(e.target.result); // Fallback to original
+                                resolve();
+                            });
+                        }
                     } else {
                         resolve();
                     }
@@ -4507,18 +4655,31 @@ window.app = {
             var imgContainer = document.createElement('div');
             imgContainer.className = 'img-preview-item-wrapper';
             
-            var img = document.createElement('img');
-            img.src = imgSrc;
-            img.className = 'img-preview-item';
-            img.alt = 'Photo ' + (index + 1);
-            img.title = 'Click to remove';
+            var mediaEl;
+            var isVideo = imgSrc.startsWith('data:video/') || imgSrc.toLowerCase().endsWith('.mp4') || imgSrc.toLowerCase().endsWith('.webm') || imgSrc.toLowerCase().endsWith('.mov');
             
-            img.onclick = function() {
+            if (isVideo) {
+                mediaEl = document.createElement('video');
+                mediaEl.src = imgSrc;
+                mediaEl.className = 'img-preview-item';
+                mediaEl.muted = true;
+                mediaEl.autoplay = false;
+                mediaEl.playsInline = true;
+                mediaEl.controls = false;
+            } else {
+                mediaEl = document.createElement('img');
+                mediaEl.src = imgSrc;
+                mediaEl.className = 'img-preview-item';
+                mediaEl.alt = 'Media ' + (index + 1);
+            }
+            mediaEl.title = 'Click to remove';
+            
+            mediaEl.onclick = function() {
                 currentImages.splice(index, 1);
                 window.app.renderImagePreview();
             };
             
-            imgContainer.appendChild(img);
+            imgContainer.appendChild(mediaEl);
             
             if (index > 0) {
                 var coverBtn = document.createElement('button');
@@ -4782,7 +4943,23 @@ window.app = {
 
     toggleEnrichDropdown: function(event) {
         if (event) event.stopPropagation();
+        var dbMenu = document.getElementById('db-dropdown');
+        if (dbMenu && dbMenu.classList.contains('active')) {
+            dbMenu.classList.remove('active');
+        }
         var menu = document.getElementById('enrich-dropdown');
+        if (menu) {
+            menu.classList.toggle('active');
+        }
+    },
+
+    toggleDbDropdown: function(event) {
+        if (event) event.stopPropagation();
+        var enrichMenu = document.getElementById('enrich-dropdown');
+        if (enrichMenu && enrichMenu.classList.contains('active')) {
+            enrichMenu.classList.remove('active');
+        }
+        var menu = document.getElementById('db-dropdown');
         if (menu) {
             menu.classList.toggle('active');
         }
@@ -5084,8 +5261,39 @@ window.app = {
         
         container.setAttribute('data-current-index', nextIndex);
         
-        var img = container.querySelector('img');
-        if (img) img.src = f.images[nextIndex];
+        var currentMedia = container.querySelector('img, video');
+        if (currentMedia) {
+            currentMedia.remove();
+        }
+        
+        var isVid = window.app.isVideo(f.images[nextIndex]);
+        var newMedia;
+        if (isVid) {
+            newMedia = document.createElement('video');
+            newMedia.src = f.images[nextIndex];
+            newMedia.className = 'card-video';
+            newMedia.autoplay = true;
+            newMedia.muted = true;
+            newMedia.loop = true;
+            newMedia.playsInline = true;
+            newMedia.style.cursor = 'zoom-in';
+            newMedia.onclick = function(e) {
+                e.stopPropagation();
+                app.openLightbox(f.id, nextIndex);
+            };
+        } else {
+            var imgCls = isAutoEnhanceActive ? 'enhanced-photo' : '';
+            newMedia = document.createElement('img');
+            newMedia.src = f.images[nextIndex];
+            newMedia.className = imgCls;
+            newMedia.style.cursor = 'zoom-in';
+            newMedia.onclick = function(e) {
+                e.stopPropagation();
+                app.openLightbox(f.id, nextIndex);
+            };
+        }
+        
+        container.insertBefore(newMedia, container.firstChild);
         
         var dots = document.querySelectorAll('#dots-' + id + ' .dot');
         dots.forEach(function(dot, i) {
@@ -5201,7 +5409,7 @@ window.app = {
                 '</div>' +
                 '<div class="label-bottom">' +
                     '<span class="catalog-id">' + escapeHtml(catalogId) + '</span>' +
-                    '<span class="label-archive">Fossil Archive</span>' +
+                    '<span class="label-archive">Specimenry</span>' +
                 '</div>' +
             '</div>' +
             '<div class="no-print"><button onclick="window.print()">Print Label</button></div>' +
@@ -5314,7 +5522,7 @@ window.app = {
                 '<div class="label-bottom">' +
                     '<div class="label-bottom-left">' +
                         '<span class="catalog-id">' + escapeHtml(customCatalogId) + '</span>' +
-                        '<span class="label-archive">Fossil Archive</span>' +
+                        '<span class="label-archive">Specimenry</span>' +
                     '</div>' +
                     '<div class="label-bottom-right">' +
                         '<img class="label-qr" src="' + qrUrl + '" alt="QR code" />' +
@@ -5324,7 +5532,7 @@ window.app = {
             '</div>';
         });
 
-        var printHtml = '<!DOCTYPE html><html><head><title>Batch Specimen Labels — Fossil Archive</title>' +
+        var printHtml = '<!DOCTYPE html><html><head><title>Batch Specimen Labels — Specimenry</title>' +
             '<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600;1,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">' +
             '<style>' +
             '*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }' +
@@ -6176,7 +6384,14 @@ window.app = {
                     var imgHtml = '';
                     if (hasImage) {
                         var imgCls = isAutoEnhanceActive ? 'enhanced-photo' : '';
-                        imgHtml = '<img src="' + f.images[0] + '" class="' + imgCls + '" alt="' + escapeHtml(f.specimen) + ' photograph" loading="lazy" style="cursor: zoom-in;" onclick="event.stopPropagation(); var idx = parseInt(this.parentElement.getAttribute(\'data-current-index\') || 0); app.openLightbox(\'' + f.id + '\', idx);" />';
+                        var isCoverVideo = window.app.isVideo(f.images[0]);
+                        
+                        if (isCoverVideo) {
+                            imgHtml = '<video src="' + f.images[0] + '" class="card-video" autoplay muted loop playsinline style="cursor: zoom-in;" onclick="event.stopPropagation(); var idx = parseInt(this.parentElement.getAttribute(\'data-current-index\') || 0); app.openLightbox(\'' + f.id + '\', idx);"></video>';
+                        } else {
+                            imgHtml = '<img src="' + f.images[0] + '" class="' + imgCls + '" alt="' + escapeHtml(f.specimen) + ' photograph" loading="lazy" style="cursor: zoom-in;" onclick="event.stopPropagation(); var idx = parseInt(this.parentElement.getAttribute(\'data-current-index\') || 0); app.openLightbox(\'' + f.id + '\', idx);" />';
+                        }
+                        
                         if (multipleImages) {
                             imgHtml += '<button class="carousel-btn prev" onclick="event.stopPropagation(); app.changeImage(\'' + f.id + '\', -1)">&#10094;</button>' +
                                        '<button class="carousel-btn next" onclick="event.stopPropagation(); app.changeImage(\'' + f.id + '\', 1)">&#10095;</button>' +
@@ -6927,7 +7142,12 @@ window.app = {
             
             var imgHtml = '';
             if (f.images && f.images.length > 0) {
-                imgHtml = '<img id="compare-img-' + f.id + '" src="' + f.images[0] + '" class="compare-img" onclick="window.app.openZoomOverlay(this.src)">';
+                var isVid = window.app.isVideo(f.images[0]);
+                if (isVid) {
+                    imgHtml = '<video id="compare-img-' + f.id + '" src="' + f.images[0] + '" class="compare-img" autoplay muted loop playsinline onclick="window.app.openZoomOverlay(this.src)"></video>';
+                } else {
+                    imgHtml = '<img id="compare-img-' + f.id + '" src="' + f.images[0] + '" class="compare-img" onclick="window.app.openZoomOverlay(this.src)">';
+                }
                 if (f.images.length > 1) {
                     imgHtml += '<button type="button" class="compare-img-toggle-btn" onclick="window.app.toggleCompareImage(\'' + f.id + '\')" title="Toggle Fossil vs Life Reconstruction">🦴 Fossil View</button>';
                 }
@@ -7134,7 +7354,7 @@ window.app = {
             '* Curatorial Notes & Provenance:\n' +
             '  ' + notesVal + '\n\n' +
             '==================================================\n' +
-            'Generated via Fossil Archive Curator Platform\n' +
+            'Generated via Specimenry Curator Platform\n' +
             '==================================================';
             
         navigator.clipboard.writeText(desc).then(function() {
@@ -7200,6 +7420,7 @@ window.app = {
             if (ownedFossils.length === 0) {
                 ownedFossils = fossils;
             }
+            window.app._deepDiveFossils = ownedFossils;
             
             ownedFossils.forEach(function(f) {
                 var opt = document.createElement('option');
@@ -7236,6 +7457,30 @@ window.app = {
         }
     },
 
+    navigateDeepDive: function(direction) {
+        if (!window.app._deepDiveFossils || window.app._deepDiveFossils.length <= 1) return;
+        var currentId = activeDeepDiveFossilId;
+        var currentIndex = window.app._deepDiveFossils.findIndex(function(x) { return x.id === currentId; });
+        if (currentIndex === -1) return;
+        
+        var nextIndex = currentIndex + direction;
+        if (nextIndex < 0) {
+            nextIndex = window.app._deepDiveFossils.length - 1;
+        } else if (nextIndex >= window.app._deepDiveFossils.length) {
+            nextIndex = 0;
+        }
+        
+        var nextFossil = window.app._deepDiveFossils[nextIndex];
+        if (nextFossil) {
+            // Update picker selection
+            var picker = document.getElementById('deep-dive-picker');
+            if (picker) {
+                picker.value = nextFossil.id;
+            }
+            window.app.renderDeepDiveProfile(nextFossil.id);
+        }
+    },
+
     renderDeepDiveProfile: function(fossilId) {
         var f = fossils.find(function(x) { return x.id === fossilId; });
         if (!f) return;
@@ -7246,6 +7491,32 @@ window.app = {
         var picker = document.getElementById('deep-dive-picker');
         if (picker && picker.value !== fossilId) {
             picker.value = fossilId;
+        }
+
+        // Update navigation arrow buttons with coming fossil names permanently visible
+        if (window.app._deepDiveFossils && window.app._deepDiveFossils.length > 0) {
+            var currentIndex = window.app._deepDiveFossils.findIndex(function(x) { return x.id === fossilId; });
+            if (currentIndex !== -1) {
+                var prevIdx = currentIndex - 1;
+                if (prevIdx < 0) prevIdx = window.app._deepDiveFossils.length - 1;
+                var nextIdx = currentIndex + 1;
+                if (nextIdx >= window.app._deepDiveFossils.length) nextIdx = 0;
+                
+                var prevF = window.app._deepDiveFossils[prevIdx];
+                var nextF = window.app._deepDiveFossils[nextIdx];
+                
+                var prevBtn = document.getElementById('deep-dive-prev-btn');
+                var nextBtn = document.getElementById('deep-dive-next-btn');
+                
+                if (prevBtn && prevF) {
+                    prevBtn.innerHTML = '&#10094; <span class="nav-species-name">' + escapeHtml(prevF.specimen || 'Unnamed') + '</span>';
+                    prevBtn.setAttribute('title', 'Previous: ' + (prevF.specimen || 'Unnamed') + ' (←)');
+                }
+                if (nextBtn && nextF) {
+                    nextBtn.innerHTML = '<span class="nav-species-name">' + escapeHtml(nextF.specimen || 'Unnamed') + '</span> &#10095;';
+                    nextBtn.setAttribute('title', 'Next: ' + (nextF.specimen || 'Unnamed') + ' (→)');
+                }
+            }
         }
         
         // Geological Era classification & class updates
@@ -7423,7 +7694,12 @@ window.app = {
         
         if (photoCircle) {
             if (f.images && f.images.length > 0) {
-                photoCircle.innerHTML = '<img src="' + f.images[0] + '" alt="' + escapeHtml(f.specimen) + ' fossil specimen" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%; border: 3px solid rgba(255,255,255,0.15); cursor: zoom-in;" onclick="window.app.openZoomOverlay(this.src)">';
+                var isVid = window.app.isVideo(f.images[0]);
+                if (isVid) {
+                    photoCircle.innerHTML = '<video src="' + f.images[0] + '" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%; border: 3px solid rgba(255,255,255,0.15); cursor: zoom-in;" muted autoplay loop playsinline onclick="window.app.openZoomOverlay(this.src)"></video>';
+                } else {
+                    photoCircle.innerHTML = '<img src="' + f.images[0] + '" alt="' + escapeHtml(f.specimen) + ' fossil specimen" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%; border: 3px solid rgba(255,255,255,0.15); cursor: zoom-in;" onclick="window.app.openZoomOverlay(this.src)">';
+                }
             } else {
                 var catEmoji = '🦴';
                 if (f.category) {
@@ -7441,7 +7717,12 @@ window.app = {
         var lifeCircle = document.getElementById('deep-dive-life-circle');
         if (lifeCircle) {
             if (f.images && f.images.length > 1) {
-                lifeCircle.innerHTML = '<img src="' + f.images[1] + '" alt="' + escapeHtml(f.specimen) + ' life reconstruction" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%; border: 3px solid rgba(255,255,255,0.15); cursor: zoom-in;" onclick="window.app.openZoomOverlay(this.src)">';
+                var isVid = window.app.isVideo(f.images[1]);
+                if (isVid) {
+                    lifeCircle.innerHTML = '<video src="' + f.images[1] + '" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%; border: 3px solid rgba(255,255,255,0.15); cursor: zoom-in;" muted autoplay loop playsinline onclick="window.app.openZoomOverlay(this.src)"></video>';
+                } else {
+                    lifeCircle.innerHTML = '<img src="' + f.images[1] + '" alt="' + escapeHtml(f.specimen) + ' life reconstruction" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%; border: 3px solid rgba(255,255,255,0.15); cursor: zoom-in;" onclick="window.app.openZoomOverlay(this.src)">';
+                }
             } else {
                 var nameClean = (f.specimen || '').trim();
                 var genus = nameClean.split(' ')[0];
@@ -7897,13 +8178,40 @@ window.app = {
     toggleCompareImage: function(fossilId) {
         var f = fossils.find(function(x) { return x.id === fossilId; });
         if (!f || !f.images || f.images.length <= 1) return;
-        var img = document.getElementById('compare-img-' + fossilId);
-        if (img) {
-            var currentSrc = img.getAttribute('src');
+        var media = document.getElementById('compare-img-' + fossilId);
+        if (media) {
+            var currentSrc = media.getAttribute('src');
             var newSrc = (currentSrc === f.images[0]) ? f.images[1] : f.images[0];
-            img.setAttribute('src', newSrc);
             
-            var btn = img.parentElement.querySelector('.compare-img-toggle-btn');
+            var isVid = window.app.isVideo(newSrc);
+            var parent = media.parentElement;
+            
+            var newMedia;
+            if (isVid) {
+                newMedia = document.createElement('video');
+                newMedia.id = 'compare-img-' + fossilId;
+                newMedia.src = newSrc;
+                newMedia.className = 'compare-img';
+                newMedia.autoplay = true;
+                newMedia.muted = true;
+                newMedia.loop = true;
+                newMedia.playsInline = true;
+                newMedia.onclick = function() {
+                    window.app.openZoomOverlay(this.src);
+                };
+            } else {
+                newMedia = document.createElement('img');
+                newMedia.id = 'compare-img-' + fossilId;
+                newMedia.src = newSrc;
+                newMedia.className = 'compare-img';
+                newMedia.onclick = function() {
+                    window.app.openZoomOverlay(this.src);
+                };
+            }
+            
+            parent.replaceChild(newMedia, media);
+            
+            var btn = parent.querySelector('.compare-img-toggle-btn');
             if (btn) {
                 if (newSrc === f.images[1]) {
                     btn.innerHTML = '🎨 Life View';
@@ -8233,7 +8541,7 @@ function optimizeExistingDatabase() {
             needsUpdate.forEach(function(f) {
                 chain = chain.then(function() {
                     var optPromises = f.images.map(function(imgStr) {
-                        if (imgStr && imgStr.length > 800000) {
+                        if (imgStr && imgStr.length > 800000 && !window.app.isVideo(imgStr)) {
                             return downscaleImage(imgStr, 1200, 0.85).catch(function() { return imgStr; });
                         }
                         return Promise.resolve(imgStr);
