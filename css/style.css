@@ -381,8 +381,13 @@ button:focus-visible {
 }
 
 /* --- Filter Selects --- */
+.view-toggle-group {
+    flex-shrink: 0;
+}
 .filter-select {
-    min-width: 140px;
+    flex: 1;
+    min-width: 110px;
+    max-width: 220px;
 }
 
 /* --- Input With Select --- */
@@ -1442,9 +1447,9 @@ main {
     color: var(--text-secondary);
     margin-bottom: 0.25rem;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 0.4rem;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     word-wrap: break-word;
     word-break: break-word;
     overflow-wrap: break-word;
@@ -1454,6 +1459,7 @@ main {
     width: 14px;
     height: 14px;
     flex-shrink: 0;
+    margin-top: 3px;
 }
 
 .card-footer {
