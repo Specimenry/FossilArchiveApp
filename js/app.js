@@ -1229,7 +1229,7 @@ function fetchExchangeRates() {
     // Cache for 12 hours (43200000 ms)
     if (cached && cachedTime && (now - cachedTime < 43200000)) {
         exchangeRates = JSON.parse(cached);
-        if(isStatsOpen) window.app.renderFossils();
+        if (isStatsOpen || currentView === 'sale' || currentView === 'sold') window.app.renderFossils();
         return;
     }
     
@@ -1240,7 +1240,7 @@ function fetchExchangeRates() {
                 exchangeRates = data.rates;
                 localStorage.setItem('exchangeRates_SEK', JSON.stringify(data.rates));
                 localStorage.setItem('exchangeRates_time', now.toString());
-                if(isStatsOpen) window.app.renderFossils();
+                if (isStatsOpen || currentView === 'sale' || currentView === 'sold') window.app.renderFossils();
             }
         })
         .catch(function(err) { console.error('Failed to fetch exchange rates', err); });
@@ -6633,6 +6633,92 @@ window.app = {
                 }
             }
 
+            // --- UPDATE VIEW INFO VALUATION BANNER ---
+            var bannerEl = document.getElementById('view-info-banner');
+            if (bannerEl) {
+                if (currentView === 'sale' || currentView === 'sold') {
+                    var pricesByCurrency = {};
+                    var count = 0;
+                    
+                    filtered.forEach(function(f) {
+                        if (currentView === 'sale' && !f.isWishlist && !f.isSold && !!f.isForSale) {
+                            var priceVal = parseFloat(f.salePrice) || 0;
+                            if (priceVal > 0) {
+                                var curr = (f.saleCurrency || 'USD').toUpperCase();
+                                pricesByCurrency[curr] = (pricesByCurrency[curr] || 0) + priceVal;
+                            }
+                            count++;
+                        } else if (currentView === 'sold' && !!f.isSold) {
+                            var priceVal = parseFloat(f.salePrice) || 0;
+                            if (priceVal > 0) {
+                                var curr = (f.saleCurrency || 'USD').toUpperCase();
+                                pricesByCurrency[curr] = (pricesByCurrency[curr] || 0) + priceVal;
+                            }
+                            count++;
+                        }
+                    });
+
+                    if (count > 0) {
+                        bannerEl.style.display = 'flex';
+                        
+                        var breakdownParts = [];
+                        var currencies = Object.keys(pricesByCurrency).sort();
+                        currencies.forEach(function(curr) {
+                            breakdownParts.push(Math.round(pricesByCurrency[curr]).toLocaleString() + ' ' + curr);
+                        });
+                        
+                        var breakdownText = breakdownParts.length > 0 ? breakdownParts.join(' + ') : '—';
+                        
+                        var totalSEK = 0;
+                        for (var curr in pricesByCurrency) {
+                            var val = pricesByCurrency[curr];
+                            if (curr === 'SEK') {
+                                totalSEK += val;
+                            } else if (exchangeRates && exchangeRates[curr]) {
+                                totalSEK += val / exchangeRates[curr];
+                            } else {
+                                if (curr === 'USD') totalSEK += val * 10.50;
+                                else if (curr === 'EUR') totalSEK += val * 11.50;
+                                else totalSEK += val;
+                            }
+                        }
+
+                        var titleText = currentView === 'sale' ? 'For Sale' : 'Sold';
+                        var labelText = currentView === 'sale' ? 'Total Asking Price' : 'Total Revenue';
+                        
+                        var iconSvg = '';
+                        if (currentView === 'sale') {
+                            iconSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent);"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>';
+                        } else {
+                            iconSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#439775" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>';
+                        }
+                        
+                        var rightHtml = '';
+                        if (breakdownParts.length === 0) {
+                            rightHtml = '<span>' + labelText + ': <strong>—</strong></span>';
+                        } else if (currencies.length === 1 && currencies[0] === 'SEK') {
+                            rightHtml = '<span>' + labelText + ': <strong>' + breakdownText + '</strong></span>';
+                        } else {
+                            var normalizedText = ' (~' + Math.round(totalSEK).toLocaleString() + ' SEK)';
+                            rightHtml = '<span>' + labelText + ': ' + breakdownText + ' <strong>' + normalizedText.trim() + '</strong></span>';
+                        }
+
+                        bannerEl.innerHTML = 
+                            '<div class="view-info-banner-left">' +
+                                iconSvg +
+                                '<span>' + titleText + ': ' + count + ' ' + (count === 1 ? 'specimen' : 'specimens') + '</span>' +
+                            '</div>' +
+                            '<div class="view-info-banner-right">' +
+                                rightHtml +
+                            '</div>';
+                    } else {
+                        bannerEl.style.display = 'none';
+                    }
+                } else {
+                    bannerEl.style.display = 'none';
+                }
+            }
+
             // --- SORT ---
             // Helper: convert a fossil's price to SEK for normalized comparison
             var toSEK = function(f) {
@@ -7230,6 +7316,12 @@ window.app = {
                     '</div>' +
                     '<div class="quick-add-row-links">' +
                         '<textarea id="wl-quick-links" placeholder="Paste source links / URLs here... (Separate multiple links with space or newlines)" rows="1" oninput="this.style.height=\'\';this.style.height=this.scrollHeight+\'px\'"></textarea>' +
+                    '</div>' +
+                    '<div class="quick-add-actions" style="display: flex; justify-content: space-between; align-items: center; width: 100%; border-top: 1px dashed var(--border-color); padding-top: 0.75rem; margin-top: 0.25rem;">' +
+                        '<span style="font-size: 0.75rem; color: var(--text-secondary); font-style: italic;">Need a backup? Export your wishlist items.</span>' +
+                        '<button class="btn-secondary" onclick="app.exportWishlist()" title="Export Wishlist" style="font-size: 0.75rem; padding: 0.35rem 0.75rem; display: flex; align-items: center; gap: 0.35rem; font-weight: 600;">' +
+                            '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Export Wishlist' +
+                        '</button>' +
                     '</div>';
                 fragment.appendChild(quickAddDiv);
             }
@@ -7853,6 +7945,64 @@ window.app = {
     },
 
     // --- Export / Import ---
+    exportWishlist: function() {
+        var wishlistItems = fossils.filter(function(f) {
+            return !!f.isWishlist && !f.isSold;
+        });
+
+        if (wishlistItems.length === 0) {
+            window.app.showToast('Your wishlist is empty!', 'info');
+            return;
+        }
+
+        // Sort them by their wishlistRank if available
+        wishlistItems.sort(function(a, b) {
+            return (a.wishlistRank || 0) - (b.wishlistRank || 0);
+        });
+
+        var fileContent = wishlistItems.map(function(f) {
+            return f.specimen || 'Unnamed Specimen';
+        }).join('\n');
+
+        var textarea = document.getElementById('wishlist-export-textarea');
+        if (textarea) {
+            textarea.value = fileContent;
+        }
+
+        var modal = document.getElementById('wishlist-export-modal');
+        if (modal) {
+            modal.showModal();
+        }
+    },
+
+    copyWishlistText: function() {
+        var textarea = document.getElementById('wishlist-export-textarea');
+        if (textarea) {
+            textarea.select();
+            textarea.setSelectionRange(0, 99999); // For mobile devices
+            
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(textarea.value).then(function() {
+                    window.app.showToast('📋 Wishlist copied to clipboard!', 'success');
+                    var modal = document.getElementById('wishlist-export-modal');
+                    if (modal) modal.close();
+                }).catch(function(err) {
+                    console.error('Clipboard copy failed:', err);
+                    window.app.showToast('Copy failed, please select and copy manually.', 'warning');
+                });
+            } else {
+                try {
+                    document.execCommand('copy');
+                    window.app.showToast('📋 Wishlist copied to clipboard!', 'success');
+                    var modal = document.getElementById('wishlist-export-modal');
+                    if (modal) modal.close();
+                } catch (err) {
+                    window.app.showToast('Copy failed, please select and copy manually.', 'warning');
+                }
+            }
+        }
+    },
+
     exportData: function() {
         try {
             localStorage.setItem('last_backup', Date.now().toString());
