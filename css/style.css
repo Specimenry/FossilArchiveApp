@@ -774,12 +774,7 @@ main {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 1.5rem;
-    transition: backdrop-filter 0.8s ease, filter 0.8s ease;
-}
-
-.fossil-grid.sea-monster-scroll {
-    backdrop-filter: blur(1px) contrast(1.1);
-    -webkit-backdrop-filter: blur(1px) contrast(1.1);
+    transition: filter 0.8s ease;
 }
 
 /* --- Fossil Cards --- */
@@ -1749,6 +1744,29 @@ dialog::backdrop {
     position: relative;
     width: 90px;
     height: 90px;
+    cursor: grab;
+    user-select: none;
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease, box-shadow 0.2s ease;
+}
+
+.img-preview-item-wrapper.dragging,
+.cart-img-preview-item.dragging {
+    opacity: 0.4 !important;
+    cursor: grabbing !important;
+}
+
+.img-preview-item-wrapper.drag-over,
+.cart-img-preview-item.drag-over {
+    transform: scale(1.08) !important;
+    box-shadow: 0 0 0 2px var(--accent) !important;
+    border-radius: var(--radius-sm) !important;
+    z-index: 20;
+}
+
+.cart-img-preview-item {
+    cursor: grab;
+    user-select: none;
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease, box-shadow 0.2s ease;
 }
 
 .img-preview-item {
@@ -1759,13 +1777,11 @@ dialog::backdrop {
     background: var(--bg-warm);
     border: 2px solid var(--border-color);
     transition: var(--transition);
-    cursor: pointer;
     display: block;
 }
 
 .img-preview-item:hover {
-    border-color: var(--danger);
-    opacity: 0.7;
+    border-color: var(--border-hover);
 }
 
 /* --- Empty State --- */
@@ -2204,10 +2220,7 @@ dialog::backdrop {
         -webkit-backdrop-filter: none !important;
         background: var(--bg-base) !important;
     }
-    .fossil-grid.sea-monster-scroll {
-        backdrop-filter: none !important;
-        -webkit-backdrop-filter: none !important;
-    }
+
 
     /* --- Compact Card Curator Actions on Mobile --- */
     .card-actions .btn-card-more {

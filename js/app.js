@@ -5151,6 +5151,65 @@ window.app = {
     },
 
     // --- Images ---
+    convertHeicIfNeeded: async function(file, i, total, showLoaderFunc) {
+        var isHeic = file.type === 'image/heic' || file.type === 'image/heif' || 
+            (file.name && (file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif')));
+
+        if (!isHeic) {
+            return file;
+        }
+
+        if (showLoaderFunc) {
+            showLoaderFunc('Converting iPhone photo ' + (i + 1) + ' of ' + total + ' format (may take a moment)...');
+        }
+
+        try {
+            // Browsers block Web Workers on file:// origins (direct double-clicking of index.html)
+            if (window.location.protocol === 'file:') {
+                throw new Error('HEIC conversion is blocked by browser security when running directly via file:// (double-clicking index.html). Please run a local web server (like VS Code "Live Server", "npx serve", or "python -m http.server") to enable iPhone photo uploads, or convert the photos to JPG/PNG before uploading.');
+            }
+
+            if (typeof heicTo === 'undefined') {
+                if (showLoaderFunc) {
+                    showLoaderFunc('Loading iPhone image converter...');
+                }
+                await new Promise(function(resolve, reject) {
+                    var script = document.createElement('script');
+                    script.src = 'js/heic-to.js';
+                    script.onload = resolve;
+                    script.onerror = function() { reject(new Error('Failed to load local HEIC converter script.')); };
+                    document.head.appendChild(script);
+                });
+            }
+
+            if (showLoaderFunc) {
+                showLoaderFunc('Converting iPhone photo ' + (i + 1) + ' of ' + total + '...');
+            }
+
+            var conversionPromise = heicTo({ blob: file, type: 'image/jpeg', quality: 0.8 });
+            
+            var timeoutPromise = new Promise(function(resolve, reject) {
+                setTimeout(function() {
+                    reject(new Error('Conversion timed out. This browser environment might not support WebAssembly or Web Workers. Please run a local server or upload standard JPG/PNG images.'));
+                }, 5000);
+            });
+
+            var resultBlob = await Promise.race([conversionPromise, timeoutPromise]);
+            var processedBlob = Array.isArray(resultBlob) ? resultBlob[0] : resultBlob;
+            var newName = (file.name || 'photo.heic').replace(/\.heic$/i, '.jpg').replace(/\.heif$/i, '.jpg');
+            return new File([processedBlob], newName, { type: 'image/jpeg' });
+        } catch (e) {
+            console.error('HEIC conversion error:', e);
+            var errMsg = e && e.message ? e.message : String(e);
+            window.app.showToast('Failed to convert HEIC image: ' + errMsg, 'danger');
+            if (showLoaderFunc) {
+                showLoaderFunc('<span style="color:var(--danger)">Failed: ' + errMsg + '</span>');
+                await new Promise(function(r) { setTimeout(r, 4000); });
+            }
+            return null;
+        }
+    },
+
     handleImageUpload: async function(event) {
         var files = event.target.files;
         if (!files || files.length === 0) return;
@@ -5200,26 +5259,9 @@ window.app = {
 
         for (var i = 0; i < files.length; i++) {
             var file = files[i];
-            var isHeic = file.type === 'image/heic' || (file.name && (file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif')));
-
-            if (isHeic && typeof heic2any !== 'undefined') {
-                showLoader('Converting iPhone photo ' + (i + 1) + ' of ' + files.length + ' format (may take a moment)...');
-                try {
-                    // Convert sequentially to prevent memory spike crashes
-                    var resultBlob = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.8 });
-                    var processBlob = Array.isArray(resultBlob) ? resultBlob[0] : resultBlob;
-                    await processFile(processBlob);
-                } catch (e) {
-                    console.error("HEIC conversion error", e);
-                    showLoader('<span style="color:var(--danger)">Failed to process photo ' + (i + 1) + '. It may be too large.</span>');
-                    await new Promise(function(r) { setTimeout(r, 2000); });
-                    await processFile(file); // Try native fallback anyway
-                }
-            } else {
-                if (isHeic && typeof heic2any === 'undefined') {
-                    window.app.showToast('Connecting to the internet is required to process HEIC iPhone photos.', 'warning');
-                }
-                await processFile(file);
+            var converted = await this.convertHeicIfNeeded(file, i, files.length, showLoader);
+            if (converted) {
+                await processFile(converted);
             }
         }
 
@@ -5340,6 +5382,40 @@ window.app = {
                 imgContainer.appendChild(coverBtn);
             }
             
+            // Drag and Drop reordering support
+            imgContainer.draggable = true;
+            imgContainer.ondragstart = function(e) {
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', index);
+                imgContainer.classList.add('dragging');
+            };
+            imgContainer.ondragend = function() {
+                imgContainer.classList.remove('dragging');
+                var items = container.querySelectorAll('.img-preview-item-wrapper');
+                items.forEach(function(item) {
+                    item.classList.remove('drag-over');
+                });
+            };
+            imgContainer.ondragover = function(e) {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                imgContainer.classList.add('drag-over');
+            };
+            imgContainer.ondragleave = function() {
+                imgContainer.classList.remove('drag-over');
+            };
+            imgContainer.ondrop = function(e) {
+                e.preventDefault();
+                imgContainer.classList.remove('drag-over');
+                var srcIdx = parseInt(e.dataTransfer.getData('text/plain'), 10);
+                var destIdx = index;
+                if (!isNaN(srcIdx) && srcIdx !== destIdx) {
+                    var moved = currentImages.splice(srcIdx, 1)[0];
+                    currentImages.splice(destIdx, 0, moved);
+                    window.app.renderImagePreview();
+                }
+            };
+            
             container.appendChild(imgContainer);
         });
     },
@@ -5348,110 +5424,133 @@ window.app = {
     saveFossil: function(event) {
         event.preventDefault();
 
-        // 1. Manual Form Validation with smart tab-switching (resolves hidden validation blockers)
-        var specElem = document.getElementById('f-specimen');
-        var catElem = document.getElementById('f-category');
+        try {
+            // 1. Manual Form Validation with smart tab-switching (resolves hidden validation blockers)
+            var specElem = document.getElementById('f-specimen');
+            var catElem = document.getElementById('f-category');
 
-        if (!specElem.value.trim()) {
-            window.app.setModalTab('classification');
-            specElem.focus();
-            window.app.showToast('Please enter a Specimen Name.', 'warning');
-            return;
-        }
-
-        if (!catElem.value) {
-            window.app.setModalTab('classification');
-            catElem.focus();
-            window.app.showToast('Please select a Category.', 'warning');
-            return;
-        }
-
-        var idVal = document.getElementById('fossil-id').value;
-        var isEditing = !!idVal;
-
-        var fossil = {
-            id: isEditing ? idVal : generateCatalogId(document.getElementById('f-category').value, fossils),
-            specimen: document.getElementById('f-specimen').value,
-            animalSize: parseFloat(document.getElementById('f-animal-size').value) || null,
-            anatomy: document.getElementById('f-anatomy').value,
-            category: document.getElementById('f-category').value,
-            fossilType: document.getElementById('f-type').value || null,
-            isWishlist: document.getElementById('f-wishlist').value === 'true',
-            isSold: document.getElementById('f-wishlist').value === 'sold',
-            isForSale: document.getElementById('f-wishlist').value === 'sale',
-            salePrice: (document.getElementById('f-wishlist').value === 'sold' || document.getElementById('f-wishlist').value === 'sale') ? parseFloat(document.getElementById('f-sale-price').value) || null : null,
-            saleCurrency: (document.getElementById('f-wishlist').value === 'sold' || document.getElementById('f-wishlist').value === 'sale') ? document.getElementById('f-sale-currency').value : 'USD',
-            isSelfFound: document.getElementById('f-self-found').checked,
-            geologicalPeriod: document.getElementById('f-period').value,
-            epoch: document.getElementById('f-epoch').value,
-            stratAge: document.getElementById('f-strat-age').value,
-            ageMa: parseFloat(document.getElementById('f-age').value) || 0,
-            country: document.getElementById('f-country').value,
-            location: document.getElementById('f-location').value,
-            formation: document.getElementById('f-formation').value,
-            lat: (document.getElementById('f-lat').value.trim() !== '' && !isNaN(parseFloat(document.getElementById('f-lat').value))) ? parseFloat(document.getElementById('f-lat').value) : null,
-            lng: (document.getElementById('f-lng').value.trim() !== '' && !isNaN(parseFloat(document.getElementById('f-lng').value))) ? parseFloat(document.getElementById('f-lng').value) : null,
-            size: parseFloat(document.getElementById('f-size').value) || null,
-            sizeUnit: document.getElementById('f-size-unit').value,
-            width: parseFloat(document.getElementById('f-width').value) || null,
-            thickness: parseFloat(document.getElementById('f-thickness').value) || null,
-            weight: parseFloat(document.getElementById('f-weight').value) || null,
-            price: parseFloat(document.getElementById('f-price').value) || null,
-            currency: document.getElementById('f-currency').value,
-            estimatedValue: parseFloat(document.getElementById('f-est-value').value) || null,
-            estimatedCurrency: document.getElementById('f-est-currency').value,
-            sourceUrl: document.getElementById('f-link').value,
-            notes: document.getElementById('f-notes').value,
-            etymology: document.getElementById('f-etymology').value,
-            restorationDetails: document.getElementById('f-restoration').value,
-            authority: document.getElementById('f-authority').value,
-            description: document.getElementById('f-description').value,
-            conditionTier: document.getElementById('f-condition-tier').value || null,
-            tags: (document.getElementById('f-tags').value || '').split(/[,\s]+/).map(function(t) { return t.trim().toLowerCase().replace(/^#/, ''); }).filter(function(t) { return t.length > 0; }),
-            images: currentImages,
-            condition: {
-                stable: document.getElementById('cond-stable').checked,
-                cracking: document.getElementById('cond-cracking').checked,
-                efflorescence: document.getElementById('cond-efflorescence').checked,
-                pyrite: document.getElementById('cond-pyrite').checked
-            },
-            treatment: {
-                paraloid: document.getElementById('treat-paraloid').checked,
-                scribe: document.getElementById('treat-scribe').checked,
-                cyano: document.getElementById('treat-cyano').checked,
-                water: document.getElementById('treat-water').checked
-            },
-            createdAt: isEditing ? undefined : Date.now()  // timestamp for sort
-        };
-
-        // Preserve original creation date on edit
-        if (isEditing) {
-            var existing = fossils.find(function(f){ return f.id === idVal; });
-            if (existing) fossil.createdAt = existing.createdAt || Date.now();
-        } else {
-            // Save last used geography/geology for future batch logging
-            localStorage.setItem('last_country', document.getElementById('f-country').value);
-            localStorage.setItem('last_location', document.getElementById('f-location').value);
-            localStorage.setItem('last_formation', document.getElementById('f-formation').value);
-            localStorage.setItem('last_period', document.getElementById('f-period').value);
-            localStorage.setItem('last_epoch', document.getElementById('f-epoch').value);
-            localStorage.setItem('last_stratAge', document.getElementById('f-strat-age').value);
-        }
-
-        var action = isEditing ? updateFossil(fossil) : addFossil(fossil);
-        action.then(function() {
-            if (!isEditing) {
-                newlyAddedFossilId = fossil.id;
-                setTimeout(function() {
-                    newlyAddedFossilId = null;
-                }, 4000);
+            if (!specElem.value.trim()) {
+                window.app.setModalTab('classification');
+                specElem.focus();
+                window.app.showToast('Please enter a Specimen Name.', 'warning');
+                return;
             }
-            window.app.closeModal();
-            window.app.renderFossils();
-        }).catch(function(err) {
-            console.error('Failed to write fossil record:', err);
-            window.app.showToast('Error saving fossil: ' + (err.message || 'Database write error'), 'error');
-        });
+
+            if (!catElem.value) {
+                window.app.setModalTab('classification');
+                catElem.focus();
+                window.app.showToast('Please select a Category.', 'warning');
+                return;
+            }
+
+            var idVal = document.getElementById('fossil-id').value;
+            var isEditing = !!idVal;
+
+            var latInput = document.getElementById('f-lat');
+            var latVal = (latInput && latInput.value) ? latInput.value.trim() : '';
+            var lat = (latVal !== '' && !isNaN(parseFloat(latVal))) ? parseFloat(latVal) : null;
+
+            var lngInput = document.getElementById('f-lng');
+            var lngVal = (lngInput && lngInput.value) ? lngInput.value.trim() : '';
+            var lng = (lngVal !== '' && !isNaN(parseFloat(lngVal))) ? parseFloat(lngVal) : null;
+
+            var createdAtVal = Date.now();
+            if (isEditing) {
+                var existing = fossils.find(function(f){ return f.id === idVal; });
+                if (existing && existing.createdAt) {
+                    createdAtVal = existing.createdAt;
+                }
+            } else {
+                // Save last used geography/geology for future batch logging
+                localStorage.setItem('last_country', document.getElementById('f-country').value);
+                localStorage.setItem('last_location', document.getElementById('f-location').value);
+                localStorage.setItem('last_formation', document.getElementById('f-formation').value);
+                localStorage.setItem('last_period', document.getElementById('f-period').value);
+                localStorage.setItem('last_epoch', document.getElementById('f-epoch').value);
+                localStorage.setItem('last_stratAge', document.getElementById('f-strat-age').value);
+            }
+
+            var fossil = {
+                id: isEditing ? idVal : generateCatalogId(document.getElementById('f-category').value, fossils),
+                specimen: document.getElementById('f-specimen').value,
+                animalSize: parseFloat(document.getElementById('f-animal-size').value) || null,
+                anatomy: document.getElementById('f-anatomy').value,
+                category: document.getElementById('f-category').value,
+                fossilType: document.getElementById('f-type').value || null,
+                isWishlist: document.getElementById('f-wishlist').value === 'true',
+                isSold: document.getElementById('f-wishlist').value === 'sold',
+                isForSale: document.getElementById('f-wishlist').value === 'sale',
+                salePrice: (document.getElementById('f-wishlist').value === 'sold' || document.getElementById('f-wishlist').value === 'sale') ? parseFloat(document.getElementById('f-sale-price').value) || null : null,
+                saleCurrency: (document.getElementById('f-wishlist').value === 'sold' || document.getElementById('f-wishlist').value === 'sale') ? document.getElementById('f-sale-currency').value : 'USD',
+                isSelfFound: document.getElementById('f-self-found').checked,
+                geologicalPeriod: document.getElementById('f-period').value,
+                epoch: document.getElementById('f-epoch').value,
+                stratAge: document.getElementById('f-strat-age').value,
+                ageMa: parseFloat(document.getElementById('f-age').value) || 0,
+                country: document.getElementById('f-country').value,
+                location: document.getElementById('f-location').value,
+                formation: document.getElementById('f-formation').value,
+                lat: lat,
+                lng: lng,
+                size: parseFloat(document.getElementById('f-size').value) || null,
+                sizeUnit: document.getElementById('f-size-unit').value,
+                width: parseFloat(document.getElementById('f-width').value) || null,
+                thickness: parseFloat(document.getElementById('f-thickness').value) || null,
+                weight: parseFloat(document.getElementById('f-weight').value) || null,
+                price: parseFloat(document.getElementById('f-price').value) || null,
+                currency: document.getElementById('f-currency').value,
+                estimatedValue: parseFloat(document.getElementById('f-est-value').value) || null,
+                estimatedCurrency: document.getElementById('f-est-currency').value,
+                sourceUrl: document.getElementById('f-link').value,
+                notes: document.getElementById('f-notes').value,
+                etymology: document.getElementById('f-etymology').value,
+                restorationDetails: document.getElementById('f-restoration').value,
+                authority: document.getElementById('f-authority').value,
+                description: document.getElementById('f-description').value,
+                conditionTier: document.getElementById('f-condition-tier').value || null,
+                tags: (document.getElementById('f-tags').value || '').split(/[,\s]+/).map(function(t) { return t.trim().toLowerCase().replace(/^#/, ''); }).filter(function(t) { return t.length > 0; }),
+                images: currentImages,
+                condition: {
+                    stable: document.getElementById('cond-stable').checked,
+                    cracking: document.getElementById('cond-cracking').checked,
+                    efflorescence: document.getElementById('cond-efflorescence').checked,
+                    pyrite: document.getElementById('cond-pyrite').checked
+                },
+                treatment: {
+                    paraloid: document.getElementById('treat-paraloid').checked,
+                    scribe: document.getElementById('treat-scribe').checked,
+                    cyano: document.getElementById('treat-cyano').checked,
+                    water: document.getElementById('treat-water').checked
+                },
+                createdAt: createdAtVal
+            };
+
+            // Safeguard: Strip undefined values to prevent DataCloneError in IndexedDB
+            Object.keys(fossil).forEach(function(key) {
+                if (fossil[key] === undefined) {
+                    delete fossil[key];
+                }
+            });
+
+            var action = isEditing ? updateFossil(fossil) : addFossil(fossil);
+            action.then(function() {
+                if (!isEditing) {
+                    newlyAddedFossilId = fossil.id;
+                    setTimeout(function() {
+                        newlyAddedFossilId = null;
+                    }, 4000);
+                }
+                window.app.closeModal();
+                window.app.renderFossils();
+            }).catch(function(err) {
+                console.error('Failed to write fossil record:', err);
+                var errDetail = err && err.message ? err.message : String(err);
+                window.app.showToast('Error saving fossil: ' + errDetail, 'error');
+            });
+        } catch (e) {
+            console.error('Synchronous saveFossil error:', e);
+            window.app.showToast('Error preparing fossil record: ' + (e.message || String(e)), 'error');
+        }
     },
 
     quickAddWishlist: function() {
@@ -8597,7 +8696,11 @@ window.app = {
         var id = document.getElementById('cart-item-id').value;
         var name = document.getElementById('cart-f-specimen').value.trim();
         if (!name) {
-            alert('Please enter a specimen name.');
+            if (window.app && typeof window.app.showToast === 'function') {
+                window.app.showToast('Please enter a specimen name.', 'warning');
+            } else {
+                alert('Please enter a specimen name.');
+            }
             return;
         }
 
@@ -8923,48 +9026,69 @@ window.app = {
         }
     },
 
-    handleCartMultipleImagesUpload: function(event) {
+    handleCartMultipleImagesUpload: async function(event) {
         var files = event.target.files;
         if (!files || files.length === 0) return;
         
         var self = this;
-        var promises = [];
+        var inputElement = event.target;
         
         if (!window.cartCurrentImages) {
             window.cartCurrentImages = [];
         }
-        
-        for (var i = 0; i < files.length; i++) {
-            var file = files[i];
-            (function(f) {
-                var promise = new Promise(function(resolve) {
-                    var reader = new FileReader();
-                    reader.onload = function(e) {
-                        var dataUrl = e.target.result;
-                        if (f.type && f.type.startsWith('video/')) {
+
+        var processFile = function(file) {
+            return new Promise(function(resolve) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    var dataUrl = e.target.result;
+                    if (file.type && file.type.startsWith('video/')) {
+                        window.cartCurrentImages.push(dataUrl);
+                        resolve();
+                    } else {
+                        downscaleImage(dataUrl, 1200, 0.85).then(function(optimized) {
+                            window.cartCurrentImages.push(optimized);
+                            resolve();
+                        }).catch(function(err) {
+                            console.error('Image downscale failed:', err);
                             window.cartCurrentImages.push(dataUrl);
                             resolve();
-                        } else {
-                            downscaleImage(dataUrl, 1200, 0.85).then(function(optimized) {
-                                window.cartCurrentImages.push(optimized);
-                                resolve();
-                            }).catch(function(err) {
-                                console.error('Image downscale failed:', err);
-                                window.cartCurrentImages.push(dataUrl);
-                                resolve();
-                            });
-                        }
-                    };
-                    reader.readAsDataURL(f);
-                });
-                promises.push(promise);
-            })(file);
+                        });
+                    }
+                };
+                reader.readAsDataURL(file);
+            });
+        };
+
+        var previewContainer = document.getElementById('cart-images-preview-container');
+        var existingLoader = document.getElementById('cart-heic-processing');
+        if (existingLoader) existingLoader.remove();
+
+        var showLoader = function(msg) {
+            var loader = document.getElementById('cart-heic-processing');
+            if (!loader) {
+                loader = document.createElement('div');
+                loader.id = 'cart-heic-processing';
+                loader.className = 'processing-indicator';
+                if (previewContainer) previewContainer.insertAdjacentElement('beforebegin', loader);
+            }
+            loader.innerHTML = '<span class="loading-spinner"></span> ' + msg;
+            return loader;
+        };
+
+        for (var i = 0; i < files.length; i++) {
+            var file = files[i];
+            var converted = await this.convertHeicIfNeeded(file, i, files.length, showLoader);
+            if (converted) {
+                await processFile(converted);
+            }
         }
-        
-        Promise.all(promises).then(function() {
-            self.renderCartImagePreview();
-            event.target.value = ''; // reset
-        });
+
+        var finalLoader = document.getElementById('cart-heic-processing');
+        if (finalLoader) finalLoader.remove();
+
+        self.renderCartImagePreview();
+        inputElement.value = ''; // reset
     },
 
     renderCartImagePreview: function() {
@@ -9060,6 +9184,40 @@ window.app = {
                 };
                 itemEl.appendChild(coverBtn);
             }
+            
+            // Drag and Drop reordering support for Cart Previews
+            itemEl.draggable = true;
+            itemEl.ondragstart = function(e) {
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', index);
+                itemEl.classList.add('dragging');
+            };
+            itemEl.ondragend = function() {
+                itemEl.classList.remove('dragging');
+                var items = container.querySelectorAll('.cart-img-preview-item');
+                items.forEach(function(item) {
+                    item.classList.remove('drag-over');
+                });
+            };
+            itemEl.ondragover = function(e) {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                itemEl.classList.add('drag-over');
+            };
+            itemEl.ondragleave = function() {
+                itemEl.classList.remove('drag-over');
+            };
+            itemEl.ondrop = function(e) {
+                e.preventDefault();
+                itemEl.classList.remove('drag-over');
+                var srcIdx = parseInt(e.dataTransfer.getData('text/plain'), 10);
+                var destIdx = index;
+                if (!isNaN(srcIdx) && srcIdx !== destIdx) {
+                    var moved = window.cartCurrentImages.splice(srcIdx, 1)[0];
+                    window.cartCurrentImages.splice(destIdx, 0, moved);
+                    window.app.renderCartImagePreview();
+                }
+            };
             
             itemEl.appendChild(removeBtn);
             container.appendChild(itemEl);
@@ -11219,18 +11377,3 @@ function enrichDatabaseInBackground() {
     })();
 }
 
-// =========================================================================
-// SEA MONSTERS - THEME EFFECTS
-// =========================================================================
-var seaMonsterScrollTimeout;
-window.addEventListener('scroll', function() {
-    var grid = document.getElementById('fossil-grid');
-    if (!grid) return;
-    
-    grid.classList.add('sea-monster-scroll');
-    
-    clearTimeout(seaMonsterScrollTimeout);
-    seaMonsterScrollTimeout = setTimeout(function() {
-        grid.classList.remove('sea-monster-scroll');
-    }, 150);
-}, { passive: true });
