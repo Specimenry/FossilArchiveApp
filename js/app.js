@@ -1176,7 +1176,7 @@ var fossilsCacheLoaded = false;
 var selectedFossils = new Set();
 var expandedTaxonomyIds = new Set();
 var currentImages = [];
-var currentView = 'false'; // 'false' = Collection, 'true' = Wishlist
+var currentView = localStorage.getItem('current_view') || 'false'; // 'false' = Collection, 'true' = Wishlist
 var isStatsOpen = false;
 var isAutoEnhanceActive = localStorage.getItem('photo_auto_enhance') === 'true';
 var comparePickerModeActive = false;
@@ -1252,6 +1252,43 @@ function fetchExchangeRates() {
 }
 
 window.addEventListener('DOMContentLoaded', function() {
+    // Sync active view classes immediately to prevent visual flashing
+    try {
+        var savedView = localStorage.getItem('current_view') || 'false';
+        currentView = savedView;
+        
+        var btnCollection = document.getElementById('btn-collection');
+        var btnWishlist = document.getElementById('btn-wishlist');
+        var btnSold = document.getElementById('btn-sold');
+        var btnSale = document.getElementById('btn-sale');
+        var btnCarts = document.getElementById('btn-carts');
+        var btnDream = document.getElementById('btn-dream');
+        
+        if (btnCollection) btnCollection.classList.toggle('active', savedView === 'false');
+        if (btnWishlist) btnWishlist.classList.toggle('active', savedView === 'true');
+        if (btnSold) btnSold.classList.toggle('active', savedView === 'sold');
+        if (btnSale) btnSale.classList.toggle('active', savedView === 'sale');
+        if (btnCarts) btnCarts.classList.toggle('active', savedView === 'carts');
+        if (btnDream) btnDream.classList.toggle('active', savedView === 'dream');
+
+        var cartsContainer = document.getElementById('carts-container');
+        var grid = document.getElementById('fossil-grid');
+        var bannerEl = document.getElementById('view-info-banner');
+        var statsContainer = document.getElementById('stats-summary');
+
+        if (savedView === 'carts') {
+            if (cartsContainer) cartsContainer.style.display = 'flex';
+            if (grid) grid.style.display = 'none';
+            if (bannerEl) bannerEl.style.display = 'none';
+            if (statsContainer) statsContainer.style.display = 'none';
+        } else {
+            if (cartsContainer) cartsContainer.style.display = 'none';
+            if (grid) grid.style.display = '';
+        }
+    } catch (e) {
+        console.error('Failed to pre-sync active view:', e);
+    }
+
     // Check if guided tour needs to start for first-time visitors
     try {
         var tourCompleted = localStorage.getItem('first_time_tour_completed');
@@ -1328,7 +1365,8 @@ window.addEventListener('DOMContentLoaded', function() {
     fetchExchangeRates();
     initDB().then(function() {
         checkAndSeedFromServer().then(function() {
-            window.app.renderFossils();
+            var savedView = localStorage.getItem('current_view') || 'false';
+            window.app.setView(savedView, true);
             // Run background check for bloated images 2 seconds after load
             setTimeout(optimizeExistingDatabase, 2000);
             // Automatic ID Migration (UUID -> Catalog) 1 second after load
@@ -5175,8 +5213,13 @@ window.app = {
     },
 
     // --- View toggle ---
-    setView: function(view) {
+    setView: function(view, skipScroll) {
         currentView = view;
+        try {
+            localStorage.setItem('current_view', view);
+        } catch (e) {
+            console.error('Failed to save active tab view:', e);
+        }
         document.getElementById('btn-collection').classList.toggle('active', view === 'false');
         document.getElementById('btn-wishlist').classList.toggle('active', view === 'true');
         if (document.getElementById('btn-sold')) {
@@ -5201,7 +5244,7 @@ window.app = {
         else if (view === 'carts') activeBtn = document.getElementById('btn-carts');
         else if (view === 'dream') activeBtn = document.getElementById('btn-dream');
 
-        if (activeBtn && typeof activeBtn.scrollIntoView === 'function') {
+        if (!skipScroll && activeBtn && typeof activeBtn.scrollIntoView === 'function') {
             activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
         }
 

@@ -201,7 +201,7 @@
                 <div class="form-group view-toggle-group">
                     <label>Archive View</label>
                     <div class="view-toggle" role="group" aria-label="Switch between collection and wishlist">
-                        <button type="button" id="btn-collection" class="toggle-btn active" onclick="app.setView('false')">
+                        <button type="button" id="btn-collection" class="toggle-btn" onclick="app.setView('false')">
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                             <span class="btn-text">My Collection</span>
                         </button>
@@ -226,6 +226,25 @@
                             <span class="btn-text">Dream Collection</span>
                         </button>
                     </div>
+                    <script>
+                        (function() {
+                            try {
+                                var savedView = localStorage.getItem('current_view') || 'false';
+                                document.getElementById('btn-collection').classList.toggle('active', savedView === 'false');
+                                document.getElementById('btn-wishlist').classList.toggle('active', savedView === 'true');
+                                var btnSold = document.getElementById('btn-sold');
+                                if (btnSold) btnSold.classList.toggle('active', savedView === 'sold');
+                                var btnSale = document.getElementById('btn-sale');
+                                if (btnSale) btnSale.classList.toggle('active', savedView === 'sale');
+                                var btnCarts = document.getElementById('btn-carts');
+                                if (btnCarts) btnCarts.classList.toggle('active', savedView === 'carts');
+                                var btnDream = document.getElementById('btn-dream');
+                                if (btnDream) btnDream.classList.toggle('active', savedView === 'dream');
+                            } catch (e) {
+                                console.error('Failed inline view toggle init:', e);
+                            }
+                        })();
+                    </script>
                 </div>
             </div>
 
