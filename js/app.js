@@ -1277,8 +1277,14 @@ window.addEventListener('DOMContentLoaded', function() {
 
     // Backup Pulse logic & warning banner
     var lastBackup = localStorage.getItem('last_backup');
+    var bannerDismissedTime = localStorage.getItem('backup_banner_dismissed_time');
     var sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
-    if (!lastBackup || Date.now() - parseInt(lastBackup, 10) > sevenDaysMs) {
+    var threeDaysMs = 3 * 24 * 60 * 60 * 1000;
+    
+    var needsBackup = !lastBackup || Date.now() - parseInt(lastBackup, 10) > sevenDaysMs;
+    var wasRecentlyDismissed = bannerDismissedTime && Date.now() - parseInt(bannerDismissedTime, 10) < threeDaysMs;
+
+    if (needsBackup) {
         var exportBtn = document.getElementById('btn-export');
         if (exportBtn) {
             exportBtn.style.position = 'relative';
@@ -1293,9 +1299,11 @@ window.addEventListener('DOMContentLoaded', function() {
                 dbCenterBtn.insertAdjacentHTML('beforeend', '<div class="pulse-dot" title="You haven\'t backed up in over 7 days!"></div>');
             }
         }
-        var warningBanner = document.getElementById('backup-warning-banner');
-        if (warningBanner) {
-            warningBanner.style.display = 'flex';
+        if (!wasRecentlyDismissed) {
+            var warningBanner = document.getElementById('backup-warning-banner');
+            if (warningBanner) {
+                warningBanner.style.display = 'flex';
+            }
         }
     }
 
@@ -1310,6 +1318,20 @@ window.addEventListener('DOMContentLoaded', function() {
             setTimeout(migrateToCatalogIds, 1000);
             // Automatic Background Data Enrichment 3 seconds after load
             setTimeout(enrichDatabaseInBackground, 3000);
+
+            // Check if guided tour needs to start for first-time visitors
+            try {
+                var tourCompleted = localStorage.getItem('first_time_tour_completed');
+                if (!tourCompleted) {
+                    setTimeout(function() {
+                        if (window.app && typeof window.app.startTour === 'function') {
+                            window.app.startTour();
+                        }
+                    }, 1500);
+                }
+            } catch (e) {
+                console.error('Tour check error:', e);
+            }
         });
     });
 
@@ -9262,6 +9284,16 @@ window.app = {
         if (warningBanner) warningBanner.style.display = 'none';
         exportToJSON(); 
     },
+    
+    dismissBackupBanner: function() {
+        var banner = document.getElementById('backup-warning-banner');
+        if (banner) banner.style.display = 'none';
+        try {
+            localStorage.setItem('backup_banner_dismissed_time', Date.now().toString());
+        } catch (e) {
+            console.error('LocalStorage error:', e);
+        }
+    },
 
     importJSON: function(event) {
         var file = event.target.files[0];
@@ -10910,6 +10942,153 @@ window.app = {
                     btn.classList.remove('active');
                 }
             }
+        }
+    },
+
+    tourStepIndex: 0,
+    startTour: function() {
+        if (document.getElementById('tour-overlay')) return;
+        this.tourStepIndex = 0;
+        var overlay = document.createElement('div');
+        overlay.id = 'tour-overlay';
+        overlay.className = 'tour-overlay';
+        overlay.onclick = function() { window.app.endTour(false); };
+        document.body.appendChild(overlay);
+        var card = document.createElement('div');
+        card.id = 'tour-card';
+        card.className = 'tour-card';
+        card.innerHTML = 
+            '<div class="tour-card-header">' +
+                '<span class="tour-card-title"></span>' +
+                '<span class="tour-card-step"></span>' +
+            '</div>' +
+            '<div class="tour-card-body"></div>' +
+            '<div class="tour-card-footer">' +
+                '<button type="button" class="tour-btn-skip" onclick="window.app.endTour(false)">Skip</button>' +
+                '<div class="tour-btn-group">' +
+                    '<button type="button" class="btn-secondary tour-btn-back" onclick="window.app.prevTourStep()" style="padding: 0.3rem 0.6rem; font-size: 0.75rem; border-radius: var(--radius-sm);">Back</button>' +
+                    '<button type="button" class="btn-primary tour-btn-next" onclick="window.app.nextTourStep()" style="padding: 0.3rem 0.6rem; font-size: 0.75rem; border-radius: var(--radius-sm);">Next</button>' +
+                '</div>' +
+            '</div>' +
+            '<div id="tour-arrow" class="tour-arrow"></div>';
+        document.body.appendChild(card);
+        this.renderTourStep();
+    },
+    nextTourStep: function() {
+        var steps = this.getTourSteps();
+        if (this.tourStepIndex < steps.length - 1) {
+            this.tourStepIndex++;
+            this.renderTourStep();
+        } else {
+            this.endTour(true);
+        }
+    },
+    prevTourStep: function() {
+        if (this.tourStepIndex > 0) {
+            this.tourStepIndex--;
+            this.renderTourStep();
+        }
+    },
+    endTour: function(completed) {
+        var overlay = document.getElementById('tour-overlay');
+        var card = document.getElementById('tour-card');
+        if (overlay) overlay.remove();
+        if (card) card.remove();
+        var prevHighlight = document.querySelector('.tour-highlighted');
+        if (prevHighlight) {
+            prevHighlight.classList.remove('tour-highlighted');
+        }
+        if (completed) {
+            try {
+                localStorage.setItem('first_time_tour_completed', 'true');
+            } catch (e) {
+                console.error(e);
+            }
+        }
+    },
+    getTourSteps: function() {
+        return [
+            {
+                title: "Welcome to Specimenry! 🦕",
+                body: "Specimenry is a personal, offline-first digital database designed to help you catalog, organize, and showcase your fossil collection.",
+                target: null
+            },
+            {
+                title: "Log New Specimens 🔬",
+                body: "Click here to add a new fossil to your archive. You can specify taxonomic classifications, geological formations, sizes, valuation, and upload photos.",
+                target: "#btn-add-fossil"
+            },
+            {
+                title: "Manage & Backup Your Database 📥",
+                body: "All of your data is stored locally in your browser cache for maximum privacy. Make sure to download a JSON backup regularly so you never lose your catalog!",
+                target: "#btn-db-center"
+            },
+            {
+                title: "Exhibition Utilities & Compare 🏛️",
+                body: "Under utilities, you can trigger compare mode, batch enhance photo lighting, print physical exhibition display labels, or browse the Earth History timeline.",
+                target: "#btn-enrich-center"
+            },
+            {
+                title: "Support & Feedback 🐛",
+                body: "We hope you love using Specimenry! You can support this open-source project on Ko-fi, or report any bugs directly next to it in the top bar.",
+                target: "#btn-support-project"
+            }
+        ];
+    },
+    renderTourStep: function() {
+        var steps = this.getTourSteps();
+        var currentStep = steps[this.tourStepIndex];
+        var prevHighlight = document.querySelector('.tour-highlighted');
+        if (prevHighlight) {
+            prevHighlight.classList.remove('tour-highlighted');
+        }
+        var card = document.getElementById('tour-card');
+        if (!card) return;
+        card.querySelector('.tour-card-title').innerText = currentStep.title;
+        card.querySelector('.tour-card-body').innerText = currentStep.body;
+        card.querySelector('.tour-card-step').innerText = (this.tourStepIndex + 1) + ' / ' + steps.length;
+        var backBtn = card.querySelector('.tour-btn-back');
+        var nextBtn = card.querySelector('.tour-btn-next');
+        backBtn.style.display = this.tourStepIndex === 0 ? 'none' : 'block';
+        nextBtn.innerText = this.tourStepIndex === steps.length - 1 ? 'Finish' : 'Next';
+        var targetEl = currentStep.target ? document.querySelector(currentStep.target) : null;
+        var arrow = document.getElementById('tour-arrow');
+        card.style.top = '';
+        card.style.left = '';
+        card.style.transform = '';
+        if (targetEl && targetEl.offsetWidth > 0 && targetEl.offsetHeight > 0) {
+            targetEl.classList.add('tour-highlighted');
+            var rect = targetEl.getBoundingClientRect();
+            var cardTop = rect.bottom + window.scrollY + 12;
+            var cardLeft = rect.left + window.scrollX + (rect.width / 2) - 160;
+            if (cardLeft < 10) cardLeft = 10;
+            if (cardLeft + 330 > window.innerWidth) cardLeft = window.innerWidth - 330;
+            if (rect.bottom + 200 > window.innerHeight) {
+                cardTop = rect.top + window.scrollY - 180;
+                if (arrow) {
+                    arrow.style.bottom = '-6px';
+                    arrow.style.top = 'auto';
+                    arrow.style.transform = 'rotate(225deg)';
+                }
+            } else {
+                if (arrow) {
+                    arrow.style.top = '-6px';
+                    arrow.style.bottom = 'auto';
+                    arrow.style.transform = 'rotate(45deg)';
+                }
+            }
+            card.style.top = cardTop + 'px';
+            card.style.left = cardLeft + 'px';
+            if (arrow) {
+                arrow.style.display = 'block';
+                var arrowLeft = rect.left + window.scrollX + (rect.width / 2) - cardLeft - 5;
+                arrow.style.left = arrowLeft + 'px';
+            }
+        } else {
+            card.style.top = '50%';
+            card.style.left = '50%';
+            card.style.transform = 'translate(-50%, -50%)';
+            if (arrow) arrow.style.display = 'none';
         }
     }
 };

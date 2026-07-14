@@ -34,7 +34,10 @@
                 <a href="https://ko-fi.com/specimenry" target="_blank" id="btn-support-project" class="desktop-only" title="Support Specimenry on Ko-fi" aria-label="Support Specimenry on Ko-fi" style="color: var(--text-primary); background: var(--bg-warm); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 0.35rem 0.65rem; font-size: 0.75rem; font-weight: 600; text-decoration: none; display: flex; align-items: center; gap: 0.35rem; transition: all 0.2s;" onmouseover="this.style.background='var(--border-color)'" onmouseout="this.style.background='var(--bg-warm)'">
                     <span style="color: #ef4444;">❤️</span> Support
                 </a>
-                <div class="desktop-only" style="width: 1px; height: 20px; background-color: var(--border-color); margin-right: 0.5rem;"></div>
+                <a href="https://github.com/specimenry/FossilArchiveApp/issues/new" target="_blank" id="btn-report-bug-header" class="desktop-only" title="Report a Bug on GitHub" aria-label="Report a Bug on GitHub" style="color: var(--text-primary); background: var(--bg-warm); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 0.35rem 0.65rem; font-size: 0.75rem; font-weight: 600; text-decoration: none; display: flex; align-items: center; gap: 0.35rem; transition: all 0.2s; margin-left: 0.5rem;" onmouseover="this.style.background='var(--border-color)'" onmouseout="this.style.background='var(--bg-warm)'">
+                    <span>🐛</span> Report Bug
+                </a>
+                <div class="desktop-only" style="width: 1px; height: 20px; background-color: var(--border-color); margin-right: 0.5rem; margin-left: 0.5rem;"></div>
 
                 <!-- Unified Mobile Option Dropdown -->
                 <div class="dropdown mobile-only" style="position: relative; display: inline-block;">
@@ -90,6 +93,12 @@
                         <a href="https://ko-fi.com/specimenry" target="_blank" onclick="app.closeMobileMenu();" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1.25rem; font-size: 0.8rem; color: #ef4444; text-decoration: none; transition: background 0.15s; font-weight: 600;" onmouseover="this.style.background='var(--bg-warm)'" onmouseout="this.style.background='transparent'">
                             ❤️ Support the Project
                         </a>
+                        <a href="https://github.com/specimenry/FossilArchiveApp/issues/new" target="_blank" onclick="app.closeMobileMenu();" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1.25rem; font-size: 0.8rem; color: var(--text-primary); text-decoration: none; transition: background 0.15s;" onmouseover="this.style.background='var(--bg-warm)'" onmouseout="this.style.background='transparent'">
+                            🐛 Report a Bug
+                        </a>
+                        <a href="#" onclick="app.closeMobileMenu(); app.startTour(); return false;" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1.25rem; font-size: 0.8rem; color: var(--text-primary); text-decoration: none; transition: background 0.15s;" onmouseover="this.style.background='var(--bg-warm)'" onmouseout="this.style.background='transparent'">
+                            🙋 App Guided Tour
+                        </a>
                     </div>
                 </div>
 
@@ -142,6 +151,12 @@
                         </a>
                         <a href="#" onclick="app.openDeepDive(); return false;" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1rem; font-size: 0.8rem; color: var(--text-primary); text-decoration: none; transition: background 0.15s; border-top: 1px solid var(--border-color);" onmouseover="this.style.background='var(--bg-warm)'" onmouseout="this.style.background='transparent'">
                             🦕 Paleo Deep Dive
+                        </a>
+                        <a href="https://github.com/specimenry/FossilArchiveApp/issues/new" target="_blank" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1rem; font-size: 0.8rem; color: var(--text-primary); text-decoration: none; transition: background 0.15s; border-top: 1px solid var(--border-color);" onmouseover="this.style.background='var(--bg-warm)'" onmouseout="this.style.background='transparent'">
+                            🐛 Report a Bug
+                        </a>
+                        <a href="#" onclick="app.startTour(); return false;" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1rem; font-size: 0.8rem; color: var(--text-primary); text-decoration: none; transition: background 0.15s; border-top: 1px solid var(--border-color);" onmouseover="this.style.background='var(--bg-warm)'" onmouseout="this.style.background='transparent'">
+                            🙋 App Guided Tour
                         </a>
                     </div>
                 </div>
@@ -266,8 +281,8 @@
                 <span style="opacity: 0.85;">• Love the app? Consider <a href="https://ko-fi.com/specimenry" target="_blank" style="color: #ef4444; font-weight: 600; text-decoration: underline;">supporting us on Ko-fi</a>!</span>
             </div>
             <div style="display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0;">
-                <button type="button" class="btn-primary" onclick="app.exportData(); document.getElementById('backup-warning-banner').style.display = 'none';" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; border-radius: var(--radius-sm); border: none; cursor: pointer; white-space: nowrap;">📥 Backup Now</button>
-                <button type="button" onclick="document.getElementById('backup-warning-banner').style.display = 'none';" style="background: transparent; border: none; color: var(--text-secondary); cursor: pointer; font-size: 1.25rem; line-height: 1; padding: 0.25rem; display: flex; align-items: center; justify-content: center;" title="Dismiss Reminder" aria-label="Dismiss">&times;</button>
+                <button type="button" class="btn-primary" onclick="app.exportData();" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; border-radius: var(--radius-sm); border: none; cursor: pointer; white-space: nowrap;">📥 Backup Now</button>
+                <button type="button" onclick="app.dismissBackupBanner();" style="background: transparent; border: none; color: var(--text-secondary); cursor: pointer; font-size: 1.25rem; line-height: 1; padding: 0.25rem; display: flex; align-items: center; justify-content: center;" title="Dismiss Reminder" aria-label="Dismiss">&times;</button>
             </div>
         </div>
 
@@ -343,8 +358,11 @@
             <div id="portfolio-container" class="dashboard-visual-container" style="display: none;">
                 <!-- Portfolio dynamically rendered by JS -->
             </div>
-            <div style="text-align: center; font-size: 0.75rem; color: var(--text-secondary); margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border-color); opacity: 0.8;">
-                Developed with ❤️ for fossil collectors. Love the app? Consider <a href="https://ko-fi.com/specimenry" target="_blank" style="color: #ef4444; font-weight: 600; text-decoration: underline;">supporting us on Ko-fi</a>!
+            <div style="text-align: center; font-size: 0.75rem; color: var(--text-secondary); margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border-color); opacity: 0.8; display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+                <span>Developed with ❤️ for fossil collectors.</span>
+                <span>Love the app? Consider <a href="https://ko-fi.com/specimenry" target="_blank" style="color: #ef4444; font-weight: 600; text-decoration: underline;">supporting us on Ko-fi</a>!</span>
+                <span>•</span>
+                <span>Found a bug? <a href="https://github.com/specimenry/FossilArchiveApp/issues/new" target="_blank" style="color: var(--text-primary); font-weight: 600; text-decoration: underline;">Report a Bug</a></span>
             </div>
         </div>
         <div id="view-info-banner" class="view-info-banner" style="display: none;"></div>
