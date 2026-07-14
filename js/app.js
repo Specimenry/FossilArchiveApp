@@ -600,7 +600,7 @@ function annotateSpecimenName(rawName, fossil) {
         }
     }
 
-    if (fossil && fossil.isWishlist) {
+    if (fossil && (fossil.isWishlist || fossil.isDream)) {
         return safeName + authHtml;
     }
 
@@ -979,6 +979,9 @@ function normalizeCSVRow(row) {
     mapped.salePrice = parseFloat(keyMap['saleprice'] || keyMap['sale price'] || keyMap['soldprice'] || keyMap['sold price'] || '') || null;
     mapped.saleCurrency = (keyMap['salecurrency'] || keyMap['sale currency'] || keyMap['soldcurrency'] || keyMap['sold currency'] || 'USD').toUpperCase();
 
+    var dream = (keyMap['isdream'] || keyMap['dream'] || keyMap['is dream'] || '').toLowerCase();
+    mapped.isDream = (dream === 'true' || dream === '1' || dream === 'yes');
+
     return mapped;
 }
 
@@ -1249,6 +1252,20 @@ function fetchExchangeRates() {
 }
 
 window.addEventListener('DOMContentLoaded', function() {
+    // Check if guided tour needs to start for first-time visitors
+    try {
+        var tourCompleted = localStorage.getItem('first_time_tour_completed');
+        if (!tourCompleted) {
+            setTimeout(function() {
+                if (window.app && typeof window.app.startTour === 'function') {
+                    window.app.startTour();
+                }
+            }, 100);
+        }
+    } catch (e) {
+        console.error('Tour check error:', e);
+    }
+
     var sizeUnitSelect = document.getElementById('f-size-unit');
     if (sizeUnitSelect) {
         sizeUnitSelect.addEventListener('change', function() {
@@ -1318,20 +1335,6 @@ window.addEventListener('DOMContentLoaded', function() {
             setTimeout(migrateToCatalogIds, 1000);
             // Automatic Background Data Enrichment 3 seconds after load
             setTimeout(enrichDatabaseInBackground, 3000);
-
-            // Check if guided tour needs to start for first-time visitors
-            try {
-                var tourCompleted = localStorage.getItem('first_time_tour_completed');
-                if (!tourCompleted) {
-                    setTimeout(function() {
-                        if (window.app && typeof window.app.startTour === 'function') {
-                            window.app.startTour();
-                        }
-                    }, 1500);
-                }
-            } catch (e) {
-                console.error('Tour check error:', e);
-            }
         });
     });
 
@@ -1932,7 +1935,7 @@ window.app = {
                 curParts.push('💰 <strong>Sold Price:</strong> ' + f.salePrice + ' ' + (f.saleCurrency || 'USD'));
             } else if (f.isForSale && f.salePrice > 0) {
                 curParts.push('🏷️ <strong>Asking Price:</strong> ' + f.salePrice + ' ' + (f.saleCurrency || 'USD'));
-            } else if (f.price && !f.isWishlist) {
+            } else if (f.price && !f.isWishlist && !f.isDream) {
                 curParts.push('💰 <strong>Value:</strong> ' + f.price + ' ' + (f.currency || 'USD'));
             }
             if (f.fossilType) curParts.push('🦕 <strong>Fossil Type:</strong> ' + escapeHtml(f.fossilType));
@@ -2036,6 +2039,7 @@ window.app = {
                            !x.isWishlist && 
                            !x.isSold && 
                            !x.isCartItem && 
+                           !x.isDream && 
                            (x.geologicalPeriod || '').trim().toLowerCase() === period.toLowerCase();
                 });
             }
@@ -3424,8 +3428,8 @@ window.app = {
                     var estB = parseFloat(b.estimatedValue) || parseFloat(b.price) || 0;
                     valB = window.app._convertCurrency(estB, b.estimatedCurrency || b.currency || 'USD', activeBaseCurrency);
                 } else if (portfolioSortField === 'status') {
-                    valA = a.isSold ? 'c' : (a.isForSale ? 'b' : (a.isWishlist ? 'd' : 'a'));
-                    valB = b.isSold ? 'c' : (b.isForSale ? 'b' : (b.isWishlist ? 'd' : 'a'));
+                    valA = a.isSold ? 'c' : (a.isForSale ? 'b' : (a.isWishlist ? 'd' : (a.isDream ? 'e' : 'a')));
+                    valB = b.isSold ? 'c' : (b.isForSale ? 'b' : (b.isWishlist ? 'd' : (b.isDream ? 'e' : 'a')));
                 }
 
                 if (valA < valB) return portfolioSortAsc ? -1 : 1;
@@ -3495,7 +3499,7 @@ window.app = {
             return;
         }
 
-        var activeFossils = fossils.filter(function(f) { return !f.isWishlist && !f.isSold && !f.isCartItem; });
+        var activeFossils = fossils.filter(function(f) { return !f.isWishlist && !f.isSold && !f.isCartItem && !f.isDream; });
         var totalCost = 0;
         var totalEst = 0;
         
@@ -3691,7 +3695,7 @@ window.app = {
 
         // 1. Smart Filtering based on active collection
         var rankedFossils = (fossils || []).filter(function(f) {
-            if (f.isWishlist || f.isCartItem) return false;
+            if (f.isWishlist || f.isCartItem || f.isDream) return false;
 
             if (criteria === 'price') {
                 return f.price !== undefined && f.price !== null && !isNaN(parseFloat(f.price)) && parseFloat(f.price) > 0;
@@ -4124,7 +4128,7 @@ window.app = {
         var counts = {};
         for (var pName in GEOLOGICAL_HISTORY_DATA) {
             counts[pName] = fossils.filter(function(f) {
-                if (f.isWishlist || f.isCartItem) return false;
+                if (f.isWishlist || f.isCartItem || f.isDream) return false;
                 var fp = f.geologicalPeriod ? f.geologicalPeriod.trim().toLowerCase() : '';
                 return fp === pName.toLowerCase();
             }).length;
@@ -4226,7 +4230,7 @@ window.app = {
         
         // Show specimens from active collection representing this period
         var periodFossils = fossils.filter(function(f) {
-            if (f.isWishlist || f.isCartItem) return false;
+            if (f.isWishlist || f.isCartItem || f.isDream) return false;
             var fp = f.geologicalPeriod ? f.geologicalPeriod.trim().toLowerCase() : '';
             return fp === selectedPeriodName.toLowerCase();
         });
@@ -4260,7 +4264,7 @@ window.app = {
         var container = document.getElementById('treemap-container');
         if (!container) return;
         
-        var ownedFossils = fossils.filter(function(f) { return !f.isWishlist && !f.isSold && !f.isCartItem; });
+        var ownedFossils = fossils.filter(function(f) { return !f.isWishlist && !f.isSold && !f.isCartItem && !f.isDream; });
         var wishlistedFossils = fossils.filter(function(f) { return f.isWishlist && !f.isSold && !f.isCartItem; });
         
         var collectedList = [];
@@ -4535,6 +4539,10 @@ window.app = {
                     document.getElementById('f-wishlist').value = 'sale';
                     document.getElementById('f-sale-price').value = f.salePrice || '';
                     document.getElementById('f-sale-currency').value = f.saleCurrency || 'USD';
+                } else if (f.isDream) {
+                    document.getElementById('f-wishlist').value = 'dream';
+                    document.getElementById('f-sale-price').value = '';
+                    document.getElementById('f-sale-currency').value = 'USD';
                 } else {
                     document.getElementById('f-wishlist').value = f.isWishlist ? 'true' : 'false';
                     document.getElementById('f-sale-price').value = '';
@@ -5180,6 +5188,9 @@ window.app = {
         if (document.getElementById('btn-carts')) {
             document.getElementById('btn-carts').classList.toggle('active', view === 'carts');
         }
+        if (document.getElementById('btn-dream')) {
+            document.getElementById('btn-dream').classList.toggle('active', view === 'dream');
+        }
 
         // Smoothly scroll active button into view on mobile view-toggle scrollable containers
         var activeBtn = null;
@@ -5188,6 +5199,7 @@ window.app = {
         else if (view === 'sold') activeBtn = document.getElementById('btn-sold');
         else if (view === 'sale') activeBtn = document.getElementById('btn-sale');
         else if (view === 'carts') activeBtn = document.getElementById('btn-carts');
+        else if (view === 'dream') activeBtn = document.getElementById('btn-dream');
 
         if (activeBtn && typeof activeBtn.scrollIntoView === 'function') {
             activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
@@ -5526,6 +5538,7 @@ window.app = {
                 isWishlist: document.getElementById('f-wishlist').value === 'true',
                 isSold: document.getElementById('f-wishlist').value === 'sold',
                 isForSale: document.getElementById('f-wishlist').value === 'sale',
+                isDream: document.getElementById('f-wishlist').value === 'dream',
                 salePrice: (document.getElementById('f-wishlist').value === 'sold' || document.getElementById('f-wishlist').value === 'sale') ? parseFloat(document.getElementById('f-sale-price').value) || null : null,
                 saleCurrency: (document.getElementById('f-wishlist').value === 'sold' || document.getElementById('f-wishlist').value === 'sale') ? document.getElementById('f-sale-currency').value : 'USD',
                 isSelfFound: document.getElementById('f-self-found').checked,
@@ -6542,6 +6555,10 @@ window.app = {
             document.getElementById('f-wishlist').value = 'sale';
             document.getElementById('f-sale-price').value = f.salePrice || '';
             document.getElementById('f-sale-currency').value = f.saleCurrency || 'USD';
+        } else if (f.isDream) {
+            document.getElementById('f-wishlist').value = 'dream';
+            document.getElementById('f-sale-price').value = '';
+            document.getElementById('f-sale-currency').value = 'USD';
         } else {
             document.getElementById('f-wishlist').value = f.isWishlist ? 'true' : 'false';
             document.getElementById('f-sale-price').value = '';
@@ -6851,9 +6868,10 @@ window.app = {
             var activeCollectionFossils = fossils.filter(function(f) { 
                 if (f.isCartItem) return false;
                 if (currentView === 'sold') return !!f.isSold;
-                if (currentView === 'true') return !!f.isWishlist && !f.isSold;
-                if (currentView === 'sale') return !f.isWishlist && !f.isSold && !!f.isForSale;
-                return !f.isWishlist && !f.isSold;
+                if (currentView === 'true') return !!f.isWishlist && !f.isSold && !f.isDream;
+                if (currentView === 'sale') return !f.isWishlist && !f.isSold && !!f.isForSale && !f.isDream;
+                if (currentView === 'dream') return !!f.isDream;
+                return !f.isWishlist && !f.isSold && !f.isDream;
             });
             
             var catTallies = {};
@@ -6973,11 +6991,13 @@ window.app = {
                 if (currentView === 'sold') {
                     matchView = !!f.isSold;
                 } else if (currentView === 'true') {
-                    matchView = !!f.isWishlist && !f.isSold;
+                    matchView = !!f.isWishlist && !f.isSold && !f.isDream;
                 } else if (currentView === 'sale') {
-                    matchView = !f.isWishlist && !f.isSold && !!f.isForSale;
+                    matchView = !f.isWishlist && !f.isSold && !!f.isForSale && !f.isDream;
+                } else if (currentView === 'dream') {
+                    matchView = !!f.isDream;
                 } else {
-                    matchView = !f.isWishlist && !f.isSold;
+                    matchView = !f.isWishlist && !f.isSold && !f.isDream;
                 }
                 return matchSearch && matchCat && matchType && matchPeriod && matchView;
             });
@@ -7001,7 +7021,7 @@ window.app = {
                     var count = 0;
                     
                     filtered.forEach(function(f) {
-                        if (currentView === 'sale' && !f.isWishlist && !f.isSold && !!f.isForSale) {
+                        if (currentView === 'sale' && !f.isWishlist && !f.isSold && !!f.isForSale && !f.isDream) {
                             var priceVal = parseFloat(f.salePrice) || 0;
                             if (priceVal > 0) {
                                 var curr = (f.saleCurrency || 'USD').toUpperCase();
@@ -7465,7 +7485,7 @@ window.app = {
                                 .slice(0, 8);
 
                             // --- CALCULATE FIELD DISCOVERY SCORE ---
-                            var overallOwned = fossils.filter(function(f) { return !f.isWishlist && !f.isSold; });
+                            var overallOwned = fossils.filter(function(f) { return !f.isWishlist && !f.isSold && !f.isDream; });
                             var ownedCount = overallOwned.length;
                             var selfFoundCount = overallOwned.filter(function(f) { return !!f.isSelfFound; }).length;
                             var selfFoundPercent = ownedCount > 0 ? Math.round((selfFoundCount / ownedCount) * 100) : 0;
@@ -7686,17 +7706,43 @@ window.app = {
                 fragment.appendChild(quickAddDiv);
             }
 
+            var dreamQ = (currentView === 'dream');
+            if (dreamQ) {
+                var dreamCard = document.createElement('div');
+                dreamCard.className = 'dream-summary-card';
+                dreamCard.style.gridColumn = '1 / -1';
+                dreamCard.style.marginBottom = '1.5rem';
+                dreamCard.innerHTML = 
+                    '<div class="cart-summary-left">' +
+                        '<h2 style="font-family: \'Playfair Display\', Georgia, serif; font-size: 1.25rem; color: var(--text-primary); margin: 0;">✨ Dream Collection</h2>' +
+                        '<p style="font-size: 0.8rem; color: var(--text-secondary); margin: 0.25rem 0 0;">Save superb specimens you find but can\'t buy at the moment.</p>' +
+                    '</div>' +
+                    '<div class="cart-summary-right" style="display: flex; gap: 0.5rem; align-items: center;">' +
+                        '<button class="btn-primary" onclick="app.openDreamItemModal()" style="display: flex; align-items: center; gap: 0.35rem;">' +
+                            '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>' +
+                            'Add Dream Specimen' +
+                        '</button>' +
+                    '</div>';
+                fragment.appendChild(dreamCard);
+            }
+
             if (filtered.length === 0) {
                 var empty = document.createElement('div');
                 empty.className = 'empty-state';
+                var emptyText = 'Add your first fossil using the button above, or import a CSV file.';
+                if (wlQ) {
+                    emptyText = 'Quickly add a specimen to your wishlist above!';
+                } else if (dreamQ) {
+                    emptyText = 'Click "Add Dream Specimen" above to save your first dream fossil!';
+                }
                 empty.innerHTML =
                     '<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>' +
                     '<h3>No Specimens Found</h3>' +
-                    '<p>' + (wlQ ? 'Quickly add a specimen to your wishlist above!' : 'Add your first fossil using the button above, or import a CSV file.') + '</p>';
+                    '<p>' + emptyText + '</p>';
                 
                 grid.innerHTML = '';
-                if (wlQ) {
-                    grid.appendChild(fragment); // Render quick add card
+                if (wlQ || dreamQ) {
+                    grid.appendChild(fragment); // Render quick add card or dream card
                 }
                 grid.appendChild(empty);
                 return;
@@ -7910,7 +7956,7 @@ window.app = {
                         '<div class="card-content">' +
                             '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.2rem;">' +
                                 '<div style="display: flex; align-items: center; gap: 0.35rem;">' +
-                                    '<span style="font-size: 0.7rem; color: var(--text-secondary); opacity: 0.8; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;">' + escapeHtml(f.id) + '</span>' +
+                                    '<span style="font-size: 0.7rem; color: var(--text-secondary); opacity: 0.8; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;">' + escapeHtml(f.id.length > 15 && f.id.indexOf('-') !== -1 ? f.id.substring(0, 8) + '...' : f.id) + '</span>' +
                                     (f.conditionTier ? getConditionTierBadgeHtml(f.conditionTier, true) : '') +
                                 '</div>' +
                                 (f.animalSize ? '<div class="animal-size-tag">' +
@@ -7926,12 +7972,15 @@ window.app = {
                             ((f.tags && f.tags.length > 0) ? '<div class="card-tags">' + f.tags.map(function(t) { return '<span class="tag-pill" onclick="event.stopPropagation(); document.getElementById(\'search\').value = \'#' + t + '\'; app.renderFossils();">#' + t + '</span>'; }).join('') + '</div>' : '') +
                             '<div class="card-footer">' +
                                 '<div style="display: flex; gap: 0.5rem; align-items: center;">' +
-                                    (f.isSold ? '<span class="badge badge-sold">Sold</span>' : (f.isForSale ? '<span class="badge badge-for-sale" style="background: rgba(229, 142, 38, 0.12); border: 1px solid var(--warning); color: var(--warning); font-weight: 700; padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.7rem; text-transform: uppercase;">For Sale</span>' : '<span class="badge badge-owned">Owned</span>')) +
+                                    (f.isDream ? '<span class="badge badge-dream" style="background: rgba(168, 120, 208, 0.15); border: 1px solid #a878d0; color: #a878d0; font-weight: 700; padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.7rem; text-transform: uppercase;">Dream</span>' : (f.isSold ? '<span class="badge badge-sold">Sold</span>' : (f.isForSale ? '<span class="badge badge-for-sale" style="background: rgba(229, 142, 38, 0.12); border: 1px solid var(--warning); color: var(--warning); font-weight: 700; padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.7rem; text-transform: uppercase;">For Sale</span>' : '<span class="badge badge-owned">Owned</span>'))) +
                                     (f.isSelfFound ? '<span class="badge badge-self-found" style="display: flex; align-items: center; gap: 4px;"><svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Found</span>' : '') +
                                 '</div>' +
                                 '<div class="card-actions">' +
                                     '<button class="btn-taxonomy ' + (expandedTaxonomyIds.has(f.id) ? 'active' : '') + '" title="Biological Taxonomy" onclick="app.toggleTaxonomy(\'' + f.id + '\')"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="M5 12h14"/><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button>' +
-                                    '<button title="Edit" onclick="app.openModal(\'' + f.id + '\')"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>' +
+                                    (f.isDream ? 
+                                        '<button title="Edit" onclick="app.openDreamItemModal(\'' + f.id + '\')"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>' :
+                                        '<button title="Edit" onclick="app.openModal(\'' + f.id + '\')"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>'
+                                    ) +
                                     '<div class="card-more-menu-container">' +
                                         '<button class="btn-card-more" title="Curator Toolkit" onclick="event.stopPropagation(); app.toggleCardMenu(event, \'' + f.id + '\')">' +
                                             '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>' +
@@ -8134,7 +8183,7 @@ window.app = {
         // Count owned fossils per period (only non-wishlist from the current filtered set)
         var ownedByPeriod = {};
         currentFossils.forEach(function(f) {
-            if (!f.isWishlist && f.geologicalPeriod) {
+            if (!f.isWishlist && !f.isDream && f.geologicalPeriod) {
                 ownedByPeriod[f.geologicalPeriod] = (ownedByPeriod[f.geologicalPeriod] || 0) + 1;
             }
         });
@@ -8814,6 +8863,134 @@ window.app = {
         }
     },
 
+    openDreamItemModal: function(id) {
+        var modal = document.getElementById('dream-item-modal');
+        var form = document.getElementById('dream-item-form');
+        if (!modal || !form) return;
+
+        form.reset();
+        document.getElementById('dream-item-id').value = id || '';
+        
+        var urlInput = document.getElementById('dream-f-photo-url-input');
+        if (urlInput) urlInput.value = '';
+
+        window.dreamCurrentImages = [];
+
+        var titleEl = document.getElementById('dream-item-modal-title');
+
+        if (id) {
+            titleEl.innerText = 'Edit Dream Specimen';
+            var item = fossils.find(function(f) { return f.id === id; });
+            if (item) {
+                document.getElementById('dream-f-specimen').value = item.specimen || '';
+                document.getElementById('dream-f-price').value = item.price !== undefined && item.price !== null ? item.price : '';
+                document.getElementById('dream-f-currency').value = item.currency || 'USD';
+                document.getElementById('dream-f-size').value = item.size !== undefined && item.size !== null ? item.size : '';
+                document.getElementById('dream-f-size-unit').value = item.sizeUnit || 'cm';
+                document.getElementById('dream-f-link').value = item.sourceUrl || '';
+                document.getElementById('dream-f-notes').value = item.notes || '';
+                
+                window.dreamCurrentImages = item.images ? JSON.parse(JSON.stringify(item.images)) : [];
+            }
+        } else {
+            titleEl.innerText = 'Add Dream Specimen';
+        }
+
+        this.renderDreamImagePreview();
+        modal.showModal();
+    },
+
+    saveDreamItem: function(event) {
+        event.preventDefault();
+        var id = document.getElementById('dream-item-id').value;
+        var name = document.getElementById('dream-f-specimen').value.trim();
+        if (!name) {
+            if (window.app && typeof window.app.showToast === 'function') {
+                window.app.showToast('Please enter a specimen name.', 'warning');
+            } else {
+                alert('Please enter a specimen name.');
+            }
+            return;
+        }
+
+        var priceVal = document.getElementById('dream-f-price').value;
+        var price = priceVal !== '' ? parseFloat(priceVal) : null;
+        var currency = document.getElementById('dream-f-currency').value;
+        var sizeVal = document.getElementById('dream-f-size').value;
+        var size = sizeVal !== '' ? parseFloat(sizeVal) : null;
+        var sizeUnit = document.getElementById('dream-f-size-unit').value;
+        var sourceUrl = document.getElementById('dream-f-link').value.trim();
+        var notes = document.getElementById('dream-f-notes').value.trim();
+        
+        var images = window.dreamCurrentImages || [];
+        var self = this;
+
+        if (id) {
+            var item = fossils.find(function(f) { return f.id === id; });
+            if (item) {
+                item.specimen = name;
+                item.price = price;
+                item.currency = currency;
+                item.size = size;
+                item.sizeUnit = sizeUnit;
+                item.sourceUrl = sourceUrl;
+                item.notes = notes;
+                item.images = images;
+                
+                updateFossil(item).then(function() {
+                    fossilsCacheLoaded = false;
+                    self.showToast('Dream specimen updated.', 'success');
+                    document.getElementById('dream-item-modal').close();
+                    self.renderFossils();
+                }).catch(function(err) {
+                    console.error('Failed to update dream specimen:', err);
+                    self.showToast('Failed to update dream specimen.', 'danger');
+                });
+            }
+        } else {
+            // Generate clean catalog-style ID for dream specimens (e.g. DREM-001)
+            var nextNum = 1;
+            var dreamFossils = fossils.filter(function(f) { return f.id && f.id.toUpperCase().startsWith('DREM-'); });
+            if (dreamFossils.length > 0) {
+                var nums = dreamFossils.map(function(f) {
+                    var parts = f.id.split('-');
+                    return parseInt(parts[1], 10) || 0;
+                });
+                nextNum = Math.max.apply(null, nums) + 1;
+            }
+            var padded = nextNum.toString().padStart(3, '0');
+            var dreamId = 'DREM-' + padded;
+
+            var newItem = {
+                id: dreamId,
+                specimen: name,
+                category: 'Uncategorized',
+                price: price,
+                currency: currency,
+                size: size,
+                sizeUnit: sizeUnit,
+                sourceUrl: sourceUrl,
+                notes: notes,
+                images: images,
+                isDream: true,
+                isWishlist: false,
+                isSold: false,
+                isCartItem: false,
+                createdAt: Date.now()
+            };
+            
+            addFossil(newItem).then(function() {
+                fossilsCacheLoaded = false;
+                self.showToast('Dream specimen saved.', 'success');
+                document.getElementById('dream-item-modal').close();
+                self.renderFossils();
+            }).catch(function(err) {
+                console.error('Failed to save dream specimen:', err);
+                self.showToast('Failed to save dream specimen.', 'danger');
+            });
+        }
+    },
+
     deleteCartItem: function(id) {
         if (!confirm('Are you sure you want to remove this draft specimen from the cart?')) {
             return;
@@ -9055,6 +9232,218 @@ window.app = {
         }).catch(function(err) {
             console.error('Failed to duplicate specimen:', err);
             self.showToast('Failed to duplicate specimen.', 'danger');
+        });
+    },
+
+    addDreamPhotoUrl: function() {
+        var input = document.getElementById('dream-f-photo-url-input');
+        if (!input) return;
+        var url = input.value.trim();
+        if (url) {
+            if (!window.dreamCurrentImages) {
+                window.dreamCurrentImages = [];
+            }
+            window.dreamCurrentImages.push(url);
+            input.value = '';
+            this.renderDreamImagePreview();
+        }
+    },
+
+    handleDreamMultipleImagesUpload: async function(event) {
+        var files = event.target.files;
+        if (!files || files.length === 0) return;
+        
+        var self = this;
+        var inputElement = event.target;
+        
+        if (!window.dreamCurrentImages) {
+            window.dreamCurrentImages = [];
+        }
+
+        var processFile = function(file) {
+            return new Promise(function(resolve) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    var dataUrl = e.target.result;
+                    if (file.type && file.type.startsWith('video/')) {
+                        window.dreamCurrentImages.push(dataUrl);
+                        resolve();
+                    } else {
+                        downscaleImage(dataUrl, 1200, 0.85).then(function(optimized) {
+                            window.dreamCurrentImages.push(optimized);
+                            resolve();
+                        }).catch(function(err) {
+                            console.error('Image downscale failed:', err);
+                            window.dreamCurrentImages.push(dataUrl);
+                            resolve();
+                        });
+                    }
+                };
+                reader.readAsDataURL(file);
+            });
+        };
+
+        var previewContainer = document.getElementById('dream-images-preview-container');
+        var existingLoader = document.getElementById('dream-heic-processing');
+        if (existingLoader) existingLoader.remove();
+
+        var showLoader = function(msg) {
+            var loader = document.getElementById('dream-heic-processing');
+            if (!loader) {
+                loader = document.createElement('div');
+                loader.id = 'dream-heic-processing';
+                loader.className = 'processing-indicator';
+                if (previewContainer) previewContainer.insertAdjacentElement('beforebegin', loader);
+            }
+            loader.innerHTML = '<span class="loading-spinner"></span> ' + msg;
+            return loader;
+        };
+
+        for (var i = 0; i < files.length; i++) {
+            var file = files[i];
+            var converted = await this.convertHeicIfNeeded(file, i, files.length, showLoader);
+            if (converted) {
+                await processFile(converted);
+            }
+        }
+
+        var finalLoader = document.getElementById('dream-heic-processing');
+        if (finalLoader) finalLoader.remove();
+
+        self.renderDreamImagePreview();
+        inputElement.value = ''; // reset
+    },
+
+    renderDreamImagePreview: function() {
+        var container = document.getElementById('dream-images-preview-container');
+        if (!container) return;
+        container.innerHTML = '';
+        
+        if (!window.dreamCurrentImages) {
+            window.dreamCurrentImages = [];
+        }
+        
+        window.dreamCurrentImages.forEach(function(imgSrc, index) {
+            var itemEl = document.createElement('div');
+            itemEl.className = 'dream-img-preview-item';
+            itemEl.style.cssText = 'position: relative; width: 80px; height: 80px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); overflow: hidden; background: var(--bg-surface); display: flex; align-items: center; justify-content: center;';
+            
+            var isVid = window.app.isVideo(imgSrc);
+            var mediaEl;
+            if (isVid) {
+                mediaEl = document.createElement('video');
+                mediaEl.src = imgSrc;
+                mediaEl.style.cssText = 'width: 100%; height: 100%; object-fit: cover;';
+                mediaEl.muted = true;
+                mediaEl.autoplay = false;
+                mediaEl.playsInline = true;
+            } else {
+                mediaEl = document.createElement('img');
+                mediaEl.src = imgSrc;
+                mediaEl.style.cssText = 'width: 100%; height: 100%; object-fit: cover;';
+            }
+            
+            itemEl.appendChild(mediaEl);
+            
+            var removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.innerHTML = '&times;';
+            removeBtn.style.cssText = 'position: absolute; top: 2px; right: 2px; background: rgba(0,0,0,0.6); color: white; border: none; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; cursor: pointer; font-weight: bold; z-index: 5; padding: 0; line-height: 1;';
+            removeBtn.onclick = function() {
+                window.dreamCurrentImages.splice(index, 1);
+                window.app.renderDreamImagePreview();
+            };
+            // Left (move back) button
+            if (index > 0) {
+                var leftBtn = document.createElement('button');
+                leftBtn.type = 'button';
+                leftBtn.innerHTML = '◀';
+                leftBtn.title = 'Move left';
+                leftBtn.style.cssText = 'position:absolute; bottom:4px; left:4px; background:rgba(0,0,0,0.7); color:#fff; border:none; width:18px; height:18px; border-radius:4px; z-index:10; cursor:pointer; font-size:8px; display:flex; align-items:center; justify-content:center; opacity:0.8; transition:opacity 0.2s, transform 0.1s;';
+                leftBtn.onmouseover = function() { this.style.opacity = '1'; this.style.transform = 'scale(1.1)'; };
+                leftBtn.onmouseout = function() { this.style.opacity = '0.8'; this.style.transform = 'scale(1)'; };
+                leftBtn.onclick = function(e) {
+                    e.stopPropagation();
+                    var temp = window.dreamCurrentImages[index];
+                    window.dreamCurrentImages[index] = window.dreamCurrentImages[index - 1];
+                    window.dreamCurrentImages[index - 1] = temp;
+                    window.app.renderDreamImagePreview();
+                };
+                itemEl.appendChild(leftBtn);
+            }
+
+            // Right (move forward) button
+            if (index < window.dreamCurrentImages.length - 1) {
+                var rightBtn = document.createElement('button');
+                rightBtn.type = 'button';
+                rightBtn.innerHTML = '▶';
+                rightBtn.title = 'Move right';
+                var leftPos = index > 0 ? '25px' : '4px';
+                rightBtn.style.cssText = 'position:absolute; bottom:4px; left:' + leftPos + '; background:rgba(0,0,0,0.7); color:#fff; border:none; width:18px; height:18px; border-radius:4px; z-index:10; cursor:pointer; font-size:8px; display:flex; align-items:center; justify-content:center; opacity:0.8; transition:opacity 0.2s, transform 0.1s;';
+                rightBtn.onmouseover = function() { this.style.opacity = '1'; this.style.transform = 'scale(1.1)'; };
+                rightBtn.onmouseout = function() { this.style.opacity = '0.8'; this.style.transform = 'scale(1)'; };
+                rightBtn.onclick = function(e) {
+                    e.stopPropagation();
+                    var temp = window.dreamCurrentImages[index];
+                    window.dreamCurrentImages[index] = window.dreamCurrentImages[index + 1];
+                    window.dreamCurrentImages[index + 1] = temp;
+                    window.app.renderDreamImagePreview();
+                };
+                itemEl.appendChild(rightBtn);
+            }
+
+            if (index > 0) {
+                var coverBtn = document.createElement('button');
+                coverBtn.type = 'button';
+                coverBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg> Cover';
+                coverBtn.style.cssText = 'position:absolute; bottom:4px; right:4px; background:rgba(0,0,0,0.65); color:#fff; border:none; padding:2px 4px; font-size:8px; border-radius:4px; z-index:10; cursor:pointer; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; display:flex; align-items:center; opacity:0.8; transition:opacity 0.2s;';
+                coverBtn.onmouseover = function() { this.style.opacity = '1'; };
+                coverBtn.onmouseout = function() { this.style.opacity = '0.8'; };
+                coverBtn.onclick = function(e) {
+                    e.stopPropagation();
+                    var clickedImg = window.dreamCurrentImages.splice(index, 1)[0];
+                    window.dreamCurrentImages.unshift(clickedImg);
+                    window.app.renderDreamImagePreview();
+                };
+                itemEl.appendChild(coverBtn);
+            }
+            
+            // Drag and Drop reordering support for Dream Previews
+            itemEl.draggable = true;
+            itemEl.ondragstart = function(e) {
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', index);
+                itemEl.classList.add('dragging');
+            };
+            itemEl.ondragend = function() {
+                itemEl.classList.remove('dragging');
+                var items = container.querySelectorAll('.dream-img-preview-item');
+                items.forEach(function(item) {
+                    item.classList.remove('drag-over');
+                });
+            };
+            itemEl.ondragover = function(e) {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                itemEl.classList.add('drag-over');
+            };
+            itemEl.ondragleave = function() {
+                itemEl.classList.remove('drag-over');
+            };
+            itemEl.ondrop = function(e) {
+                e.preventDefault();
+                itemEl.classList.remove('drag-over');
+                var srcIdx = parseInt(e.dataTransfer.getData('text/plain'), 10);
+                var destIdx = index;
+                if (!isNaN(srcIdx) && srcIdx !== destIdx) {
+                    var moved = window.dreamCurrentImages.splice(srcIdx, 1)[0];
+                    window.dreamCurrentImages.splice(destIdx, 0, moved);
+                    window.app.renderDreamImagePreview();
+                }
+            };
+            
+            itemEl.appendChild(removeBtn);
+            container.appendChild(itemEl);
         });
     },
 
@@ -10136,7 +10525,7 @@ window.app = {
         var picker = document.getElementById('deep-dive-picker');
         if (picker) {
             picker.innerHTML = '';
-            var ownedFossils = fossils.filter(function(x) { return !x.isWishlist && !x.isSold && !x.isCartItem; });
+            var ownedFossils = fossils.filter(function(x) { return !x.isWishlist && !x.isSold && !x.isCartItem && !x.isDream; });
             if (ownedFossils.length === 0) {
                 ownedFossils = fossils;
             }
@@ -10536,6 +10925,7 @@ window.app = {
                 return x.id !== f.id && 
                        !x.isWishlist && 
                        !x.isCartItem &&
+                       !x.isDream &&
                        (x.formation || '').trim().toLowerCase().indexOf(formationClean) !== -1;
             });
         }

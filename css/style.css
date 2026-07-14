@@ -1750,20 +1750,23 @@ dialog::backdrop {
 }
 
 .img-preview-item-wrapper.dragging,
-.cart-img-preview-item.dragging {
+.cart-img-preview-item.dragging,
+.dream-img-preview-item.dragging {
     opacity: 0.4 !important;
     cursor: grabbing !important;
 }
 
 .img-preview-item-wrapper.drag-over,
-.cart-img-preview-item.drag-over {
+.cart-img-preview-item.drag-over,
+.dream-img-preview-item.drag-over {
     transform: scale(1.08) !important;
     box-shadow: 0 0 0 2px var(--accent) !important;
     border-radius: var(--radius-sm) !important;
     z-index: 20;
 }
 
-.cart-img-preview-item {
+.cart-img-preview-item,
+.dream-img-preview-item {
     cursor: grab;
     user-select: none;
     transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease, box-shadow 0.2s ease;
@@ -6833,7 +6836,8 @@ dialog::backdrop {
     gap: 0.5rem;
 }
 
-.cart-summary-card {
+.cart-summary-card,
+.dream-summary-card {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -7085,7 +7089,8 @@ dialog::backdrop {
     .carts-actions-group {
         justify-content: flex-end;
     }
-    .cart-summary-card {
+    .cart-summary-card,
+    .dream-summary-card {
         flex-direction: column;
         align-items: stretch;
     }
