@@ -81,8 +81,17 @@
         }));
         assert('accepts trips in backup', withTrips.ok && withTrips.trips && withTrips.trips.length === 1);
 
-        var full = serializeFullBackup(sample, [{ id: 't1', title: 'Field day' }]);
+        var full = serializeFullBackup(sample, [{ id: 't1', title: 'Field day' }], [{ id: 'l1', name: 'Kem Kem' }]);
         assert('serializeFullBackup includes trips', typeof full === 'string' && full.indexOf('Field day') !== -1 && full.indexOf('specimenry-backup') !== -1);
+        assert('serializeFullBackup includes localities', full.indexOf('Kem Kem') !== -1 && full.indexOf('"localities"') !== -1);
+
+        var withLoc = parseFossilsBackup(JSON.stringify({
+            format: 'specimenry-backup',
+            fossils: sample,
+            trips: [],
+            localities: [{ id: 'loc1', name: 'Lyme Regis' }]
+        }));
+        assert('accepts localities in backup', withLoc.ok && withLoc.localities && withLoc.localities.length === 1);
 
         var bad = parseFossilsBackup('{ "not": "an array" }');
         assert('rejects non-array', bad.ok === false && !!bad.error);
@@ -136,6 +145,44 @@
         var html = SpecimenryShareCatalog.renderHtml(payload);
         assert('html is shareable document', html.indexOf('Read-only') !== -1 && html.indexOf('T. rex') !== -1);
         assert('html does not contain price', html.indexOf('9999') === -1);
+    })();
+
+    // --- Share card (no prices in canvas pipeline inputs) ---
+    (function() {
+        if (typeof SpecimenryShareCard === 'undefined') {
+            assert('SpecimenryShareCard loaded', false);
+            return;
+        }
+        assert('share card API has share', typeof SpecimenryShareCard.share === 'function');
+        assert('share card API has download', typeof SpecimenryShareCard.download === 'function');
+        assert('share card API has renderToCanvas', typeof SpecimenryShareCard.renderToCanvas === 'function');
+    })();
+
+    // --- ZIP / CSV export helpers ---
+    (function() {
+        if (typeof SpecimenryExportZip === 'undefined') {
+            assert('SpecimenryExportZip loaded', false);
+            return;
+        }
+        var csv = SpecimenryExportZip.buildCsv([{
+            id: 'S1',
+            specimen: 'T. rex',
+            type: 'fossil',
+            country: 'USA',
+            notes: 'Has, comma',
+            images: ['data:image/jpeg;base64,/9j/4AAQ'],
+            isCartItem: false
+        }, {
+            id: 'CART',
+            specimen: 'skip',
+            isCartItem: true,
+            images: []
+        }]);
+        assert('csv has header', csv.indexOf('Specimen Name') !== -1);
+        assert('csv includes specimen', csv.indexOf('T. rex') !== -1);
+        assert('csv escapes commas', csv.indexOf('"Has, comma"') !== -1);
+        assert('csv skips cart items', csv.indexOf('skip') === -1);
+        assert('csv references photo path', csv.indexOf('photos/S1_01.jpg') !== -1);
     })();
 
     // --- Backup reminders / fingerprint ---

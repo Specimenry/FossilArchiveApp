@@ -5,7 +5,7 @@
 // (see index.html).
 // =========================================================================
 var DB_NAME = 'FossilArchiveDB';
-var DB_VERSION = 2;
+var DB_VERSION = 4;
 var dbInstance = null;
 
 function initDB() {
@@ -27,6 +27,12 @@ function initDB() {
             }
             if (!db.objectStoreNames.contains('trips')) {
                 db.createObjectStore('trips', { keyPath: 'id' });
+            }
+            if (!db.objectStoreNames.contains('localities')) {
+                db.createObjectStore('localities', { keyPath: 'id' });
+            }
+            if (!db.objectStoreNames.contains('groups')) {
+                db.createObjectStore('groups', { keyPath: 'id' });
             }
         };
     });
@@ -238,14 +244,16 @@ function deleteMultipleFossils(ids) {
     });
 }
 
-/** Serialize a full backup object (fossils + trips). */
-function serializeFullBackup(fossilsList, tripsList) {
+/** Serialize a full backup object (fossils + trips + localities + groups). */
+function serializeFullBackup(fossilsList, tripsList, localitiesList, groupsList) {
     return JSON.stringify({
         format: 'specimenry-backup',
-        version: 2,
+        version: 4,
         exportedAt: new Date().toISOString(),
         fossils: fossilsList || [],
-        trips: tripsList || []
+        trips: tripsList || [],
+        localities: localitiesList || [],
+        groups: groupsList || []
     }, null, 2);
 }
 
@@ -262,24 +270,28 @@ function parseFossilsBackup(jsonStr) {
     try {
         var data = (typeof jsonStr === 'string') ? JSON.parse(jsonStr) : jsonStr;
         var trips = [];
+        var localities = [];
+        var groups = [];
         if (data && !Array.isArray(data) && typeof data === 'object') {
             if (Array.isArray(data.trips)) trips = data.trips;
+            if (Array.isArray(data.localities)) localities = data.localities;
+            if (Array.isArray(data.groups)) groups = data.groups;
             if (Array.isArray(data.fossils)) {
-                return { ok: true, fossils: data.fossils, trips: trips, error: null, format: data.format || 'specimenry-backup' };
+                return { ok: true, fossils: data.fossils, trips: trips, localities: localities, groups: groups, error: null, format: data.format || 'specimenry-backup' };
             }
             if (Array.isArray(data.data)) {
-                return { ok: true, fossils: data.data, trips: trips, error: null, format: 'legacy-data' };
+                return { ok: true, fossils: data.data, trips: trips, localities: localities, groups: groups, error: null, format: 'legacy-data' };
             }
             if (Array.isArray(data.specimens)) {
-                return { ok: true, fossils: data.specimens, trips: trips, error: null, format: 'sync-style' };
+                return { ok: true, fossils: data.specimens, trips: trips, localities: localities, groups: groups, error: null, format: 'sync-style' };
             }
         }
         if (!Array.isArray(data)) {
-            return { ok: false, fossils: null, trips: [], error: 'Invalid format: Expected an array of fossils.', format: null };
+            return { ok: false, fossils: null, trips: [], localities: [], groups: [], error: 'Invalid format: Expected an array of fossils.', format: null };
         }
-        return { ok: true, fossils: data, trips: [], error: null, format: 'legacy-array' };
+        return { ok: true, fossils: data, trips: [], localities: [], groups: [], error: null, format: 'legacy-array' };
     } catch (err) {
-        return { ok: false, fossils: null, trips: [], error: (err && err.message) ? err.message : String(err), format: null };
+        return { ok: false, fossils: null, trips: [], localities: [], groups: [], error: (err && err.message) ? err.message : String(err), format: null };
     }
 }
 
@@ -288,25 +300,34 @@ function exportToJSON() {
     var tripsPromise = (typeof SpecimenryTrips !== 'undefined' && SpecimenryTrips.getAll)
         ? SpecimenryTrips.getAll().catch(function() { return []; })
         : Promise.resolve([]);
+    var localitiesPromise = (typeof SpecimenryLocalities !== 'undefined' && SpecimenryLocalities.getAll)
+        ? SpecimenryLocalities.getAll().catch(function() { return []; })
+        : Promise.resolve([]);
+    var groupsPromise = (typeof SpecimenryGroups !== 'undefined' && SpecimenryGroups.getAll)
+        ? SpecimenryGroups.getAll().catch(function() { return []; })
+        : Promise.resolve([]);
 
-    return Promise.all([fossilsPromise, tripsPromise]).then(function(results) {
+    return Promise.all([fossilsPromise, tripsPromise, localitiesPromise, groupsPromise]).then(function(results) {
         var fossilsList = results[0] || [];
         var tripsList = results[1] || [];
-        if ((!fossilsList || fossilsList.length === 0) && (!tripsList || tripsList.length === 0)) {
+        var localitiesList = results[2] || [];
+        var groupsList = results[3] || [];
+        if ((!fossilsList || fossilsList.length === 0) && (!tripsList || tripsList.length === 0) &&
+            (!localitiesList || localitiesList.length === 0) && (!groupsList || groupsList.length === 0)) {
             if (window.app && window.app.showToast) {
                 window.app.showToast('No fossil records found to export.', 'warning');
             }
             return { ok: false, empty: true };
         }
         var dataStr = (typeof serializeFullBackup === 'function')
-            ? serializeFullBackup(fossilsList, tripsList)
+            ? serializeFullBackup(fossilsList, tripsList, localitiesList, groupsList)
             : JSON.stringify(fossilsList, null, 2);
         var blob = new Blob([dataStr], { type: 'application/json' });
         var filename = (typeof SpecimenryBackup !== 'undefined' && SpecimenryBackup.buildFilename)
             ? SpecimenryBackup.buildFilename()
             : 'specimenry-backup.json';
         var fingerprint = (typeof SpecimenryBackup !== 'undefined')
-            ? SpecimenryBackup.fingerprintLists(fossilsList, tripsList)
+            ? SpecimenryBackup.fingerprintLists(fossilsList, tripsList, localitiesList, groupsList)
             : '';
 
         var savePromise = (typeof SpecimenryBackup !== 'undefined' && SpecimenryBackup.saveBlobToDownloads)
@@ -336,6 +357,8 @@ function exportToJSON() {
                     filename: saveResult.filename || filename,
                     specimenCount: fossilsList.length,
                     tripCount: tripsList.length,
+                    localityCount: localitiesList.length,
+                    groupCount: groupsList.length,
                     fingerprint: fingerprint,
                     method: saveResult.method,
                     source: 'export'
@@ -344,6 +367,8 @@ function exportToJSON() {
 
             if (window.app && window.app.showToast) {
                 var tripNote = tripsList.length ? ' + ' + tripsList.length + ' trip(s)' : '';
+                var locNote = localitiesList.length ? ' + ' + localitiesList.length + ' site(s)' : '';
+                var grpNote = groupsList.length ? ' + ' + groupsList.length + ' group(s)' : '';
                 var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
                     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
                 var where;
@@ -355,7 +380,7 @@ function exportToJSON() {
                     where = 'Where is the file? Check your Downloads folder.';
                 }
                 window.app.showToast(
-                    'Backup OK (' + fossilsList.length + ' specimens' + tripNote + '). ' + where,
+                    'Backup OK (' + fossilsList.length + ' specimens' + tripNote + locNote + grpNote + '). ' + where,
                     'success',
                     7500
                 );
@@ -371,6 +396,8 @@ function exportToJSON() {
                 filename: saveResult.filename || filename,
                 specimenCount: fossilsList.length,
                 tripCount: tripsList.length,
+                localityCount: localitiesList.length,
+                groupCount: groupsList.length,
                 fingerprint: fingerprint,
                 method: saveResult.method
             };

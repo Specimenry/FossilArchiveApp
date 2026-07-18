@@ -5,8 +5,8 @@
 // =========================================================================
 
 // --- CONSTANTS ---
-var SPECIMENRY_VERSION = '0.9.0';
-var SPECIMENRY_BUILD_DATE = '2026-07-18';
+var SPECIMENRY_VERSION = '0.9.4';
+var SPECIMENRY_BUILD_DATE = '2026-07-19';
 
 var CATEGORIES = [
     "Vertebrate",
@@ -1366,6 +1366,9 @@ window.addEventListener('DOMContentLoaded', function() {
             if (window.app && typeof window.app.populateTripSelect === 'function') {
                 window.app.populateTripSelect('');
             }
+            if (window.app && typeof window.app.populateGroupSelect === 'function') {
+                window.app.populateGroupSelect('');
+            }
             if (window.app && typeof window.app.refreshBackupReminder === 'function') {
                 window.app.refreshBackupReminder();
             }
@@ -1526,6 +1529,12 @@ window.addEventListener('DOMContentLoaded', function() {
 // Global keyboard navigation (Lightbox & Showcase & Zoom & Compare)
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape' && window.app) {
+        var sheet = document.getElementById('specimenry-sheet');
+        if (sheet && sheet.classList.contains('active')) {
+            window.app.closeSpecimenrySheet(false);
+            e.preventDefault();
+            return;
+        }
         var menu = document.getElementById('mobile-menu-dropdown-content');
         if (menu && menu.classList.contains('active')) {
             window.app.closeMobileMenu();
@@ -1894,6 +1903,8 @@ window.app = {
         var typeSelect = document.getElementById('f-type-select');
         if (!typeSelect) return;
         var val = typeSelect.value;
+        var form = document.getElementById('fossil-form');
+        if (form) form.classList.toggle('is-mineral-type', val === 'mineral');
         
         var fossilClass = document.getElementById('fossil-class-group');
         var fossilGeol = document.getElementById('fossil-geology-group');
@@ -2249,7 +2260,14 @@ window.app = {
     },
 
     restoreToCollectionQuick: function(id, specimen) {
-        if (confirm('Are you sure you want to restore "' + specimen + '" back to your active collection?')) {
+        var self = this;
+        this.confirmAction({
+            title: 'Restore to collection?',
+            message: 'Restore "' + specimen + '" back to your active collection?',
+            confirmLabel: 'Restore',
+            destructive: false
+        }).then(function(ok) {
+            if (!ok) return;
             var f = fossils.find(function(x) { return x.id === id; });
             if (f) {
                 f.isSold = false;
@@ -2262,7 +2280,7 @@ window.app = {
                     window.app.renderFossils();
                 });
             }
-        }
+        });
     },
 
     // --- Theme ---
@@ -2385,6 +2403,16 @@ window.app = {
             counter.textContent = '';
         }
 
+        // Always-visible action strip (share / sales / deep dive)
+        var actionsEl = document.getElementById('lightbox-actions');
+        if (actionsEl) {
+            var deepLabel = f.type === 'mineral' ? '💎 Mineral Deep Dive' : '🦕 Paleo Deep Dive';
+            actionsEl.innerHTML =
+                '<button type="button" class="btn-secondary" onclick="app.shareSpecimenCard(\'' + f.id + '\')" style="width:100%;font-weight:700;padding:0.55rem;font-size:0.75rem;">🖼️ Share Card (no prices)</button>' +
+                '<button type="button" class="btn-primary" onclick="app.copyListingDescription(\'' + f.id + '\')" style="width:100%;display:flex;align-items:center;justify-content:center;gap:0.5rem;background:var(--accent);color:var(--bg-surface);font-weight:700;padding:0.55rem;border-radius:var(--radius-sm);border:none;cursor:pointer;font-size:0.75rem;">📋 Copy Sales Description</button>' +
+                '<button type="button" class="btn-primary" onclick="app.closeLightbox(); app.openDeepDive(\'' + f.id + '\')" style="width:100%;display:flex;align-items:center;justify-content:center;gap:0.5rem;background:linear-gradient(135deg, #2a52be, #319795);color:#fff;font-weight:700;padding:0.55rem;border-radius:var(--radius-sm);border:none;cursor:pointer;font-size:0.75rem;">' + deepLabel + '</button>';
+        }
+
         // Show/hide within-fossil nav arrows
         var prevBtn = overlay.querySelector('.lightbox-nav.prev');
         var nextBtn = overlay.querySelector('.lightbox-nav.next');
@@ -2393,6 +2421,7 @@ window.app = {
 
         // Render fossil carousel strip
         window.app._renderLightboxCarousel();
+        window.app._bindLightboxCollapse();
 
         // Render geological timeline ruler
         var rulerElem = document.getElementById('lightbox-timeline-ruler');
@@ -2568,17 +2597,6 @@ window.app = {
                     curHtml += '<div>' + part + '</div>';
                 });
                 curHtml += '</div>';
-                
-                // Add Copy Sales Description button
-                curHtml += '<button class="btn-primary" onclick="app.copyListingDescription(\'' + f.id + '\')" style="margin-top: 1rem; width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem; background: var(--accent); color: var(--bg-surface); font-weight: 700; padding: 0.55rem; border-radius: var(--radius-sm); border: none; cursor: pointer; font-size: 0.75rem; transition: transform 0.1s ease;" onmousedown="this.style.transform=\'scale(0.98)\'" onmouseup="this.style.transform=\'scale(1)\'">' +
-                           '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>' +
-                           '📋 Copy Sales Description' +
-                           '</button>';
-
-                // Add Paleo Deep Dive button
-                curHtml += '<button class="btn-primary" onclick="app.closeLightbox(); app.openDeepDive(\'' + f.id + '\')" style="margin-top: 0.5rem; width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem; background: linear-gradient(135deg, #2a52be, #319795); color: #ffffff; font-weight: 700; padding: 0.55rem; border-radius: var(--radius-sm); border: none; cursor: pointer; font-size: 0.75rem; transition: transform 0.1s ease; box-shadow: 0 4px 12px rgba(49, 151, 149, 0.2);" onmousedown="this.style.transform=\'scale(0.98)\'" onmouseup="this.style.transform=\'scale(1)\'">' +
-                           '🦕 Paleo Deep Dive' +
-                           '</button>';
 
                 curatorElem.innerHTML = curHtml;
                 curatorElem.style.display = '';
@@ -2796,6 +2814,48 @@ window.app = {
         if (vid) {
             vid.pause();
         }
+        this._unbindLightboxCollapse();
+    },
+
+    _lightboxCollapseBound: false,
+    _lightboxCollapseHandler: null,
+    _lightboxInfoScrollHandler: null,
+
+    _bindLightboxCollapse: function() {
+        var inner = document.querySelector('#lightbox .lightbox-inner');
+        var info = document.querySelector('#lightbox .lightbox-info');
+        if (!inner) return;
+
+        this._unbindLightboxCollapse();
+        inner.classList.remove('is-collapsed');
+        inner.scrollTop = 0;
+        if (info) info.scrollTop = 0;
+
+        var self = this;
+        var onScroll = function() {
+            // Collapse only on narrow layouts where hero is sticky
+            if (window.matchMedia && window.matchMedia('(min-width: 1024px)').matches) {
+                inner.classList.remove('is-collapsed');
+                return;
+            }
+            var y = inner.scrollTop || 0;
+            if (y > 56) inner.classList.add('is-collapsed');
+            else inner.classList.remove('is-collapsed');
+        };
+
+        this._lightboxCollapseHandler = onScroll;
+        inner.addEventListener('scroll', onScroll, { passive: true });
+        this._lightboxCollapseBound = true;
+    },
+
+    _unbindLightboxCollapse: function() {
+        var inner = document.querySelector('#lightbox .lightbox-inner');
+        if (inner && this._lightboxCollapseHandler) {
+            inner.removeEventListener('scroll', this._lightboxCollapseHandler);
+        }
+        if (inner) inner.classList.remove('is-collapsed');
+        this._lightboxCollapseHandler = null;
+        this._lightboxCollapseBound = false;
     },
 
     openZoomOverlay: function(src, allImages, currentIndex) {
@@ -5558,31 +5618,35 @@ window.app = {
         html += '<h3 style="font-family: \'Playfair Display\', Georgia, serif; font-size: 1.4rem; color: var(--text-primary); margin-bottom: 0.75rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; display: flex; align-items: center; justify-content: space-between;">' +
                     '<span style="display: flex; align-items: center; gap: 0.5rem;">' +
                         '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>' +
-                        'Specimen Discovery & Gaps Album' +
+                        'Legendary Index Fossils' +
                     '</span>' +
                     '<button class="btn-secondary" onclick="app.showMainCharts()" style="font-size: 0.75rem; padding: 0.25rem 0.6rem; cursor: pointer; display: flex; align-items: center; gap: 0.25rem;">' +
                         '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg> Back to Dashboard' +
                     '</button>' +
                 '</h3>';
         
-        html += '<p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.5rem; line-height: 1.5;">' +
-                    'Track important evolutionary index fossils in Earth\'s history. This album lists legendary specimens that are currently missing from your active collection. You can add them to your Wishlist with a single click to help complete your archive!' +
+        html += '<p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.85rem; line-height: 1.5;">' +
+                    'A fixed “bucket list” of classic index fossils (T. rex, Megalodon, Ammonite, and more) — not a full gap analysis of <em>your</em> archive. ' +
+                    'We check whether those names appear in your Collection or Wishlist. Mineral-only collectors can skip this tab; charts and map still reflect your data.' +
+                '</p>';
+        html += '<p style="font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 1.5rem; line-height: 1.45; padding: 0.65rem 0.85rem; background: var(--bg-warm); border: 1px solid var(--border-color); border-radius: var(--radius-sm);">' +
+                    '<strong style="color: var(--text-primary);">How matching works:</strong> a specimen counts if its name contains the list name (e.g. “Megalodon tooth” matches Megalodon). Add missing ones to your Wishlist in one click.' +
                 '</p>';
                 
         // Progress Bar
         var totalKey = KEY_SPECIMENS.length;
         var collectedCount = collectedList.length;
-        var progressPercent = Math.round((collectedCount / totalKey) * 100);
+        var progressPercent = totalKey ? Math.round((collectedCount / totalKey) * 100) : 0;
         html += '<div style="margin-bottom: 1.5rem;">' +
-                    '<div style="display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.35rem;">' +
-                        '<span>Prehistoric Milestones Album (Legendary Index Fossils)</span>' +
-                        '<span>' + collectedCount + ' / ' + totalKey + ' Specimens (' + progressPercent + '%)</span>' +
+                    '<div style="display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.35rem; gap: 0.75rem; flex-wrap: wrap;">' +
+                        '<span>Fixed catalog progress (' + totalKey + ' legendary taxa)</span>' +
+                        '<span>' + collectedCount + ' / ' + totalKey + ' collected (' + progressPercent + '%)</span>' +
                     '</div>' +
                     '<div style="width: 100%; height: 8px; background: var(--bg-warm); border-radius: 4px; overflow: hidden; border: 1px solid var(--border-color);">' +
                         '<div style="width: ' + progressPercent + '%; height: 100%; background: var(--accent); transition: width 0.3s ease;"></div>' +
                     '</div>' +
                     '<div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.35rem; line-height: 1.3;">' +
-                        'ℹ️ Tracks specifically your collection representation of the 27 legendary index species defined in our geologic discovery catalog.' +
+                        'ℹ️ Suggestions below (time gaps, taxonomic gaps) still use <em>your</em> periods and categories — but only among this fixed fossil list.' +
                     '</div>' +
                 '</div>';
                 
@@ -5811,6 +5875,9 @@ window.app = {
                 if (typeof window.app.populateTripSelect === 'function') {
                     window.app.populateTripSelect(f.tripId || '');
                 }
+                if (typeof window.app.populateGroupSelect === 'function') {
+                    window.app.populateGroupSelect(f.groupId || '');
+                }
                 if (typeof window.app.renderChangeLogPanel === 'function') {
                     window.app.renderChangeLogPanel(f.changeLog, true);
                 }
@@ -5934,6 +6001,9 @@ window.app = {
             document.getElementById('f-self-found').checked = false;
             if (typeof window.app.populateTripSelect === 'function') {
                 window.app.populateTripSelect('');
+            }
+            if (typeof window.app.populateGroupSelect === 'function') {
+                window.app.populateGroupSelect('');
             }
             if (typeof window.app.renderChangeLogPanel === 'function') {
                 window.app.renderChangeLogPanel(null, false);
@@ -6098,15 +6168,30 @@ window.app = {
     },
 
     closeModal: function() {
+        var self = this;
         if (this._formDirty) {
-            if (!confirm('You have unsaved changes. Discard them?')) {
-                return;
-            }
+            this.confirmAction({
+                title: 'Discard changes?',
+                message: 'You have unsaved changes. Discard them?',
+                confirmLabel: 'Discard',
+                cancelLabel: 'Keep editing',
+                destructive: true
+            }).then(function(ok) {
+                if (ok) self._closeModalNow();
+            });
+            return;
         }
+        this._closeModalNow();
+    },
+
+    _closeModalNow: function() {
         this._formDirty = false;
         this.updateUnsavedBadge();
         if (typeof window.app.stopAllDictation === 'function') {
             window.app.stopAllDictation();
+        }
+        if (typeof this.resetSimpleMore === 'function') {
+            this.resetSimpleMore();
         }
         document.getElementById('fossil-modal').close();
     },
@@ -7860,6 +7945,7 @@ window.app = {
                 saleCurrency: (document.getElementById('f-wishlist').value === 'sold' || document.getElementById('f-wishlist').value === 'sale') ? document.getElementById('f-sale-currency').value : 'USD',
                 isSelfFound: document.getElementById('f-self-found').checked,
                 tripId: (document.getElementById('f-trip-id') && document.getElementById('f-trip-id').value) || '',
+                groupId: (document.getElementById('f-group-id') && document.getElementById('f-group-id').value) || '',
                 changeLog: existingChangeLog,
                 geologicalPeriod: document.getElementById('f-period').value,
                 epoch: document.getElementById('f-epoch').value,
@@ -7941,6 +8027,12 @@ window.app = {
                 if (tripLinkId && typeof SpecimenryTrips !== 'undefined') {
                     SpecimenryTrips.linkSpecimen(tripLinkId, fossil.id).catch(function(err) {
                         console.warn('Could not link specimen to trip:', err);
+                    });
+                }
+                var groupLinkId = fossil.groupId;
+                if (groupLinkId && typeof SpecimenryGroups !== 'undefined') {
+                    SpecimenryGroups.linkSpecimen(groupLinkId, fossil.id).catch(function(err) {
+                        console.warn('Could not link specimen to group:', err);
                     });
                 }
 
@@ -8096,21 +8188,29 @@ window.app = {
 
     // --- Delete ---
     deleteFossilItem: function(id) {
-        if (!confirm('Are you sure you want to delete this fossil?')) return;
-        var f = fossils.find(function(x) { return x.id === id; });
-        if (!f) return;
-        var snapshot = null;
-        try {
-            snapshot = JSON.parse(JSON.stringify(f));
-        } catch (e) {
-            snapshot = f;
-        }
-        var name = f.specimen || 'Specimen';
-        deleteFossil(id).then(function() {
-            selectedFossils.delete(id);
-            window.app.updateMassDeleteButton();
-            window.app.renderFossils();
-            window.app.offerUndoDelete([snapshot], '"' + name + '" deleted.');
+        var self = this;
+        this.confirmAction({
+            title: 'Delete specimen?',
+            message: 'This removes the specimen from your archive. You can undo briefly after delete.',
+            confirmLabel: 'Delete',
+            destructive: true
+        }).then(function(ok) {
+            if (!ok) return;
+            var f = fossils.find(function(x) { return x.id === id; });
+            if (!f) return;
+            var snapshot = null;
+            try {
+                snapshot = JSON.parse(JSON.stringify(f));
+            } catch (e) {
+                snapshot = f;
+            }
+            var name = f.specimen || 'Specimen';
+            deleteFossil(id).then(function() {
+                selectedFossils.delete(id);
+                window.app.updateMassDeleteButton();
+                window.app.renderFossils();
+                window.app.offerUndoDelete([snapshot], '"' + name + '" deleted.');
+            });
         });
     },
 
@@ -8761,6 +8861,108 @@ window.app = {
         });
     },
 
+    massLinkToGroupSelected: function() {
+        if (selectedFossils.size === 0) return;
+        if (typeof SpecimenryGroups === 'undefined') {
+            window.app.showToast('Groups module not loaded.', 'error');
+            return;
+        }
+        var count = selectedFossils.size;
+        var ids = Array.from(selectedFossils);
+
+        SpecimenryGroups.getAll().then(function(groups) {
+            var overlay = document.createElement('div');
+            overlay.className = 'curator-modal-overlay';
+            overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:100050; display:flex; align-items:center; justify-content:center; opacity:0; transition:opacity 0.25s;';
+
+            var optionsHtml = '<option value="">— Select a group —</option>';
+            groups.forEach(function(g) {
+                var label = (g.name || g.id) + (g.source ? ' · ' + g.source : '');
+                optionsHtml += '<option value="' + escapeHtml(g.id) + '">' + escapeHtml(label) + '</option>';
+            });
+
+            overlay.innerHTML =
+                '<div class="curator-modal-card" style="background:var(--bg-surface); color:var(--text-primary); border-radius:var(--radius-md); width:92%; max-width:420px; padding:1.25rem; box-shadow:var(--shadow-lg); transform:scale(0.95); transition:transform 0.25s; border:1px solid var(--border-color);">' +
+                    '<h3 style="margin:0 0 0.35rem 0; font-size:1.05rem;">Add ' + count + ' specimen(s) to a group</h3>' +
+                    '<p style="margin:0 0 1rem 0; font-size:0.75rem; color:var(--text-secondary); line-height:1.4;">Lots / ex-collections / same-matrix bundles.</p>' +
+                    '<label for="mass-group-select" style="display:block; font-size:0.78rem; font-weight:600; margin-bottom:0.25rem;">Group</label>' +
+                    '<select id="mass-group-select" style="width:100%; margin-bottom:1rem;">' + optionsHtml + '</select>' +
+                    '<div style="display:flex; justify-content:flex-end; gap:0.5rem;">' +
+                        '<button type="button" class="btn-secondary" id="mass-group-cancel">Cancel</button>' +
+                        '<button type="button" class="btn-primary" id="mass-group-submit">Add</button>' +
+                    '</div>' +
+                '</div>';
+
+            document.body.appendChild(overlay);
+            var card = overlay.querySelector('.curator-modal-card');
+            setTimeout(function() {
+                overlay.style.opacity = '1';
+                if (card) card.style.transform = 'scale(1)';
+            }, 10);
+
+            var closeModal = function() {
+                overlay.style.opacity = '0';
+                if (card) card.style.transform = 'scale(0.95)';
+                setTimeout(function() {
+                    if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+                }, 250);
+            };
+
+            overlay.querySelector('#mass-group-cancel').addEventListener('click', closeModal);
+            overlay.addEventListener('click', function(e) {
+                if (e.target === overlay) closeModal();
+            });
+
+            overlay.querySelector('#mass-group-submit').addEventListener('click', function() {
+                var groupId = document.getElementById('mass-group-select').value;
+                if (!groupId) {
+                    window.app.showToast('Choose a group first (or create one under Utilities → Lots & Groups).', 'warning');
+                    return;
+                }
+                var okIds = [];
+                var failCount = 0;
+                var chain = Promise.resolve();
+                ids.forEach(function(id) {
+                    chain = chain.then(function() {
+                        var f = fossils.find(function(x) { return x.id === id; });
+                        if (!f) {
+                            failCount++;
+                            return;
+                        }
+                        var prev = f.groupId || '';
+                        f.groupId = groupId;
+                        return updateFossil(f).then(function() {
+                            okIds.push(id);
+                        }).catch(function() {
+                            failCount++;
+                            f.groupId = prev;
+                        });
+                    });
+                });
+                chain.then(function() {
+                    if (okIds.length === 0) {
+                        throw new Error('No specimens could be updated.');
+                    }
+                    return SpecimenryGroups.linkSpecimens(groupId, okIds);
+                }).then(function() {
+                    selectedFossils.clear();
+                    window.app.updateMassDeleteButton();
+                    window.app.renderFossils();
+                    var msg = 'Added ' + okIds.length + ' specimen(s) to group.';
+                    if (failCount) msg += ' ' + failCount + ' failed.';
+                    window.app.showToast(msg, failCount ? 'warning' : 'success');
+                    closeModal();
+                }).catch(function(err) {
+                    if (typeof reportAppError === 'function') reportAppError(err, 'Add to group');
+                    else window.app.showToast('Could not add to group.', 'error');
+                });
+            });
+        }).catch(function(err) {
+            if (typeof reportAppError === 'function') reportAppError(err, 'Add to group');
+            else window.app.showToast('Could not load groups.', 'error');
+        });
+    },
+
     preloadDictationModel: function() {
         if (typeof SpecimenryDictationStatus !== 'undefined' && SpecimenryDictationStatus.updateBadge) {
             SpecimenryDictationStatus.updateBadge();
@@ -8785,26 +8987,33 @@ window.app = {
     deleteSelected: function() {
         if (selectedFossils.size === 0) return;
         var count = selectedFossils.size;
-        if (!confirm('Are you sure you want to delete ' + count + ' fossil(s)?')) return;
-        var ids = Array.from(selectedFossils);
-        var snapshots = ids.map(function(id) {
-            var f = fossils.find(function(x) { return x.id === id; });
-            if (!f) return null;
-            try {
-                return JSON.parse(JSON.stringify(f));
-            } catch (e) {
-                return f;
-            }
-        }).filter(Boolean);
+        this.confirmAction({
+            title: count === 1 ? 'Delete 1 specimen?' : 'Delete ' + count + ' specimens?',
+            message: 'Selected specimens will be removed. You can undo briefly after delete.',
+            confirmLabel: 'Delete',
+            destructive: true
+        }).then(function(ok) {
+            if (!ok) return;
+            var ids = Array.from(selectedFossils);
+            var snapshots = ids.map(function(id) {
+                var f = fossils.find(function(x) { return x.id === id; });
+                if (!f) return null;
+                try {
+                    return JSON.parse(JSON.stringify(f));
+                } catch (e) {
+                    return f;
+                }
+            }).filter(Boolean);
 
-        deleteMultipleFossils(ids).then(function() {
-            selectedFossils.clear();
-            window.app.updateMassDeleteButton();
-            window.app.renderFossils();
-            window.app.offerUndoDelete(
-                snapshots,
-                count === 1 ? '1 specimen deleted.' : count + ' specimens deleted.'
-            );
+            deleteMultipleFossils(ids).then(function() {
+                selectedFossils.clear();
+                window.app.updateMassDeleteButton();
+                window.app.renderFossils();
+                window.app.offerUndoDelete(
+                    snapshots,
+                    count === 1 ? '1 specimen deleted.' : count + ' specimens deleted.'
+                );
+            });
         });
     },
 
@@ -8937,6 +9146,295 @@ window.app = {
         if (el && typeof el.focus === 'function') {
             try { el.focus(); } catch (err) {}
         }
+    },
+
+    /** Apple-style action / confirm sheet. opts: title, message?, actions?, confirmLabel?, cancelLabel?, destructive?, onResult? */
+    openActionSheet: function(opts) {
+        opts = opts || {};
+        var self = this;
+        var sheet = document.getElementById('specimenry-sheet');
+        var backdrop = document.getElementById('specimenry-sheet-backdrop');
+        var body = document.getElementById('specimenry-sheet-body');
+        var titleEl = document.getElementById('specimenry-sheet-title');
+        if (!sheet || !body) return Promise.resolve(null);
+
+        if (this._sheetResolve) {
+            var prev = this._sheetResolve;
+            this._sheetResolve = null;
+            prev(false);
+        }
+
+        if (titleEl) titleEl.textContent = opts.title || 'Actions';
+        body.innerHTML = '';
+
+        if (opts.message) {
+            var msg = document.createElement('p');
+            msg.className = 'specimenry-confirm-message';
+            msg.textContent = opts.message;
+            body.appendChild(msg);
+        }
+
+        var actions = opts.actions || [];
+        if (actions.length) {
+            var list = document.createElement('div');
+            list.className = 'specimenry-sheet-actions';
+            actions.forEach(function(action, idx) {
+                var btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'specimenry-sheet-action' + (action.destructive ? ' is-destructive' : '');
+                btn.textContent = (action.icon ? action.icon + ' ' : '') + (action.label || 'Action');
+                btn.addEventListener('click', function() {
+                    self.closeSpecimenrySheet(action.value != null ? action.value : idx);
+                    if (typeof action.onClick === 'function') {
+                        setTimeout(function() { action.onClick(); }, 40);
+                    }
+                });
+                list.appendChild(btn);
+            });
+            body.appendChild(list);
+        }
+
+        if (opts.confirmLabel || opts.mode === 'confirm') {
+            var footer = document.createElement('div');
+            footer.className = 'specimenry-confirm-footer';
+            var confirmBtn = document.createElement('button');
+            confirmBtn.type = 'button';
+            confirmBtn.className = opts.destructive !== false ? 'btn-danger' : 'btn-primary';
+            confirmBtn.textContent = opts.confirmLabel || 'Confirm';
+            confirmBtn.addEventListener('click', function() {
+                self.closeSpecimenrySheet(true);
+            });
+            var cancelBtn = document.createElement('button');
+            cancelBtn.type = 'button';
+            cancelBtn.className = 'btn-secondary';
+            cancelBtn.textContent = opts.cancelLabel || 'Cancel';
+            cancelBtn.addEventListener('click', function() {
+                self.closeSpecimenrySheet(false);
+            });
+            footer.appendChild(confirmBtn);
+            footer.appendChild(cancelBtn);
+            body.appendChild(footer);
+        } else {
+            var dismiss = document.createElement('button');
+            dismiss.type = 'button';
+            dismiss.className = 'specimenry-sheet-cancel';
+            dismiss.textContent = opts.cancelLabel || 'Cancel';
+            dismiss.addEventListener('click', function() {
+                self.closeSpecimenrySheet(false);
+            });
+            body.appendChild(dismiss);
+        }
+
+        sheet.hidden = false;
+        if (backdrop) {
+            backdrop.hidden = false;
+            backdrop.classList.add('active');
+        }
+        requestAnimationFrame(function() {
+            sheet.classList.add('active');
+        });
+        document.body.classList.add('specimenry-sheet-open');
+        this._bindSheetSwipe(sheet);
+        this.focusSheet(sheet, opts.destructive !== false && (opts.confirmLabel || opts.mode === 'confirm')
+            ? '.specimenry-confirm-footer .btn-secondary'
+            : '.specimenry-sheet-action, .specimenry-sheet-cancel, .btn-primary');
+
+        return new Promise(function(resolve) {
+            self._sheetResolve = resolve;
+        });
+    },
+
+    confirmAction: function(opts) {
+        opts = opts || {};
+        opts.mode = 'confirm';
+        if (opts.destructive == null) opts.destructive = true;
+        return this.openActionSheet(opts).then(function(result) {
+            return !!result;
+        });
+    },
+
+    closeSpecimenrySheet: function(result) {
+        var sheet = document.getElementById('specimenry-sheet');
+        var backdrop = document.getElementById('specimenry-sheet-backdrop');
+        if (sheet) {
+            sheet.classList.remove('active');
+            sheet.style.transform = '';
+        }
+        if (backdrop) backdrop.classList.remove('active');
+        document.body.classList.remove('specimenry-sheet-open');
+        this._unbindSheetSwipe();
+        var resolve = this._sheetResolve;
+        this._sheetResolve = null;
+        var self = this;
+        setTimeout(function() {
+            if (sheet && !sheet.classList.contains('active')) sheet.hidden = true;
+            if (backdrop && !backdrop.classList.contains('active')) backdrop.hidden = true;
+            self.restoreSheetFocus(null);
+        }, 280);
+        if (resolve) resolve(result);
+    },
+
+    _bindSheetSwipe: function(sheet) {
+        this._unbindSheetSwipe();
+        if (!sheet || window.matchMedia('(min-width: 720px)').matches) return;
+        var self = this;
+        var startY = 0;
+        var currentY = 0;
+        var dragging = false;
+        var onStart = function(e) {
+            var t = e.touches && e.touches[0];
+            if (!t) return;
+            var handle = document.getElementById('specimenry-sheet-handle');
+            var header = sheet.querySelector('.specimenry-sheet-header');
+            var target = e.target;
+            if (!(handle && (target === handle || handle.contains(target))) &&
+                !(header && (target === header || header.contains(target)))) {
+                if (sheet.scrollTop > 0) return;
+            }
+            startY = t.clientY;
+            currentY = startY;
+            dragging = true;
+        };
+        var onMove = function(e) {
+            if (!dragging) return;
+            var t = e.touches && e.touches[0];
+            if (!t) return;
+            currentY = t.clientY;
+            var dy = Math.max(0, currentY - startY);
+            if (dy > 0) {
+                sheet.style.transform = 'translateY(' + dy + 'px)';
+                if (e.cancelable) e.preventDefault();
+            }
+        };
+        var onEnd = function() {
+            if (!dragging) return;
+            dragging = false;
+            var dy = Math.max(0, currentY - startY);
+            sheet.style.transform = '';
+            if (dy > 90) self.closeSpecimenrySheet(false);
+        };
+        sheet.addEventListener('touchstart', onStart, { passive: true });
+        sheet.addEventListener('touchmove', onMove, { passive: false });
+        sheet.addEventListener('touchend', onEnd);
+        sheet.addEventListener('touchcancel', onEnd);
+        this._sheetSwipeHandlers = { sheet: sheet, onStart: onStart, onMove: onMove, onEnd: onEnd };
+    },
+
+    _unbindSheetSwipe: function() {
+        var h = this._sheetSwipeHandlers;
+        if (!h || !h.sheet) return;
+        h.sheet.removeEventListener('touchstart', h.onStart);
+        h.sheet.removeEventListener('touchmove', h.onMove);
+        h.sheet.removeEventListener('touchend', h.onEnd);
+        h.sheet.removeEventListener('touchcancel', h.onEnd);
+        this._sheetSwipeHandlers = null;
+    },
+
+    toggleSimpleMore: function() {
+        var panel = document.getElementById('simple-more-panel');
+        var btn = document.getElementById('btn-simple-more');
+        if (!panel || !btn) return;
+        var open = !panel.classList.contains('is-open');
+        panel.classList.toggle('is-open', open);
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        btn.textContent = open ? 'Hide details' : 'More details';
+    },
+
+    resetSimpleMore: function() {
+        var panel = document.getElementById('simple-more-panel');
+        var btn = document.getElementById('btn-simple-more');
+        if (panel) panel.classList.remove('is-open');
+        if (btn) {
+            btn.setAttribute('aria-expanded', 'false');
+            btn.textContent = 'More details';
+        }
+    },
+
+    updateArchiveStickyHeader: function(count) {
+        var header = document.getElementById('archive-sticky-header');
+        var titleEl = document.getElementById('archive-sticky-title');
+        var countEl = document.getElementById('archive-sticky-count');
+        if (!header || !titleEl || !countEl) return;
+        var titles = {
+            'false': 'Collection',
+            'true': 'Wishlist',
+            sold: 'Sold',
+            sale: 'For Sale',
+            traded: 'Traded',
+            dream: 'Dream',
+            carts: 'Carts'
+        };
+        titleEl.textContent = titles[currentView] || 'Archive';
+        var n = typeof count === 'number' ? count : 0;
+        countEl.textContent = n === 1 ? '1 specimen' : n + ' specimens';
+        header.hidden = currentView === 'carts';
+        this._ensureArchiveStickyScroll();
+    },
+
+    _ensureArchiveStickyScroll: function() {
+        if (this._archiveStickyBound) return;
+        this._archiveStickyBound = true;
+        var self = this;
+        var onScroll = function() {
+            var header = document.getElementById('archive-sticky-header');
+            if (!header || header.hidden) return;
+            header.classList.toggle('is-compact', window.scrollY > 28);
+        };
+        window.addEventListener('scroll', onScroll, { passive: true });
+        onScroll();
+    },
+
+    openCardActionSheet: function(fossilId) {
+        var f = fossils.find(function(x) { return x.id === fossilId; });
+        if (!f) return;
+        var self = this;
+        var name = f.specimen || 'Specimen';
+        var nameEsc = (typeof escapeHtml === 'function' ? escapeHtml(name) : name).replace(/'/g, "\\'");
+        var speciesFirstWord = (f.specimen || '').trim().split(/\s+/)[0] || '';
+        var wikiQuery = encodeURIComponent(speciesFirstWord);
+        var actions = [];
+
+        actions.push({
+            label: f.type === 'mineral' ? 'Mineral Deep Dive' : 'Paleo Deep Dive',
+            icon: f.type === 'mineral' ? '💎' : '🦕',
+            onClick: function() { self.openDeepDive(fossilId); }
+        });
+        if (speciesFirstWord) {
+            actions.push({
+                label: 'Wikipedia Search',
+                icon: '📖',
+                onClick: function() {
+                    window.open('https://en.wikipedia.org/wiki/Special:Search?search=' + wikiQuery, '_blank');
+                }
+            });
+        }
+        actions.push({ label: 'Copy Sales Info', icon: '📋', onClick: function() { self.copyListingDescription(fossilId); } });
+        actions.push({ label: 'Share Card', icon: '🖼️', onClick: function() { self.shareSpecimenCard(fossilId); } });
+        actions.push({ label: 'Print Label', icon: '🖨️', onClick: function() { self.printLabel(fossilId); } });
+        actions.push({ label: 'Duplicate Specimen', icon: '👥', onClick: function() { self.duplicateFossil(fossilId); } });
+
+        if (f.isSold) {
+            actions.push({ label: 'Change to Traded', icon: '🔄', onClick: function() { self.markAsTradedQuick(fossilId, nameEsc); } });
+            actions.push({ label: 'Restore to Collection', icon: '↩️', onClick: function() { self.restoreToCollectionQuick(fossilId, name); } });
+        } else if (f.isTraded) {
+            actions.push({ label: 'Change to Sold', icon: '💰', onClick: function() { self.markAsSoldQuick(fossilId, nameEsc); } });
+            actions.push({ label: 'Restore to Collection', icon: '↩️', onClick: function() { self.restoreToCollectionQuick(fossilId, name); } });
+        } else if (!f.isWishlist && !f.isDream) {
+            actions.push({ label: 'Mark as Sold', icon: '💰', onClick: function() { self.markAsSoldQuick(fossilId, nameEsc); } });
+            actions.push({ label: 'Mark as Traded', icon: '🔄', onClick: function() { self.markAsTradedQuick(fossilId, nameEsc); } });
+        } else {
+            actions.push({ label: 'Acquire → Collection', icon: '🚀', onClick: function() { self.acquireWishlistFossil(fossilId); } });
+            actions.push({ label: 'Found → New Specimen', icon: '✨', onClick: function() { self.foundWantAsNew(fossilId); } });
+        }
+
+        actions.push({
+            label: 'Delete Specimen',
+            icon: '🗑️',
+            destructive: true,
+            onClick: function() { self.deleteFossilItem(fossilId); }
+        });
+
+        this.openActionSheet({ title: name, actions: actions });
     },
 
     showStorageFailureUI: function(err) {
@@ -10435,6 +10933,9 @@ window.app = {
                     countEl.classList.remove('active');
                 }
             }
+            if (typeof window.app.updateArchiveStickyHeader === 'function') {
+                window.app.updateArchiveStickyHeader(filtered.length);
+            }
 
             // --- UPDATE VIEW INFO VALUATION BANNER ---
             var bannerEl = document.getElementById('view-info-banner');
@@ -10688,66 +11189,64 @@ window.app = {
                         '<h3>No specimens match</h3>' +
                         '<p>Nothing in this view matches your search or filters.</p>' +
                         '<div class="empty-state-actions">' +
-                            '<button type="button" class="btn-secondary" onclick="app.resetFiltersOnly()">Clear filters</button>' +
+                            '<button type="button" class="btn-primary" onclick="app.resetFiltersOnly()">Clear filters</button>' +
                         '</div>';
                 } else if (wlQ) {
                     empty.innerHTML =
                         iconHeart +
                         '<h3>Wishlist is empty</h3>' +
-                        '<p>Track specimens you want to acquire. Use the quick-add row above, or add from Collection later.</p>' +
+                        '<p>Track specimens you want to acquire.</p>' +
                         '<div class="empty-state-actions">' +
-                            '<button type="button" class="btn-secondary" onclick="document.getElementById(\'wl-quick-name\') && document.getElementById(\'wl-quick-name\').focus()">Focus quick add</button>' +
+                            '<button type="button" class="btn-primary" onclick="document.getElementById(\'wl-quick-name\') && document.getElementById(\'wl-quick-name\').focus()">Add a want</button>' +
                         '</div>';
                 } else if (dreamQ) {
                     empty.innerHTML =
                         iconStar +
                         '<h3>No dream specimens yet</h3>' +
-                        '<p>Save superb specimens you find but can\'t buy right now — wishlist for the long term.</p>' +
+                        '<p>Save superb finds you can\'t buy right now.</p>' +
                         '<div class="empty-state-actions">' +
-                            '<button type="button" class="btn-primary" onclick="app.openDreamItemModal()">✨ Add Dream Specimen</button>' +
+                            '<button type="button" class="btn-primary" onclick="app.openDreamItemModal()">Add Dream Specimen</button>' +
                         '</div>';
                 } else if (soldQ) {
                     empty.innerHTML =
                         iconSold +
                         '<h3>No sold specimens yet</h3>' +
-                        '<p>When you sell something, use <strong>More → Mark as Sold</strong> on a card. It moves here for your records.</p>' +
+                        '<p>Mark a specimen as sold from its card menu to keep records here.</p>' +
                         '<div class="empty-state-actions">' +
-                            '<button type="button" class="btn-secondary" onclick="app.setView(\'false\')">Back to Collection</button>' +
+                            '<button type="button" class="btn-primary" onclick="app.setView(\'false\')">Back to Collection</button>' +
                         '</div>';
                 } else if (tradedQ) {
                     empty.innerHTML =
                         iconTrade +
                         '<h3>No traded specimens yet</h3>' +
-                        '<p>Mark a specimen as traded from the card menu to keep a history of exchanges here.</p>' +
+                        '<p>Mark a specimen as traded from its card menu to keep exchange history here.</p>' +
                         '<div class="empty-state-actions">' +
-                            '<button type="button" class="btn-secondary" onclick="app.setView(\'false\')">Back to Collection</button>' +
+                            '<button type="button" class="btn-primary" onclick="app.setView(\'false\')">Back to Collection</button>' +
                         '</div>';
                 } else if (saleQ) {
                     empty.innerHTML =
                         iconCart +
                         '<h3>Nothing for sale yet</h3>' +
-                        '<p>List a specimen from Collection via ownership status <strong>For Sale</strong>, or edit and set asking price.</p>' +
+                        '<p>Set ownership to For Sale on a collection specimen to list it here.</p>' +
                         '<div class="empty-state-actions">' +
-                            '<button type="button" class="btn-secondary" onclick="app.setView(\'false\')">Back to Collection</button>' +
-                            '<button type="button" class="btn-primary" onclick="app.openModal()">➕ Add specimen</button>' +
+                            '<button type="button" class="btn-primary" onclick="app.setView(\'false\')">Back to Collection</button>' +
                         '</div>';
                 } else if (!hasAnySpecimen && collectionView) {
                     empty.innerHTML =
                         iconPlus +
                         '<h3>Add your first specimen</h3>' +
-                        '<p>Specimenry stores your fossils and minerals in this browser. Start with Simple mode — name, photo, location, notes — then back up when you have a few.</p>' +
+                        '<p>Start with Simple mode — name, photo, place, notes.</p>' +
                         '<div class="empty-state-actions">' +
-                            '<button type="button" class="btn-primary" onclick="app.openModalForFirstSpecimen()">➕ Add first specimen</button>' +
-                            '<button type="button" class="btn-secondary" onclick="app.openBackupCenter()">📥 Backup tip</button>' +
+                            '<button type="button" class="btn-primary" onclick="app.openModalForFirstSpecimen()">Add first specimen</button>' +
                         '</div>' +
-                        '<p class="empty-state-tip">Your data lives in this browser — <a href="#" onclick="app.openBackupCenter(); return false;">export backups</a> regularly.</p>';
+                        '<p class="empty-state-tip">Data stays in this browser — <a class="empty-state-link" href="#" onclick="app.openBackupCenter(); return false;">export a backup</a> once you have a few.</p>';
                 } else {
                     empty.innerHTML =
                         iconSearch +
                         '<h3>No specimens here</h3>' +
                         '<p>This archive view is empty.</p>' +
                         '<div class="empty-state-actions">' +
-                            '<button type="button" class="btn-primary" onclick="app.openModal()">➕ Add specimen</button>' +
+                            '<button type="button" class="btn-primary" onclick="app.openModal()">Add specimen</button>' +
                         '</div>';
                 }
                 
@@ -10817,6 +11316,7 @@ window.app = {
                         '</div>' +
                         '<div class="wishlist-row-actions-container">' +
                             '<button class="btn-acquire" onclick="app.acquireWishlistFossil(\'' + f.id + '\')" title="Acquire Specimen and Add to Collection">🚀 Acquire</button>' +
+                            '<button class="btn-acquire" onclick="app.foundWantAsNew(\'' + f.id + '\')" title="Create a new collection specimen from this want" style="background:var(--bg-warm);color:var(--text-primary);border:1px solid var(--border-color);">✨ Found → New</button>' +
                             '<button class="btn-edit-info" title="Full Settings / Edit Specimen" onclick="app.openModal(\'' + f.id + '\')">' +
                                 '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:3px;"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg> Full Settings' +
                             '</button>' +
@@ -11037,6 +11537,7 @@ window.app = {
                                             ) +
                                             (speciesFirstWord ? '<button class="dropdown-item" onclick="event.stopPropagation(); window.open(\'https://en.wikipedia.org/wiki/Special:Search?search=\' + \'' + wikiQuery + '\', \'_blank\'); app.closeAllCardMenus()"><span class="icon">📖</span> Wikipedia Search</button>' : '') +
                                             '<button class="dropdown-item" onclick="event.stopPropagation(); app.copyListingDescription(\'' + f.id + '\'); app.closeAllCardMenus()"><span class="icon">📋</span> Copy Sales Info</button>' +
+                                            '<button class="dropdown-item" onclick="event.stopPropagation(); app.shareSpecimenCard(\'' + f.id + '\'); app.closeAllCardMenus()"><span class="icon">🖼️</span> Share Card</button>' +
                                             '<button class="dropdown-item" onclick="event.stopPropagation(); app.printLabel(\'' + f.id + '\'); app.closeAllCardMenus()"><span class="icon">🖨️</span> Print Label</button>' +
                                             '<button class="dropdown-item" onclick="event.stopPropagation(); app.duplicateFossil(\'' + f.id + '\'); app.closeAllCardMenus()"><span class="icon">👥</span> Duplicate Specimen</button>' +
                                             (function() {
@@ -11054,6 +11555,10 @@ window.app = {
                                                     statusBtns +=
                                                         '<button class="dropdown-item" onclick="event.stopPropagation(); app.markAsSoldQuick(\'' + f.id + '\', \'' + nameEsc + '\'); app.closeAllCardMenus()"><span class="icon">💰</span> Mark as Sold</button>' +
                                                         '<button class="dropdown-item" onclick="event.stopPropagation(); app.markAsTradedQuick(\'' + f.id + '\', \'' + nameEsc + '\'); app.closeAllCardMenus()"><span class="icon">🔄</span> Mark as Traded</button>';
+                                                } else {
+                                                    statusBtns +=
+                                                        '<button class="dropdown-item" onclick="event.stopPropagation(); app.acquireWishlistFossil(\'' + f.id + '\'); app.closeAllCardMenus()"><span class="icon">🚀</span> Acquire → Collection</button>' +
+                                                        '<button class="dropdown-item" onclick="event.stopPropagation(); app.foundWantAsNew(\'' + f.id + '\'); app.closeAllCardMenus()"><span class="icon">✨</span> Found → New Specimen</button>';
                                                 }
                                                 return statusBtns;
                                             })() +
@@ -11191,20 +11696,29 @@ window.app = {
     },
 
     markAsFound: function(event, id, specimenName) {
-        if (event.target.checked) {
-            if (confirm('Did you find this specimen? Move "' + specimenName + '" from Wishlist to your Physical Collection?')) {
-                var f = fossils.find(function(x) { return x.id === id; });
-                if (f) {
-                    f.isWishlist = false;
-                    updateFossil(f).then(function() {
-                        window.app.renderFossils();
-                    });
-                }
-            } else {
-                // User cancelled - uncheck the box
-                event.target.checked = false;
+        if (!event.target.checked) return;
+        var checkbox = event.target;
+        this.confirmAction({
+            title: 'Move to collection?',
+            message: 'Did you find this specimen? Move "' + specimenName + '" from Wishlist to your Physical Collection?',
+            confirmLabel: 'Move to collection',
+            destructive: false
+        }).then(function(ok) {
+            if (!ok) {
+                checkbox.checked = false;
+                return;
             }
-        }
+            var f = fossils.find(function(x) { return x.id === id; });
+            if (f) {
+                f.isWishlist = false;
+                f.isDream = false;
+                updateFossil(f).then(function() {
+                    window.app.setView('false');
+                    window.app.showToast('Moved to collection — finishing details…', 'success');
+                    setTimeout(function() { window.app.openModal(id); }, 200);
+                });
+            }
+        });
     },
 
     acquireWishlistFossil: function(id) {
@@ -11233,6 +11747,7 @@ window.app = {
             var currency = (values.currency || 'USD').toUpperCase();
 
             f.isWishlist = false;
+            f.isDream = false;
             if (cost !== null) {
                 f.price = cost;
                 f.currency = currency;
@@ -11242,7 +11757,46 @@ window.app = {
                 if (window.app.showToast) {
                     window.app.showToast('🚀 "' + name + '" is now part of your Physical Collection!', 'success');
                 }
-                window.app.renderFossils();
+                window.app.setView('false');
+                setTimeout(function() { window.app.openModal(id); }, 200);
+            });
+        });
+    },
+
+    /** Create a NEW owned specimen from a wishlist/dream want. */
+    foundWantAsNew: function(id) {
+        var f = fossils.find(function(x) { return x.id === id; });
+        if (!f) return;
+        var name = f.specimen || 'this want';
+        var self = this;
+        this.confirmAction({
+            title: 'Create new specimen?',
+            message: 'Create a NEW collection specimen from "' + name + '"? Opens a new record with the want’s details (new catalog ID).',
+            confirmLabel: 'Create new',
+            destructive: false
+        }).then(function(ok) {
+            if (!ok) return;
+            return self.confirmAction({
+                title: 'Remove from wishlist?',
+                message: 'Also remove "' + name + '" from Wishlist/Dream after creating the new specimen?',
+                confirmLabel: 'Remove want',
+                cancelLabel: 'Keep want',
+                destructive: true
+            }).then(function(removeWant) {
+                window.app.duplicateFossil(id);
+                setTimeout(function() {
+                    document.getElementById('f-wishlist').value = 'false';
+                    window.app.toggleSalePriceField();
+                    document.getElementById('modal-title').innerText =
+                        (f.type === 'mineral' ? 'New mineral from want' : 'New specimen from want');
+                    window.app.showToast('Review details, then Save.', 'info', 4500);
+                }, 250);
+
+                if (removeWant) {
+                    deleteFossil(id).then(function() {
+                        window.app.renderFossils();
+                    });
+                }
             });
         });
     },
@@ -11624,6 +12178,7 @@ window.app = {
     },
 
     deleteCart: function() {
+        var self = this;
         var carts = this.getCarts();
         if (carts.length <= 1) {
             this.showToast('Cannot delete the last remaining cart. Create a new one first.', 'warning');
@@ -11633,40 +12188,43 @@ window.app = {
         var cart = carts.find(function(c) { return c.id === activeId; });
         if (!cart) return;
 
-        if (!confirm('Are you sure you want to delete the cart "' + cart.name + '" and all its draft specimens?')) {
-            return;
-        }
+        this.confirmAction({
+            title: 'Delete cart?',
+            message: 'Delete the cart "' + cart.name + '" and all its draft specimens?',
+            confirmLabel: 'Delete cart',
+            destructive: true
+        }).then(function(ok) {
+            if (!ok) return;
+            getAllFossils().then(function(allFossils) {
+                var itemsToDelete = allFossils.filter(function(f) { return f.isCartItem && f.cartId === activeId; });
+                var deletePromises = itemsToDelete.map(function(f) { return deleteFossil(f.id); });
+                return Promise.all(deletePromises);
+            }).then(function() {
+                fossilsCacheLoaded = false;
 
-        var self = this;
-        getAllFossils().then(function(allFossils) {
-            var itemsToDelete = allFossils.filter(function(f) { return f.isCartItem && f.cartId === activeId; });
-            var deletePromises = itemsToDelete.map(function(f) { return deleteFossil(f.id); });
-            return Promise.all(deletePromises);
-        }).then(function() {
-            fossilsCacheLoaded = false;
-            
-            var newCarts = carts.filter(function(c) { return c.id !== activeId; });
-            localStorage.setItem('fossil_carts', JSON.stringify(newCarts));
-            localStorage.setItem('fossil_active_cart_id', newCarts[0].id);
+                var newCarts = carts.filter(function(c) { return c.id !== activeId; });
+                localStorage.setItem('fossil_carts', JSON.stringify(newCarts));
+                localStorage.setItem('fossil_active_cart_id', newCarts[0].id);
 
-            var deletedIds = [];
-            try {
-                deletedIds = JSON.parse(localStorage.getItem('fossil_deleted_ids') || '[]');
-            } catch(e) {}
-            if (deletedIds.indexOf(activeId) === -1) {
-                deletedIds.push(activeId);
-                localStorage.setItem('fossil_deleted_ids', JSON.stringify(deletedIds));
-            }
+                var deletedIds = [];
+                try {
+                    deletedIds = JSON.parse(localStorage.getItem('fossil_deleted_ids') || '[]');
+                } catch(e) {}
+                if (deletedIds.indexOf(activeId) === -1) {
+                    deletedIds.push(activeId);
+                    localStorage.setItem('fossil_deleted_ids', JSON.stringify(deletedIds));
+                }
 
-            if (window.app && typeof window.app.autoPushCloud === 'function') {
-                window.app.autoPushCloud();
-            }
+                if (window.app && typeof window.app.autoPushCloud === 'function') {
+                    window.app.autoPushCloud();
+                }
 
-            self.showToast('Cart "' + cart.name + '" and its items deleted.', 'success');
-            self.renderFossils();
-        }).catch(function(err) {
-            console.error('Failed to delete cart items:', err);
-            self.showToast('Error deleting cart items.', 'danger');
+                self.showToast('Cart "' + cart.name + '" and its items deleted.', 'success');
+                self.renderFossils();
+            }).catch(function(err) {
+                console.error('Failed to delete cart items:', err);
+                self.showToast('Error deleting cart items.', 'danger');
+            });
         });
     },
 
@@ -12129,17 +12687,22 @@ window.app = {
     },
 
     deleteCartItem: function(id) {
-        if (!confirm('Are you sure you want to remove this draft specimen from the cart?')) {
-            return;
-        }
         var self = this;
-        deleteFossil(id).then(function() {
-            fossilsCacheLoaded = false;
-            self.showToast('Draft specimen removed.', 'success');
-            self.renderFossils();
-        }).catch(function(err) {
-            console.error('Failed to delete draft specimen:', err);
-            self.showToast('Error removing specimen.', 'danger');
+        this.confirmAction({
+            title: 'Remove draft?',
+            message: 'Remove this draft specimen from the cart?',
+            confirmLabel: 'Remove',
+            destructive: true
+        }).then(function(ok) {
+            if (!ok) return;
+            deleteFossil(id).then(function() {
+                fossilsCacheLoaded = false;
+                self.showToast('Draft specimen removed.', 'success');
+                self.renderFossils();
+            }).catch(function(err) {
+                console.error('Failed to delete draft specimen:', err);
+                self.showToast('Error removing specimen.', 'danger');
+            });
         });
     },
 
@@ -12819,6 +13382,62 @@ window.app = {
         });
     },
 
+    exportZipArchive: function() {
+        var dbMenu = document.getElementById('db-dropdown');
+        if (dbMenu) dbMenu.classList.remove('active');
+        if (typeof SpecimenryExportZip === 'undefined') {
+            window.app.showToast('ZIP export unavailable.', 'error');
+            return Promise.resolve({ ok: false });
+        }
+        if (typeof JSZip === 'undefined') {
+            window.app.showToast('ZIP library failed to load. Check your network and reload.', 'error');
+            return Promise.resolve({ ok: false });
+        }
+
+        var list = (typeof fossils !== 'undefined' ? fossils : []).filter(function(f) {
+            return f && !f.isCartItem;
+        });
+        if (!list.length) {
+            window.app.showToast('No specimens to export.', 'warning');
+            return Promise.resolve({ ok: false, empty: true });
+        }
+
+        window.app.showToast('Building ZIP (CSV + photos)…', 'info', 4000);
+        return SpecimenryExportZip.exportArchive(list, {
+            onProgress: function(done, total) {
+                if (!total) return;
+                if (done === total || done % 25 === 0) {
+                    window.app.showToast('Packing media ' + done + '/' + total + '…', 'info', 2000);
+                }
+            }
+        }).then(function(result) {
+            if (result && result.cancelled) {
+                window.app.showToast('ZIP export cancelled.', 'warning');
+                return result;
+            }
+            if (result && result.ok) {
+                window.app.showToast(
+                    'ZIP ready (' + result.specimenCount + ' specimens, ' + result.mediaCount + ' media). Check Downloads.',
+                    'success',
+                    7000
+                );
+            } else {
+                window.app.showToast('ZIP export failed.', 'error');
+            }
+            return result;
+        }).catch(function(err) {
+            if (typeof reportAppError === 'function') {
+                reportAppError(err, 'ZIP export', {
+                    type: 'error',
+                    retry: function() { window.app.exportZipArchive(); }
+                });
+            } else {
+                window.app.showToast('ZIP export failed: ' + ((err && err.message) || err), 'error');
+            }
+            return { ok: false, error: err };
+        });
+    },
+
     refreshBackupReminder: function() {
         if (typeof SpecimenryBackup === 'undefined') return;
         var evalResult = SpecimenryBackup.evaluateNeed();
@@ -12985,23 +13604,31 @@ window.app = {
             try {
                 var parsed = (typeof parseFossilsBackup === 'function')
                     ? parseFossilsBackup(e.target.result)
-                    : { ok: Array.isArray(JSON.parse(e.target.result)), fossils: JSON.parse(e.target.result), trips: [], error: null };
+                    : { ok: Array.isArray(JSON.parse(e.target.result)), fossils: JSON.parse(e.target.result), trips: [], localities: [], error: null };
 
                 if (!parsed.ok) {
                     throw new Error(parsed.error || 'Invalid format: Expected an array of fossils.');
                 }
                 var data = parsed.fossils || [];
                 var tripsData = parsed.trips || [];
+                var localitiesData = parsed.localities || [];
+                var groupsData = parsed.groups || [];
 
                 var check = (typeof SpecimenryBackup !== 'undefined')
-                    ? SpecimenryBackup.describeRestoreCheck(data, tripsData, file.name)
+                    ? SpecimenryBackup.describeRestoreCheck(data, tripsData, file.name, localitiesData, groupsData)
                     : { fingerprint: '', message: 'Backup check: OK — ' + data.length + ' specimen(s).', matchesLast: false };
 
                 var warnMsg = check.message + '\n\n' +
                     'Restore these records into this browser?\n\n' +
                     'Local records with the same ID will be overwritten. ' +
                     'Change history from the backup is kept when present; otherwise your local change history is preserved.';
-                if (!confirm(warnMsg)) {
+                window.app.confirmAction({
+                    title: 'Restore backup?',
+                    message: warnMsg,
+                    confirmLabel: 'Restore',
+                    destructive: true
+                }).then(function(ok) {
+                if (!ok) {
                     document.getElementById('file-restore-json').value = '';
                     return;
                 }
@@ -13028,15 +13655,41 @@ window.app = {
                     }
                 });
 
+                chain = chain.then(function() {
+                    if (localitiesData.length && typeof SpecimenryLocalities !== 'undefined' && SpecimenryLocalities.replaceAll) {
+                        return SpecimenryLocalities.getAll().then(function(localLocs) {
+                            var byId = {};
+                            (localLocs || []).forEach(function(l) { if (l && l.id) byId[l.id] = l; });
+                            localitiesData.forEach(function(l) { if (l && l.id) byId[l.id] = l; });
+                            return SpecimenryLocalities.replaceAll(Object.keys(byId).map(function(k) { return byId[k]; }));
+                        });
+                    }
+                });
+
+                chain = chain.then(function() {
+                    if (groupsData.length && typeof SpecimenryGroups !== 'undefined' && SpecimenryGroups.replaceAll) {
+                        return SpecimenryGroups.getAll().then(function(localGroups) {
+                            var byId = {};
+                            (localGroups || []).forEach(function(g) { if (g && g.id) byId[g.id] = g; });
+                            groupsData.forEach(function(g) { if (g && g.id) byId[g.id] = g; });
+                            return SpecimenryGroups.replaceAll(Object.keys(byId).map(function(k) { return byId[k]; }));
+                        });
+                    }
+                });
+
                 chain.then(function() {
                     var allOk = successCount === data.length;
                     var tripNote = tripsData.length ? ' + ' + tripsData.length + ' trip(s)' : '';
+                    var locNote = localitiesData.length ? ' + ' + localitiesData.length + ' site(s)' : '';
+                    var grpNote = groupsData.length ? ' + ' + groupsData.length + ' group(s)' : '';
 
                     if (typeof SpecimenryBackup !== 'undefined' && allOk) {
                         SpecimenryBackup.recordSuccessfulBackup({
                             filename: file.name,
                             specimenCount: data.length,
                             tripCount: tripsData.length,
+                            localityCount: localitiesData.length,
+                            groupCount: groupsData.length,
                             fingerprint: check.fingerprint,
                             method: 'restore',
                             source: 'restore'
@@ -13045,7 +13698,7 @@ window.app = {
 
                     if (allOk) {
                         window.app.showToast(
-                            'Restore verified OK — ' + successCount + ' fossil(s)' + tripNote + '.',
+                            'Restore verified OK — ' + successCount + ' fossil(s)' + tripNote + locNote + grpNote + '.',
                             'success'
                         );
                     } else {
@@ -13066,6 +13719,7 @@ window.app = {
                     } else {
                         window.app.showToast('Error importing backup: ' + err.message, 'error');
                     }
+                });
                 });
 
             } catch (err) {
@@ -13849,6 +14503,11 @@ window.app = {
 
     toggleCardMenu: function(event, fossilId) {
         event.stopPropagation();
+        if (window.matchMedia('(max-width: 719px)').matches) {
+            window.app.closeAllCardMenus();
+            window.app.openCardActionSheet(fossilId);
+            return;
+        }
         var dropdown = document.getElementById('dropdown-' + fossilId);
         var container = dropdown ? dropdown.closest('.card-more-menu-container') : null;
         var wasActive = dropdown && dropdown.classList.contains('active');
@@ -15800,7 +16459,13 @@ window.app = {
 
     disconnectGoogleDrive: function() {
         var self = this;
-        if (confirm('Disconnect from Google Drive? Your local data will remain intact, but cloud synchronization will be disabled.')) {
+        this.confirmAction({
+            title: 'Disconnect Google Drive?',
+            message: 'Your local data will remain intact, but cloud synchronization will be disabled.',
+            confirmLabel: 'Disconnect',
+            destructive: true
+        }).then(function(ok) {
+            if (!ok) return;
             var token = window.app.gdriveAccessToken;
             localStorage.removeItem('fossil_gdrive_connected');
             window.app.gdriveAccessToken = null;
@@ -15808,10 +16473,10 @@ window.app = {
             if (token && typeof google !== 'undefined' && google.accounts && google.accounts.oauth2 && google.accounts.oauth2.revoke) {
                 try { google.accounts.oauth2.revoke(token); } catch (e) {}
             }
-            
+
             self.updateCloudStatus('disconnected', 'Not Connected');
             self.showToast('Disconnected from Google Drive.', 'success');
-        }
+        });
     },
 
     syncWithGoogleDrive: async function(mode) {
@@ -15832,7 +16497,7 @@ window.app = {
             var searchData = await searchResp.json();
             var fileId = (searchData.files && searchData.files.length > 0) ? searchData.files[0].id : null;
             
-            var remoteData = { specimens: [], carts: [], trips: [], deletedIds: [] };
+            var remoteData = { specimens: [], carts: [], trips: [], localities: [], groups: [], deletedIds: [] };
             if (fileId) {
                 var downloadUrl = 'https://www.googleapis.com/drive/v3/files/' + fileId + '?alt=media';
                 var downloadResp = await fetch(downloadUrl, {
@@ -15842,6 +16507,8 @@ window.app = {
                     try {
                         remoteData = await downloadResp.json();
                         if (!remoteData.trips) remoteData.trips = [];
+                        if (!remoteData.localities) remoteData.localities = [];
+                        if (!remoteData.groups) remoteData.groups = [];
                     } catch(e) {
                         console.warn('Failed to parse remote JSON, starting fresh:', e);
                     }
@@ -15856,6 +16523,14 @@ window.app = {
             if (typeof SpecimenryTrips !== 'undefined' && SpecimenryTrips.getAll) {
                 try { localTrips = await SpecimenryTrips.getAll(); } catch (e) { localTrips = []; }
             }
+            var localLocalities = [];
+            if (typeof SpecimenryLocalities !== 'undefined' && SpecimenryLocalities.getAll) {
+                try { localLocalities = await SpecimenryLocalities.getAll(); } catch (e) { localLocalities = []; }
+            }
+            var localGroups = [];
+            if (typeof SpecimenryGroups !== 'undefined' && SpecimenryGroups.getAll) {
+                try { localGroups = await SpecimenryGroups.getAll(); } catch (e) { localGroups = []; }
+            }
             var localDeletedIds = [];
             try {
                 localDeletedIds = JSON.parse(localStorage.getItem('fossil_deleted_ids') || '[]');
@@ -15864,18 +16539,24 @@ window.app = {
             var finalSpecimens = [];
             var finalCarts = [];
             var finalTrips = [];
+            var finalLocalities = [];
+            var finalGroups = [];
             var finalDeletedIds = [];
             
             if (mode === 'push') {
                 finalSpecimens = localSpecimens;
                 finalCarts = localCarts;
                 finalTrips = localTrips;
+                finalLocalities = localLocalities;
+                finalGroups = localGroups;
                 // Keep local tombstones so deletes still propagate on force push
                 finalDeletedIds = localDeletedIds.slice();
             } else if (mode === 'pull') {
                 finalSpecimens = remoteData.specimens || [];
                 finalCarts = remoteData.carts || [];
                 finalTrips = remoteData.trips || [];
+                finalLocalities = remoteData.localities || [];
+                finalGroups = remoteData.groups || [];
                 finalDeletedIds = remoteData.deletedIds || [];
             } else {
                 var mergedDeletedIds = Array.from(new Set([].concat(localDeletedIds, remoteData.deletedIds || [])));
@@ -15925,6 +16606,12 @@ window.app = {
                 finalTrips = (typeof SpecimenryTrips !== 'undefined' && SpecimenryTrips.mergeByUpdatedAt)
                     ? SpecimenryTrips.mergeByUpdatedAt(localTrips, remoteData.trips || [])
                     : (localTrips.length ? localTrips : (remoteData.trips || []));
+                finalLocalities = (typeof SpecimenryLocalities !== 'undefined' && SpecimenryLocalities.mergeByUpdatedAt)
+                    ? SpecimenryLocalities.mergeByUpdatedAt(localLocalities, remoteData.localities || [])
+                    : (localLocalities.length ? localLocalities : (remoteData.localities || []));
+                finalGroups = (typeof SpecimenryGroups !== 'undefined' && SpecimenryGroups.mergeByUpdatedAt)
+                    ? SpecimenryGroups.mergeByUpdatedAt(localGroups, remoteData.groups || [])
+                    : (localGroups.length ? localGroups : (remoteData.groups || []));
             }
             
             await initDB().then(function(db) {
@@ -15946,6 +16633,12 @@ window.app = {
             if (typeof SpecimenryTrips !== 'undefined' && SpecimenryTrips.replaceAll) {
                 await SpecimenryTrips.replaceAll(finalTrips || []);
             }
+            if (typeof SpecimenryLocalities !== 'undefined' && SpecimenryLocalities.replaceAll) {
+                await SpecimenryLocalities.replaceAll(finalLocalities || []);
+            }
+            if (typeof SpecimenryGroups !== 'undefined' && SpecimenryGroups.replaceAll) {
+                await SpecimenryGroups.replaceAll(finalGroups || []);
+            }
             
             if (finalCarts.length === 0) {
                 finalCarts = [{ id: 'cart_default', name: 'Main Comparison Cart', updatedAt: 0 }];
@@ -15963,6 +16656,8 @@ window.app = {
                     specimens: finalSpecimens,
                     carts: finalCarts,
                     trips: finalTrips || [],
+                    localities: finalLocalities || [],
+                    groups: finalGroups || [],
                     deletedIds: finalDeletedIds,
                     syncTime: Date.now()
                 };
@@ -16378,11 +17073,21 @@ window.app = {
                     if (typeof SpecimenryTrips !== 'undefined' && SpecimenryTrips.getAll) {
                         try { localTrips = await SpecimenryTrips.getAll(); } catch (e) { localTrips = []; }
                     }
+                    var localLocalities = [];
+                    if (typeof SpecimenryLocalities !== 'undefined' && SpecimenryLocalities.getAll) {
+                        try { localLocalities = await SpecimenryLocalities.getAll(); } catch (e) { localLocalities = []; }
+                    }
+                    var localGroups = [];
+                    if (typeof SpecimenryGroups !== 'undefined' && SpecimenryGroups.getAll) {
+                        try { localGroups = await SpecimenryGroups.getAll(); } catch (e) { localGroups = []; }
+                    }
                     var localDeletedIds = JSON.parse(localStorage.getItem('fossil_deleted_ids') || '[]');
                     var payload = {
                         specimens: localSpecimens,
                         carts: localCarts,
                         trips: localTrips,
+                        localities: localLocalities,
+                        groups: localGroups,
                         deletedIds: localDeletedIds,
                         syncTime: Date.now()
                     };
@@ -16406,6 +17111,14 @@ window.app = {
                     var localTrips = [];
                     if (typeof SpecimenryTrips !== 'undefined' && SpecimenryTrips.getAll) {
                         try { localTrips = await SpecimenryTrips.getAll(); } catch (e) { localTrips = []; }
+                    }
+                    var localLocalities = [];
+                    if (typeof SpecimenryLocalities !== 'undefined' && SpecimenryLocalities.getAll) {
+                        try { localLocalities = await SpecimenryLocalities.getAll(); } catch (e) { localLocalities = []; }
+                    }
+                    var localGroups = [];
+                    if (typeof SpecimenryGroups !== 'undefined' && SpecimenryGroups.getAll) {
+                        try { localGroups = await SpecimenryGroups.getAll(); } catch (e) { localGroups = []; }
                     }
                     var localDeletedIds = JSON.parse(localStorage.getItem('fossil_deleted_ids') || '[]');
 
@@ -16456,6 +17169,12 @@ window.app = {
                     var finalTrips = (typeof SpecimenryTrips !== 'undefined' && SpecimenryTrips.mergeByUpdatedAt)
                         ? SpecimenryTrips.mergeByUpdatedAt(localTrips, remoteData.trips || [])
                         : (localTrips.length ? localTrips : (remoteData.trips || []));
+                    var finalLocalities = (typeof SpecimenryLocalities !== 'undefined' && SpecimenryLocalities.mergeByUpdatedAt)
+                        ? SpecimenryLocalities.mergeByUpdatedAt(localLocalities, remoteData.localities || [])
+                        : (localLocalities.length ? localLocalities : (remoteData.localities || []));
+                    var finalGroups = (typeof SpecimenryGroups !== 'undefined' && SpecimenryGroups.mergeByUpdatedAt)
+                        ? SpecimenryGroups.mergeByUpdatedAt(localGroups, remoteData.groups || [])
+                        : (localGroups.length ? localGroups : (remoteData.groups || []));
 
                     await initDB().then(function(db) {
                         return new Promise(function(resolve, reject) {
@@ -16476,6 +17195,12 @@ window.app = {
                     if (typeof SpecimenryTrips !== 'undefined' && SpecimenryTrips.replaceAll) {
                         await SpecimenryTrips.replaceAll(finalTrips || []);
                     }
+                    if (typeof SpecimenryLocalities !== 'undefined' && SpecimenryLocalities.replaceAll) {
+                        await SpecimenryLocalities.replaceAll(finalLocalities || []);
+                    }
+                    if (typeof SpecimenryGroups !== 'undefined' && SpecimenryGroups.replaceAll) {
+                        await SpecimenryGroups.replaceAll(finalGroups || []);
+                    }
 
                     if (finalCarts.length === 0) {
                         finalCarts = [{ id: 'cart_default', name: 'Main Comparison Cart', updatedAt: 0 }];
@@ -16489,6 +17214,8 @@ window.app = {
                         specimens: finalSpecimens,
                         carts: finalCarts,
                         trips: finalTrips || [],
+                        localities: finalLocalities || [],
+                        groups: finalGroups || [],
                         deletedIds: finalDeletedIds,
                         syncTime: Date.now()
                     };
@@ -16528,6 +17255,12 @@ window.app = {
 
                     if (typeof SpecimenryTrips !== 'undefined' && SpecimenryTrips.replaceAll) {
                         await SpecimenryTrips.replaceAll(mergedData.trips || []);
+                    }
+                    if (typeof SpecimenryLocalities !== 'undefined' && SpecimenryLocalities.replaceAll) {
+                        await SpecimenryLocalities.replaceAll(mergedData.localities || []);
+                    }
+                    if (typeof SpecimenryGroups !== 'undefined' && SpecimenryGroups.replaceAll) {
+                        await SpecimenryGroups.replaceAll(mergedData.groups || []);
                     }
 
                     if ((mergedData.carts || []).length > 0) {
@@ -16682,6 +17415,7 @@ window.app = {
         if (chk && form) {
             if (chk.checked) {
                 form.classList.add('simple-mode-active');
+                if (typeof this.resetSimpleMore === 'function') this.resetSimpleMore();
             } else {
                 form.classList.remove('simple-mode-active');
             }
@@ -16917,6 +17651,30 @@ window.app = {
 
     // --- Field Diary ---
     _tripDraftPhotos: [],
+    _fieldDiaryTab: 'visits',
+
+    setFieldDiaryTab: function(tab) {
+        this._fieldDiaryTab = tab === 'sites' ? 'sites' : 'visits';
+        var visitsPanel = document.getElementById('field-diary-panel-visits');
+        var sitesPanel = document.getElementById('field-diary-panel-sites');
+        var tabVisits = document.getElementById('fd-tab-visits');
+        var tabSites = document.getElementById('fd-tab-sites');
+        if (visitsPanel) visitsPanel.hidden = this._fieldDiaryTab !== 'visits';
+        if (sitesPanel) sitesPanel.hidden = this._fieldDiaryTab !== 'sites';
+        if (tabVisits) {
+            tabVisits.classList.toggle('is-active', this._fieldDiaryTab === 'visits');
+            tabVisits.style.fontWeight = this._fieldDiaryTab === 'visits' ? '700' : '';
+        }
+        if (tabSites) {
+            tabSites.classList.toggle('is-active', this._fieldDiaryTab === 'sites');
+            tabSites.style.fontWeight = this._fieldDiaryTab === 'sites' ? '700' : '';
+        }
+        if (this._fieldDiaryTab === 'sites') {
+            this.renderLocalityList();
+        } else {
+            this.renderFieldDiaryList();
+        }
+    },
 
     toggleFieldDiaryModal: function() {
         var modal = document.getElementById('field-diary-modal');
@@ -16925,7 +17683,13 @@ window.app = {
             modal.close();
             return;
         }
-        this.renderFieldDiaryList().then(function() {
+        var self = this;
+        this.setFieldDiaryTab(this._fieldDiaryTab || 'visits');
+        Promise.all([
+            this.populateTripLocalitySelect(),
+            this.renderFieldDiaryList(),
+            this.renderLocalityList()
+        ]).then(function() {
             modal.showModal();
         }).catch(function(err) {
             if (typeof reportAppError === 'function') reportAppError(err, 'Field diary');
@@ -16947,20 +17711,53 @@ window.app = {
         }).catch(function() { /* trips store may not exist yet */ });
     },
 
+    populateTripLocalitySelect: function(selectedId) {
+        var sel = document.getElementById('trip-locality-id');
+        if (!sel || typeof SpecimenryLocalities === 'undefined') return Promise.resolve();
+        return SpecimenryLocalities.getAll().then(function(list) {
+            var html = '<option value="">— Free-text / none —</option>';
+            (list || []).forEach(function(loc) {
+                var label = (loc.name || loc.id) + (loc.country ? ' · ' + loc.country : '');
+                html += '<option value="' + escapeHtml(loc.id) + '"' + (loc.id === selectedId ? ' selected' : '') + '>' + escapeHtml(label) + '</option>';
+            });
+            sel.innerHTML = html;
+            if (selectedId) sel.value = selectedId;
+        }).catch(function() { /* localities store may not exist yet */ });
+    },
+
+    applyLocalityToTripForm: function() {
+        var sel = document.getElementById('trip-locality-id');
+        var id = sel ? sel.value : '';
+        if (!id || typeof SpecimenryLocalities === 'undefined') return;
+        SpecimenryLocalities.getById(id).then(function(loc) {
+            if (!loc) return;
+            var nameEl = document.getElementById('trip-locality');
+            var countryEl = document.getElementById('trip-country');
+            var latEl = document.getElementById('trip-lat');
+            var lngEl = document.getElementById('trip-lng');
+            if (nameEl && !nameEl.value) nameEl.value = loc.name || '';
+            else if (nameEl && loc.name) nameEl.value = loc.name;
+            if (countryEl && loc.country) countryEl.value = loc.country;
+            if (latEl && loc.lat != null) latEl.value = loc.lat;
+            if (lngEl && loc.lng != null) lngEl.value = loc.lng;
+        });
+    },
+
     renderFieldDiaryList: function() {
         var self = this;
+        if (typeof SpecimenryTrips === 'undefined') return Promise.resolve();
         return SpecimenryTrips.getAll().then(function(trips) {
             var list = document.getElementById('field-diary-list');
             if (!list) return;
             if (!trips.length) {
-                list.innerHTML = '<p style="font-size:0.75rem;color:var(--text-secondary);padding:0.5rem;">No trips yet.</p>';
+                list.innerHTML = '<p style="font-size:0.75rem;color:var(--text-secondary);padding:0.5rem;">No visits yet.</p>';
                 if (!document.getElementById('trip-edit-id').value) {
                     self.createNewFieldTrip(true);
                 }
                 return;
             }
             list.innerHTML = trips.map(function(t) {
-                var label = escapeHtml(t.title || t.locality || 'Untitled trip');
+                var label = escapeHtml(t.title || t.locality || 'Untitled visit');
                 var meta = escapeHtml((t.date || '') + (t.locality ? ' · ' + t.locality : ''));
                 var count = (t.specimenIds || []).length;
                 return '<button type="button" onclick="app.loadFieldTrip(\'' + t.id.replace(/'/g, "\\'") + '\')" style="display:block;width:100%;text-align:left;padding:0.55rem 0.6rem;margin-bottom:0.35rem;border:1px solid var(--border-color);border-radius:var(--radius-sm);background:var(--bg-surface);cursor:pointer;color:var(--text-primary);">' +
@@ -16992,6 +17789,7 @@ window.app = {
         this._tripDraftPhotos = (trip.photos || []).slice();
         this._renderTripPhotosPreview();
         this._renderTripLinkedSpecimens(trip.specimenIds || []);
+        this.populateTripLocalitySelect(trip.localityId || '');
     },
 
     loadFieldTrip: function(id) {
@@ -17007,10 +17805,12 @@ window.app = {
         var lngEl = document.getElementById('trip-lng');
         var latVal = latEl && latEl.value !== '' ? parseFloat(latEl.value) : null;
         var lngVal = lngEl && lngEl.value !== '' ? parseFloat(lngEl.value) : null;
+        var locSel = document.getElementById('trip-locality-id');
         return {
             id: document.getElementById('trip-edit-id').value,
             title: document.getElementById('trip-title').value.trim(),
             date: document.getElementById('trip-date').value,
+            localityId: locSel ? locSel.value : '',
             country: document.getElementById('trip-country').value.trim(),
             locality: document.getElementById('trip-locality').value.trim(),
             lat: isNaN(latVal) ? null : latVal,
@@ -17045,7 +17845,7 @@ window.app = {
         var el = document.getElementById('trip-linked-specimens');
         if (!el) return;
         if (!ids || !ids.length) {
-            el.innerHTML = '<span>None linked yet — use “Log specimen here” or pick a trip in the specimen editor.</span>';
+            el.innerHTML = '<span>None linked yet — use “Log specimen here” or pick a visit in the specimen editor.</span>';
             return;
         }
         el.innerHTML = ids.map(function(id) {
@@ -17111,7 +17911,7 @@ window.app = {
         var trip = this._readTripForm();
         if (!trip.id) trip.id = SpecimenryTrips.createId();
         if (!trip.title && !trip.locality) {
-            window.app.showToast('Add a title or locality for the trip.', 'warning');
+            window.app.showToast('Add a title or locality for the visit.', 'warning');
             return;
         }
         SpecimenryTrips.getById(trip.id).then(function(existing) {
@@ -17121,31 +17921,38 @@ window.app = {
             }
             return SpecimenryTrips.save(trip);
         }).then(function() {
-            window.app.showToast('Trip saved.', 'success');
+            window.app.showToast('Visit saved.', 'success');
             self.populateTripSelect(trip.id);
             return self.renderFieldDiaryList();
         }).catch(function(err) {
-            if (typeof reportAppError === 'function') reportAppError(err, 'Save trip');
-            else window.app.showToast('Could not save trip.', 'error');
+            if (typeof reportAppError === 'function') reportAppError(err, 'Save visit');
+            else window.app.showToast('Could not save visit.', 'error');
         });
     },
 
     deleteCurrentFieldTrip: function() {
         var id = document.getElementById('trip-edit-id').value;
         if (!id) return;
-        if (!confirm('Delete this trip log? Specimens stay in your collection; only the link is removed.')) return;
         var self = this;
-        SpecimenryTrips.remove(id).then(function() {
-            fossils.forEach(function(f) {
-                if (f.tripId === id) {
-                    f.tripId = '';
-                    updateFossil(f);
-                }
+        this.confirmAction({
+            title: 'Delete visit?',
+            message: 'Delete this visit log? Specimens stay in your collection; only the link is removed.',
+            confirmLabel: 'Delete visit',
+            destructive: true
+        }).then(function(ok) {
+            if (!ok) return;
+            SpecimenryTrips.remove(id).then(function() {
+                fossils.forEach(function(f) {
+                    if (f.tripId === id) {
+                        f.tripId = '';
+                        updateFossil(f);
+                    }
+                });
+                self.createNewFieldTrip();
+                self.renderFieldDiaryList();
+                self.populateTripSelect('');
+                window.app.showToast('Visit deleted.', 'success');
             });
-            self.createNewFieldTrip();
-            self.renderFieldDiaryList();
-            self.populateTripSelect('');
-            window.app.showToast('Trip deleted.', 'success');
         });
     },
 
@@ -17171,7 +17978,7 @@ window.app = {
     applyTripToNewSpecimen: function() {
         var trip = this._readTripForm();
         if (!trip.id) {
-            window.app.showToast('Save the trip first.', 'warning');
+            window.app.showToast('Save the visit first.', 'warning');
             return;
         }
         var self = this;
@@ -17190,8 +17997,410 @@ window.app = {
                 if (document.getElementById('f-quick-add')) {
                     self.setEditorMode('simple');
                 }
-                window.app.showToast('New specimen prefilled from trip — add name & photo, then save.', 'success', 5000);
+                window.app.showToast('New specimen prefilled from visit — add name & photo, then save.', 'success', 5000);
             }, 200);
+        });
+    },
+
+    // --- Localities (collecting sites) ---
+    renderLocalityList: function() {
+        var self = this;
+        if (typeof SpecimenryLocalities === 'undefined') return Promise.resolve();
+        return SpecimenryLocalities.getAll().then(function(list) {
+            var el = document.getElementById('locality-list');
+            if (!el) return;
+            if (!list.length) {
+                el.innerHTML = '<p style="font-size:0.75rem;color:var(--text-secondary);padding:0.5rem;">No sites yet. Add one, or import from visit labels.</p>';
+                if (!document.getElementById('locality-edit-id').value) {
+                    self.createNewLocality(true);
+                }
+                return;
+            }
+            el.innerHTML = list.map(function(loc) {
+                var label = escapeHtml(loc.name || 'Untitled site');
+                var meta = escapeHtml([loc.region, loc.country].filter(Boolean).join(' · ') || 'No place details');
+                return '<button type="button" onclick="app.loadLocality(\'' + loc.id.replace(/'/g, "\\'") + '\')" style="display:block;width:100%;text-align:left;padding:0.55rem 0.6rem;margin-bottom:0.35rem;border:1px solid var(--border-color);border-radius:var(--radius-sm);background:var(--bg-surface);cursor:pointer;color:var(--text-primary);">' +
+                    '<strong style="font-size:0.82rem;">' + label + '</strong>' +
+                    '<div style="font-size:0.68rem;color:var(--text-secondary);margin-top:0.15rem;">' + meta + '</div></button>';
+            }).join('');
+            var current = document.getElementById('locality-edit-id').value;
+            if (!current && list[0]) self.loadLocality(list[0].id);
+        }).catch(function() { /* store may not exist yet */ });
+    },
+
+    createNewLocality: function(skipRender) {
+        if (typeof SpecimenryLocalities === 'undefined') return;
+        var loc = SpecimenryLocalities.newBlank();
+        this._fillLocalityForm(loc);
+        if (!skipRender) this.renderLocalityList();
+    },
+
+    _fillLocalityForm: function(loc) {
+        document.getElementById('locality-edit-id').value = loc.id || '';
+        document.getElementById('locality-name').value = loc.name || '';
+        document.getElementById('locality-country').value = loc.country || '';
+        document.getElementById('locality-region').value = loc.region || '';
+        document.getElementById('locality-lat').value = loc.lat != null ? loc.lat : '';
+        document.getElementById('locality-lng').value = loc.lng != null ? loc.lng : '';
+        document.getElementById('locality-notes').value = loc.notes || '';
+        this._renderLocalityLinkedVisits(loc.id);
+    },
+
+    loadLocality: function(id) {
+        var self = this;
+        SpecimenryLocalities.getById(id).then(function(loc) {
+            if (!loc) return;
+            self._fillLocalityForm(loc);
+        });
+    },
+
+    _renderLocalityLinkedVisits: function(localityId) {
+        var el = document.getElementById('locality-linked-visits');
+        if (!el) return;
+        if (!localityId || typeof SpecimenryTrips === 'undefined') {
+            el.innerHTML = '<span>None yet.</span>';
+            return;
+        }
+        SpecimenryTrips.getAll().then(function(trips) {
+            var linked = (trips || []).filter(function(t) { return t.localityId === localityId; });
+            if (!linked.length) {
+                el.innerHTML = '<span>No visits linked to this site yet.</span>';
+                return;
+            }
+            el.innerHTML = linked.map(function(t) {
+                var label = escapeHtml((t.date ? t.date + ' — ' : '') + (t.title || t.locality || t.id));
+                return '<div style="padding:0.25rem 0;border-bottom:1px solid var(--border-color);">' + label + '</div>';
+            }).join('');
+        });
+    },
+
+    _readLocalityForm: function() {
+        var latEl = document.getElementById('locality-lat');
+        var lngEl = document.getElementById('locality-lng');
+        var latVal = latEl && latEl.value !== '' ? parseFloat(latEl.value) : null;
+        var lngVal = lngEl && lngEl.value !== '' ? parseFloat(lngEl.value) : null;
+        return {
+            id: document.getElementById('locality-edit-id').value,
+            name: document.getElementById('locality-name').value.trim(),
+            country: document.getElementById('locality-country').value.trim(),
+            region: document.getElementById('locality-region').value.trim(),
+            lat: isNaN(latVal) ? null : latVal,
+            lng: isNaN(lngVal) ? null : lngVal,
+            notes: document.getElementById('locality-notes').value,
+            photos: []
+        };
+    },
+
+    captureLocalityGps: function() {
+        if (!navigator.geolocation) {
+            window.app.showToast('Geolocation not available on this device.', 'warning');
+            return;
+        }
+        window.app.showToast('Getting GPS…', 'info');
+        navigator.geolocation.getCurrentPosition(function(pos) {
+            document.getElementById('locality-lat').value = pos.coords.latitude.toFixed(6);
+            document.getElementById('locality-lng').value = pos.coords.longitude.toFixed(6);
+            window.app.showToast('GPS captured.', 'success');
+        }, function(err) {
+            if (typeof reportAppError === 'function') {
+                reportAppError(err, 'Site GPS', { type: 'warning', retry: function() { window.app.captureLocalityGps(); } });
+            } else {
+                window.app.showToast('Could not get GPS.', 'error');
+            }
+        }, { enableHighAccuracy: true, timeout: 12000 });
+    },
+
+    saveCurrentLocality: function() {
+        var self = this;
+        if (typeof SpecimenryLocalities === 'undefined') return;
+        var loc = this._readLocalityForm();
+        if (!loc.id) loc.id = SpecimenryLocalities.createId();
+        if (!loc.name) {
+            window.app.showToast('Add a site name.', 'warning');
+            return;
+        }
+        SpecimenryLocalities.getById(loc.id).then(function(existing) {
+            if (existing && existing.createdAt) loc.createdAt = existing.createdAt;
+            if (existing && existing.photos) loc.photos = existing.photos;
+            return SpecimenryLocalities.save(loc);
+        }).then(function() {
+            window.app.showToast('Site saved.', 'success');
+            self.populateTripLocalitySelect(loc.id);
+            return self.renderLocalityList();
+        }).catch(function(err) {
+            if (typeof reportAppError === 'function') reportAppError(err, 'Save site');
+            else window.app.showToast('Could not save site.', 'error');
+        });
+    },
+
+    deleteCurrentLocality: function() {
+        var id = document.getElementById('locality-edit-id').value;
+        if (!id) return;
+        var self = this;
+        this.confirmAction({
+            title: 'Delete site?',
+            message: 'Delete this site? Visits keep their locality labels; only the site link is cleared.',
+            confirmLabel: 'Delete site',
+            destructive: true
+        }).then(function(ok) {
+            if (!ok) return;
+            SpecimenryLocalities.remove(id).then(function() {
+                return SpecimenryTrips.getAll().then(function(trips) {
+                    var chain = Promise.resolve();
+                    (trips || []).forEach(function(t) {
+                        if (t.localityId === id) {
+                            t.localityId = '';
+                            chain = chain.then(function() { return SpecimenryTrips.save(t); });
+                        }
+                    });
+                    return chain;
+                });
+            }).then(function() {
+                self.createNewLocality();
+                self.renderLocalityList();
+                self.populateTripLocalitySelect('');
+                window.app.showToast('Site deleted.', 'success');
+            });
+        });
+    },
+
+    importLocalitiesFromTrips: function() {
+        var self = this;
+        if (typeof SpecimenryLocalities === 'undefined' || typeof SpecimenryTrips === 'undefined') return;
+        SpecimenryTrips.getAll().then(function(trips) {
+            return SpecimenryLocalities.importFromTrips(trips || []).then(function(created) {
+                var chain = Promise.resolve();
+                (trips || []).forEach(function(t) {
+                    if (t.localityId) {
+                        chain = chain.then(function() { return SpecimenryTrips.save(t); });
+                    }
+                });
+                return chain.then(function() { return created; });
+            });
+        }).then(function(created) {
+            var n = (created && created.length) || 0;
+            window.app.showToast(n ? ('Imported ' + n + ' site(s) from visits.') : 'No new sites to import.', n ? 'success' : 'info');
+            self.populateTripLocalitySelect();
+            return self.renderLocalityList();
+        }).catch(function(err) {
+            if (typeof reportAppError === 'function') reportAppError(err, 'Import sites');
+            else window.app.showToast('Could not import sites.', 'error');
+        });
+    },
+
+    shareSpecimenCard: function(fossilId) {
+        var f = fossils.find(function(x) { return x.id === fossilId; });
+        if (!f) {
+            window.app.showToast('Specimen not found.', 'warning');
+            return;
+        }
+        if (typeof SpecimenryShareCard === 'undefined') {
+            window.app.showToast('Share card unavailable.', 'error');
+            return;
+        }
+        window.app.showToast('Preparing share card…', 'info');
+        SpecimenryShareCard.share(f).then(function(result) {
+            if (result && result.method === 'share') {
+                window.app.showToast('Shared.', 'success');
+            } else {
+                window.app.showToast('Share card downloaded (PNG). No prices included.', 'success');
+            }
+        }).catch(function(err) {
+            if (err && err.name === 'AbortError') return;
+            if (typeof reportAppError === 'function') reportAppError(err, 'Share card');
+            else window.app.showToast('Could not create share card.', 'error');
+        });
+    },
+
+    // --- Lots & Groups ---
+    populateGroupSelect: function(selectedId) {
+        var sel = document.getElementById('f-group-id');
+        if (!sel || typeof SpecimenryGroups === 'undefined') return Promise.resolve();
+        return SpecimenryGroups.getAll().then(function(groups) {
+            var html = '<option value="">— None —</option>';
+            (groups || []).forEach(function(g) {
+                var label = (g.name || g.id) + (g.source ? ' · ' + g.source : '');
+                html += '<option value="' + escapeHtml(g.id) + '"' + (g.id === selectedId ? ' selected' : '') + '>' + escapeHtml(label) + '</option>';
+            });
+            sel.innerHTML = html;
+            if (selectedId) sel.value = selectedId;
+        }).catch(function() {});
+    },
+
+    toggleGroupsModal: function() {
+        var modal = document.getElementById('groups-modal');
+        if (!modal) return;
+        if (modal.open) {
+            modal.close();
+            return;
+        }
+        var self = this;
+        this.renderGroupsList().then(function() {
+            modal.showModal();
+        }).catch(function(err) {
+            if (typeof reportAppError === 'function') reportAppError(err, 'Groups');
+            else window.app.showToast('Could not open groups.', 'error');
+        });
+    },
+
+    renderGroupsList: function() {
+        var self = this;
+        if (typeof SpecimenryGroups === 'undefined') return Promise.resolve();
+        return SpecimenryGroups.getAll().then(function(groups) {
+            var list = document.getElementById('groups-list');
+            if (!list) return;
+            if (!groups.length) {
+                list.innerHTML = '<p style="font-size:0.75rem;color:var(--text-secondary);padding:0.5rem;">No groups yet.</p>';
+                if (!document.getElementById('group-edit-id').value) self.createNewGroup(true);
+                return;
+            }
+            list.innerHTML = groups.map(function(g) {
+                var label = escapeHtml(g.name || 'Untitled group');
+                var meta = escapeHtml((g.source || '') + (g.acquiredDate ? (g.source ? ' · ' : '') + g.acquiredDate : '') || 'No source');
+                var count = (g.specimenIds || []).length;
+                return '<button type="button" onclick="app.loadGroup(\'' + g.id.replace(/'/g, "\\'") + '\')" style="display:block;width:100%;text-align:left;padding:0.55rem 0.6rem;margin-bottom:0.35rem;border:1px solid var(--border-color);border-radius:var(--radius-sm);background:var(--bg-surface);cursor:pointer;color:var(--text-primary);">' +
+                    '<strong style="font-size:0.82rem;">' + label + '</strong>' +
+                    '<div style="font-size:0.68rem;color:var(--text-secondary);margin-top:0.15rem;">' + meta + ' · ' + count + ' specimen(s)</div></button>';
+            }).join('');
+            var current = document.getElementById('group-edit-id').value;
+            if (!current && groups[0]) self.loadGroup(groups[0].id);
+        });
+    },
+
+    createNewGroup: function(skipRender) {
+        if (typeof SpecimenryGroups === 'undefined') return;
+        var g = SpecimenryGroups.newBlank();
+        this._fillGroupForm(g);
+        if (!skipRender) this.renderGroupsList();
+    },
+
+    _fillGroupForm: function(g) {
+        document.getElementById('group-edit-id').value = g.id || '';
+        document.getElementById('group-name').value = g.name || '';
+        document.getElementById('group-source').value = g.source || '';
+        document.getElementById('group-acquired').value = g.acquiredDate || '';
+        document.getElementById('group-price').value = g.price != null ? g.price : '';
+        document.getElementById('group-currency').value = g.currency || 'USD';
+        document.getElementById('group-notes').value = g.notes || '';
+        this._renderGroupLinkedSpecimens(g.specimenIds || []);
+    },
+
+    loadGroup: function(id) {
+        var self = this;
+        SpecimenryGroups.getById(id).then(function(g) {
+            if (!g) return;
+            self._fillGroupForm(g);
+        });
+    },
+
+    _readGroupForm: function() {
+        var priceEl = document.getElementById('group-price');
+        var priceVal = priceEl && priceEl.value !== '' ? parseFloat(priceEl.value) : null;
+        return {
+            id: document.getElementById('group-edit-id').value,
+            name: document.getElementById('group-name').value.trim(),
+            source: document.getElementById('group-source').value.trim(),
+            acquiredDate: document.getElementById('group-acquired').value,
+            price: isNaN(priceVal) ? null : priceVal,
+            currency: document.getElementById('group-currency').value || 'USD',
+            notes: document.getElementById('group-notes').value,
+            specimenIds: this._getGroupLinkedIdsFromUi()
+        };
+    },
+
+    _getGroupLinkedIdsFromUi: function() {
+        var wrap = document.getElementById('group-linked-specimens');
+        if (!wrap) return [];
+        var ids = [];
+        wrap.querySelectorAll('[data-specimen-id]').forEach(function(el) {
+            ids.push(el.getAttribute('data-specimen-id'));
+        });
+        return ids;
+    },
+
+    _renderGroupLinkedSpecimens: function(ids) {
+        var el = document.getElementById('group-linked-specimens');
+        if (!el) return;
+        if (!ids || !ids.length) {
+            el.innerHTML = '<span>None yet — select specimens in the archive and use Add to Group.</span>';
+            return;
+        }
+        el.innerHTML = ids.map(function(id) {
+            var f = fossils.find(function(x) { return x.id === id; });
+            var name = f ? f.specimen : '(missing)';
+            return '<div data-specimen-id="' + escapeHtml(id) + '" style="display:flex;justify-content:space-between;gap:0.5rem;padding:0.25rem 0;border-bottom:1px solid var(--border-color);">' +
+                '<a href="#" onclick="app.closeGroupsThenOpen(\'' + id.replace(/'/g, "\\'") + '\');return false;">' + escapeHtml(id) + ' — ' + escapeHtml(name) + '</a>' +
+                '<button type="button" class="btn-text" onclick="app.unlinkSpecimenFromGroup(\'' + id.replace(/'/g, "\\'") + '\')" style="border:none;background:none;color:var(--text-secondary);cursor:pointer;">Unlink</button></div>';
+        }).join('');
+    },
+
+    closeGroupsThenOpen: function(specimenId) {
+        var modal = document.getElementById('groups-modal');
+        if (modal && modal.open) modal.close();
+        this.openModal(specimenId);
+    },
+
+    saveCurrentGroup: function() {
+        var self = this;
+        if (typeof SpecimenryGroups === 'undefined') return;
+        var g = this._readGroupForm();
+        if (!g.id) g.id = SpecimenryGroups.createId();
+        if (!g.name) {
+            window.app.showToast('Add a group name.', 'warning');
+            return;
+        }
+        SpecimenryGroups.getById(g.id).then(function(existing) {
+            if (existing && existing.createdAt) g.createdAt = existing.createdAt;
+            if (existing && existing.specimenIds && (!g.specimenIds || !g.specimenIds.length)) {
+                g.specimenIds = existing.specimenIds;
+            }
+            return SpecimenryGroups.save(g);
+        }).then(function() {
+            window.app.showToast('Group saved.', 'success');
+            self.populateGroupSelect(g.id);
+            return self.renderGroupsList();
+        }).catch(function(err) {
+            if (typeof reportAppError === 'function') reportAppError(err, 'Save group');
+            else window.app.showToast('Could not save group.', 'error');
+        });
+    },
+
+    deleteCurrentGroup: function() {
+        var id = document.getElementById('group-edit-id').value;
+        if (!id) return;
+        var self = this;
+        this.confirmAction({
+            title: 'Delete group?',
+            message: 'Delete this group? Specimens stay in your collection; only the lot link is cleared.',
+            confirmLabel: 'Delete group',
+            destructive: true
+        }).then(function(ok) {
+            if (!ok) return;
+            SpecimenryGroups.remove(id).then(function() {
+                fossils.forEach(function(f) {
+                    if (f.groupId === id) {
+                        f.groupId = '';
+                        updateFossil(f);
+                    }
+                });
+                self.createNewGroup();
+                self.renderGroupsList();
+                self.populateGroupSelect('');
+                window.app.showToast('Group deleted.', 'success');
+            });
+        });
+    },
+
+    unlinkSpecimenFromGroup: function(specimenId) {
+        var groupId = document.getElementById('group-edit-id').value;
+        var self = this;
+        SpecimenryGroups.unlinkSpecimen(groupId, specimenId).then(function(group) {
+            var f = fossils.find(function(x) { return x.id === specimenId; });
+            if (f && f.groupId === groupId) {
+                f.groupId = '';
+                updateFossil(f);
+            }
+            if (group) self._renderGroupLinkedSpecimens(group.specimenIds || []);
         });
     },
 

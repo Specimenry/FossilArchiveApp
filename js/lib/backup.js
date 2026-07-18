@@ -22,10 +22,15 @@ var SpecimenryBackup = (function() {
         return (h >>> 0).toString(16);
     }
 
-    function fingerprintLists(fossilsList, tripsList) {
+    function fingerprintLists(fossilsList, tripsList, localitiesList, groupsList) {
         var fIds = (fossilsList || []).map(function(f) { return f && f.id ? String(f.id) : ''; }).filter(Boolean).sort();
         var tIds = (tripsList || []).map(function(t) { return t && t.id ? String(t.id) : ''; }).filter(Boolean).sort();
-        return simpleHash(fIds.join('|') + '#' + tIds.join('|') + '#' + fIds.length + '#' + tIds.length);
+        var lIds = (localitiesList || []).map(function(l) { return l && l.id ? String(l.id) : ''; }).filter(Boolean).sort();
+        var gIds = (groupsList || []).map(function(g) { return g && g.id ? String(g.id) : ''; }).filter(Boolean).sort();
+        return simpleHash(
+            fIds.join('|') + '#' + tIds.join('|') + '#' + lIds.join('|') + '#' + gIds.join('|') + '#' +
+            fIds.length + '#' + tIds.length + '#' + lIds.length + '#' + gIds.length
+        );
     }
 
     function buildFilename() {
@@ -76,6 +81,8 @@ var SpecimenryBackup = (function() {
             filename: info.filename || '',
             specimenCount: info.specimenCount || 0,
             tripCount: info.tripCount || 0,
+            localityCount: info.localityCount || 0,
+            groupCount: info.groupCount || 0,
             fingerprint: info.fingerprint || '',
             method: info.method || 'download',
             source: info.source || 'export'
@@ -182,13 +189,18 @@ var SpecimenryBackup = (function() {
         return { ok: true, method: 'download', filename: filename };
     }
 
-    function describeRestoreCheck(fossilsList, tripsList, fileName) {
-        var fp = fingerprintLists(fossilsList, tripsList);
+    function describeRestoreCheck(fossilsList, tripsList, fileName, localitiesList, groupsList) {
+        var fp = fingerprintLists(fossilsList, tripsList, localitiesList, groupsList);
         var meta = getMeta();
         var lines = [];
         lines.push('Backup check: OK — readable Specimenry backup.');
         lines.push('File: ' + (fileName || 'backup.json'));
-        lines.push('Contents: ' + (fossilsList || []).length + ' specimen(s), ' + (tripsList || []).length + ' trip(s).');
+        lines.push(
+            'Contents: ' + (fossilsList || []).length + ' specimen(s), ' +
+            (tripsList || []).length + ' trip(s), ' +
+            (localitiesList || []).length + ' site(s), ' +
+            (groupsList || []).length + ' group(s).'
+        );
         if (meta && meta.ok && meta.fingerprint) {
             if (meta.fingerprint === fp) {
                 lines.push('Matches your last successful backup on this browser.');

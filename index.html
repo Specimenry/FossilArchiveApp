@@ -92,6 +92,9 @@
                         <a href="#" id="btn-export" onclick="app.openBackupCenter(); return false;" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1rem; font-size: 0.8rem; color: var(--text-primary); text-decoration: none; transition: background 0.15s;" onmouseover="this.style.background='var(--bg-warm)'" onmouseout="this.style.background='transparent'">
                             📥 Backup &amp; Restore
                         </a>
+                        <a href="#" onclick="app.exportZipArchive(); return false;" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1rem; font-size: 0.8rem; color: var(--text-primary); text-decoration: none; transition: background 0.15s;" onmouseover="this.style.background='var(--bg-warm)'" onmouseout="this.style.background='transparent'">
+                            📦 Export ZIP (CSV + photos)
+                        </a>
                         <a href="#" onclick="app.openAboutSpecimenry(); return false;" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1rem; font-size: 0.8rem; color: var(--text-primary); text-decoration: none; transition: background 0.15s;" onmouseover="this.style.background='var(--bg-warm)'" onmouseout="this.style.background='transparent'">
                             ℹ️ About &amp; Privacy
                         </a>
@@ -127,6 +130,9 @@
                         </a>
                         <a href="#" onclick="app.toggleFieldDiaryModal(); return false;" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1rem; font-size: 0.8rem; color: var(--text-primary); text-decoration: none; transition: background 0.15s; border-top: 1px solid var(--border-color);" onmouseover="this.style.background='var(--bg-warm)'" onmouseout="this.style.background='transparent'">
                             📓 Field Diary (Trip Log)
+                        </a>
+                        <a href="#" onclick="app.toggleGroupsModal(); return false;" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1rem; font-size: 0.8rem; color: var(--text-primary); text-decoration: none; transition: background 0.15s;" onmouseover="this.style.background='var(--bg-warm)'" onmouseout="this.style.background='transparent'">
+                            📦 Lots &amp; Groups
                         </a>
                         <a href="#" id="toggle-enrich-lighting" onclick="app.toggleAutoEnhance(); return false;" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1rem; font-size: 0.8rem; color: var(--text-primary); text-decoration: none; transition: background 0.15s; border-top: 1px solid var(--border-color);" onmouseover="this.style.background='var(--bg-warm)'" onmouseout="this.style.background='transparent'">
                             💡 Auto-Enhance Lighting: Off
@@ -189,7 +195,9 @@
                 <summary>Database</summary>
                 <a href="#" class="mobile-menu-link" onclick="app.closeMobileMenu(); app.toggleCloudSyncModal(); return false;">🔄 Sync Center</a>
                 <a href="#" class="mobile-menu-link" onclick="app.closeMobileMenu(); app.toggleFieldDiaryModal(); return false;">📓 Field Diary</a>
+                <a href="#" class="mobile-menu-link" onclick="app.closeMobileMenu(); app.toggleGroupsModal(); return false;">📦 Lots &amp; Groups</a>
                 <a href="#" class="mobile-menu-link" onclick="app.closeMobileMenu(); app.showCSVInstructions(); return false;">📄 Import CSV</a>
+                <a href="#" class="mobile-menu-link" onclick="app.closeMobileMenu(); app.exportZipArchive(); return false;">📦 Export ZIP (CSV + photos)</a>
                 <a href="#" class="mobile-menu-link" onclick="app.closeMobileMenu(); app.openShareCatalogModal(); return false;">📖 Shareable Catalog</a>
                 <a href="#" class="mobile-menu-link" onclick="app.closeMobileMenu(); app.copyLLMContext(); return false;">🤖 Export for AI</a>
                 <a href="#" class="mobile-menu-link" onclick="app.closeMobileMenu(); app.openAboutSpecimenry(); return false;">ℹ️ About &amp; Privacy</a>
@@ -505,11 +513,25 @@
             </div>
         </div>
         <div id="view-info-banner" class="view-info-banner" style="display: none;"></div>
+        <div id="archive-sticky-header" class="archive-sticky-header" aria-live="polite">
+            <h2 id="archive-sticky-title" class="archive-sticky-title">Collection</h2>
+            <span id="archive-sticky-count" class="archive-sticky-count"></span>
+        </div>
         <div id="carts-container" class="carts-container-wrapper" style="display: none;"></div>
         <div id="fossil-grid" class="fossil-grid" aria-live="polite">
             <!-- Fossils rendered by JS -->
         </div>
     </main>
+
+    <div id="specimenry-sheet-backdrop" class="specimenry-sheet-backdrop" hidden onclick="app.closeSpecimenrySheet(false)"></div>
+    <div id="specimenry-sheet" class="specimenry-sheet" role="dialog" aria-modal="true" aria-labelledby="specimenry-sheet-title" hidden>
+        <div class="specimenry-sheet-handle" id="specimenry-sheet-handle" aria-hidden="true"></div>
+        <div class="specimenry-sheet-header">
+            <h3 id="specimenry-sheet-title">Actions</h3>
+            <button type="button" class="btn-icon" aria-label="Close" onclick="app.closeSpecimenrySheet(false)">✕</button>
+        </div>
+        <div class="specimenry-sheet-body" id="specimenry-sheet-body"></div>
+    </div>
 
     <!-- Fossil Form Modal -->
     <dialog id="fossil-modal" aria-labelledby="modal-title">
@@ -556,10 +578,6 @@
                             </select>
                         </div>
                         <p class="simple-mode-hint">Field log — name, photo, place, note, then <strong>Save specimen</strong>. Switch to Advanced anytime for full details.</p>
-                        <div class="form-group" id="f-anatomy-part-col">
-                            <label for="f-anatomy">Anatomy / Part</label>
-                            <input type="text" id="f-anatomy" placeholder="e.g. Anterior Tooth, Thoracic Vertebra, Leaf Impression...">
-                        </div>
 
                         <div class="form-group full-width quick-add-visible">
                             <label for="f-specimen">Specimen Name *</label>
@@ -569,6 +587,15 @@
                                     ⚡ Auto-Fetch All
                                 </button>
                             </div>
+                        </div>
+
+                        <div class="simple-more-toggle-wrap">
+                            <button type="button" class="simple-more-toggle" id="btn-simple-more" onclick="app.toggleSimpleMore()" aria-expanded="false">More details</button>
+                        </div>
+                        <div id="simple-more-panel">
+                        <div class="form-group" id="f-anatomy-part-col">
+                            <label for="f-anatomy">Anatomy / Part</label>
+                            <input type="text" id="f-anatomy" placeholder="e.g. Anterior Tooth, Thoracic Vertebra, Leaf Impression...">
                         </div>
 
                         <!-- Fossil Classification Fields -->
@@ -620,6 +647,7 @@
                                 <div id="mineral-care-panel" class="mineral-care-panel" aria-live="polite"></div>
                             </div>
                         </div>
+                        </div><!-- /#simple-more-panel -->
 
                         <div class="form-group">
                             <label for="f-wishlist">Ownership Status</label>
@@ -813,6 +841,14 @@
                                 <option value="">— None —</option>
                             </select>
                             <span class="upload-hint" style="display:block; margin-top:0.25rem;">Link this specimen to a trip log (Utilities → Field Diary).</span>
+                        </div>
+
+                        <div class="form-group full-width quick-add-visible">
+                            <label for="f-group-id">Lot / group</label>
+                            <select id="f-group-id" style="width: 100%;">
+                                <option value="">— None —</option>
+                            </select>
+                            <span class="upload-hint" style="display:block; margin-top:0.25rem;">Ex-collection, fair purchase, same matrix (Utilities → Lots &amp; Groups).</span>
                         </div>
 
                         <!-- Physical Storage Fields -->
@@ -1197,26 +1233,29 @@
             <button id="lightbox-auto-enhance" onclick="app.toggleAutoEnhance()" title="Toggle Auto-Enhance Lighting" style="position: absolute; top: -40px; right: 40px; background: none; border: none; color: var(--text-primary); font-size: 1.25rem; cursor: pointer; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: background 0.2s ease;" onmouseover="this.style.background='rgba(0,0,0,0.05)'" onmouseout="this.style.background='transparent'">💡</button>
             <button class="lightbox-close" onclick="app.closeLightbox()" title="Close (Esc)">&times;</button>
 
-            <!-- Image row: arrows are flex siblings of the image, always visible -->
-            <div class="lightbox-img-row">
-                <button class="lightbox-nav prev" onclick="app.lightboxNav(-1)" title="Previous photo (←)">&#10094;</button>
-                <img id="lightbox-img" src="" alt="Full-size fossil image" />
-                <video id="lightbox-video" style="display:none; max-width: 100%; max-height: 70vh; object-fit: contain; box-shadow: var(--shadow-lg);" controls></video>
-                <button class="lightbox-nav next" onclick="app.lightboxNav(1)" title="Next photo (→)">&#10095;</button>
+            <div class="lightbox-hero">
+                <div class="lightbox-img-row">
+                    <button class="lightbox-nav prev" onclick="app.lightboxNav(-1)" title="Previous photo (←)">&#10094;</button>
+                    <img id="lightbox-img" src="" alt="Full-size fossil image" />
+                    <video id="lightbox-video" style="display:none; max-width: 100%; max-height: 70vh; object-fit: contain; box-shadow: var(--shadow-lg);" controls></video>
+                    <button class="lightbox-nav next" onclick="app.lightboxNav(1)" title="Next photo (→)">&#10095;</button>
+                </div>
+                <div class="lightbox-hero-meta">
+                    <h3 id="lightbox-title"></h3>
+                    <p id="lightbox-detail"></p>
+                    <p id="lightbox-location"></p>
+                    <div class="lightbox-counter" id="lightbox-counter"></div>
+                </div>
             </div>
 
-            <!-- Fossil info -->
             <div class="lightbox-info">
-                <h3 id="lightbox-title"></h3>
-                <p id="lightbox-detail"></p>
-                <p id="lightbox-location"></p>
-                <div class="lightbox-counter" id="lightbox-counter"></div>
-                <div id="lightbox-timeline-ruler" style="margin-top: 1.25rem; border-top: 1px solid var(--border-color); padding-top: 1rem; display: none;"></div>
-                <div id="lightbox-mineral-care" style="margin-top: 1.25rem; border-top: 1px solid var(--border-color); padding-top: 1rem; display: none;"></div>
-                <div id="lightbox-provenance" style="margin-top: 1.25rem; border-top: 1px solid var(--border-color); padding-top: 1rem; display: none;"></div>
-                <div id="lightbox-curator-details" style="margin-top: 1.25rem; border-top: 1px solid var(--border-color); padding-top: 1rem; display: none;"></div>
-                <div id="lightbox-biology-details" style="margin-top: 1.25rem; border-top: 1px solid var(--border-color); padding-top: 1rem; display: none;"></div>
-                <div id="lightbox-coexistence" style="margin-top: 1.25rem; border-top: 1px solid var(--border-color); padding-top: 1rem; display: none;"></div>
+                <div id="lightbox-actions" class="lightbox-actions"></div>
+                <div id="lightbox-timeline-ruler" class="lightbox-section" style="display: none;"></div>
+                <div id="lightbox-mineral-care" class="lightbox-section" style="display: none;"></div>
+                <div id="lightbox-provenance" class="lightbox-section" style="display: none;"></div>
+                <div id="lightbox-curator-details" class="lightbox-section" style="display: none;"></div>
+                <div id="lightbox-biology-details" class="lightbox-section" style="display: none;"></div>
+                <div id="lightbox-coexistence" class="lightbox-section" style="display: none;"></div>
             </div>
 
             <!-- Inter-fossil carousel -->
@@ -1252,6 +1291,7 @@
                 <button id="btn-mass-edit" class="btn-secondary selection-primary" onclick="app.massBulkEditSelected()">✏️ Bulk Edit</button>
                 <button id="btn-mass-tag" class="btn-secondary selection-primary" onclick="app.massTagSelected()">🏷️ Tag</button>
                 <button id="btn-mass-trip" class="btn-secondary selection-secondary" onclick="app.massLinkToTripSelected()">📓 Link to Trip</button>
+                <button id="btn-mass-group" class="btn-secondary selection-secondary" onclick="app.massLinkToGroupSelected()">📦 Add to Group</button>
                 <button id="btn-mass-untag" class="btn-secondary selection-secondary" onclick="app.massUntagSelected()">🏷️ Untag</button>
                 <button id="btn-mass-type" class="btn-secondary selection-secondary" onclick="app.massChangeFossilTypeSelected()">🦕 Set Type</button>
                 <button id="btn-mass-print" class="btn-secondary selection-secondary" onclick="app.printLabelsSelected()">🖨️ Print Labels</button>
@@ -1261,6 +1301,7 @@
                     <button type="button" id="btn-selection-more" class="btn-secondary" onclick="app.toggleSelectionMoreMenu(event)" aria-haspopup="true" aria-expanded="false">More</button>
                     <div id="selection-more-menu" class="selection-more-menu" hidden>
                         <button type="button" class="selection-more-item" onclick="app.closeSelectionMoreMenu(); app.massLinkToTripSelected()">📓 Link to Trip</button>
+                        <button type="button" class="selection-more-item" onclick="app.closeSelectionMoreMenu(); app.massLinkToGroupSelected()">📦 Add to Group</button>
                         <button type="button" class="selection-more-item" onclick="app.closeSelectionMoreMenu(); app.massUntagSelected()">🏷️ Untag</button>
                         <button type="button" class="selection-more-item" onclick="app.closeSelectionMoreMenu(); app.massChangeFossilTypeSelected()">🦕 Set Type</button>
                         <button type="button" class="selection-more-item" onclick="app.closeSelectionMoreMenu(); app.printLabelsSelected()">🖨️ Print Labels</button>
@@ -2195,67 +2236,192 @@
         </div>
     </dialog>
 
-    <!-- Field Diary / Trip Log Modal -->
-    <dialog id="field-diary-modal" style="width: 95%; max-width: 720px; border: 1px solid var(--border-color); border-radius: var(--radius-md); background: var(--bg-surface); padding: 1.25rem; box-shadow: var(--shadow-lg); color: var(--text-primary); outline: none;">
-        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; margin-bottom: 1rem;">
+    <!-- Field Diary / Localities & Visits Modal -->
+    <dialog id="field-diary-modal" style="width: 95%; max-width: 760px; border: 1px solid var(--border-color); border-radius: var(--radius-md); background: var(--bg-surface); padding: 1.25rem; box-shadow: var(--shadow-lg); color: var(--text-primary); outline: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; margin-bottom: 0.75rem;">
             <h2 style="font-size: 1.1rem; font-weight: 700; margin: 0;">📓 Field Diary</h2>
             <button type="button" class="btn-icon" aria-label="Close" onclick="app.toggleFieldDiaryModal()" style="border: none; background: transparent; color: var(--text-secondary); cursor: pointer;">✕</button>
         </div>
-        <p style="font-size: 0.78rem; color: var(--text-secondary); margin: 0 0 1rem 0; line-height: 1.4;">Quick trip log: date, locality, GPS, photos — then link specimens from the editor.</p>
+        <div class="field-diary-tabs" role="tablist" style="display:flex; gap:0.35rem; margin-bottom:0.85rem;">
+            <button type="button" id="fd-tab-visits" class="btn-secondary field-diary-tab is-active" onclick="app.setFieldDiaryTab('visits')" style="font-size:0.78rem; flex:1;">Visits</button>
+            <button type="button" id="fd-tab-sites" class="btn-secondary field-diary-tab" onclick="app.setFieldDiaryTab('sites')" style="font-size:0.78rem; flex:1;">Sites</button>
+        </div>
+
+        <!-- Visits (= trips) -->
+        <div id="field-diary-panel-visits">
+            <p style="font-size: 0.78rem; color: var(--text-secondary); margin: 0 0 1rem 0; line-height: 1.4;">Log a collecting visit, link it to a saved site, then attach specimens from the editor.</p>
+            <div class="field-diary-layout" style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 1rem; max-height: 70vh;">
+                <div style="overflow: auto; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: var(--bg-warm); padding: 0.5rem;">
+                    <button type="button" class="btn-primary" onclick="app.createNewFieldTrip()" style="width: 100%; margin-bottom: 0.5rem; font-size: 0.78rem;">+ New visit</button>
+                    <div id="field-diary-list"></div>
+                </div>
+                <div style="overflow: auto;">
+                    <input type="hidden" id="trip-edit-id">
+                    <div class="form-grid" style="gap: 0.65rem;">
+                        <div class="form-group full-width">
+                            <label for="trip-title">Title</label>
+                            <input type="text" id="trip-title" placeholder="e.g. Kem Kem weekend">
+                        </div>
+                        <div class="form-group">
+                            <label for="trip-date">Date</label>
+                            <input type="date" id="trip-date">
+                        </div>
+                        <div class="form-group">
+                            <label for="trip-locality-id">Site</label>
+                            <select id="trip-locality-id" onchange="app.applyLocalityToTripForm()">
+                                <option value="">— Free-text / none —</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="trip-country">Country</label>
+                            <input type="text" id="trip-country" placeholder="e.g. Morocco">
+                        </div>
+                        <div class="form-group full-width">
+                            <label for="trip-locality">Locality label</label>
+                            <input type="text" id="trip-locality" placeholder="Site / quarry / beach">
+                        </div>
+                        <div class="form-group">
+                            <label for="trip-lat">Latitude</label>
+                            <input type="number" step="any" id="trip-lat" placeholder="GPS">
+                        </div>
+                        <div class="form-group">
+                            <label for="trip-lng">Longitude</label>
+                            <input type="number" step="any" id="trip-lng" placeholder="GPS">
+                        </div>
+                        <div class="form-group full-width" style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+                            <button type="button" class="btn-secondary" onclick="app.captureTripGps()" style="font-size:0.75rem;">📍 Use my GPS</button>
+                            <button type="button" class="btn-secondary" onclick="app.applyTripToNewSpecimen()" style="font-size:0.75rem;">＋ Log specimen here</button>
+                        </div>
+                        <div class="form-group full-width">
+                            <label for="trip-notes">Notes</label>
+                            <textarea id="trip-notes" rows="3" placeholder="Weather, access, finds…"></textarea>
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Visit photos</label>
+                            <input type="file" id="trip-photos" accept="image/*,.heic,.heif" multiple onchange="app.handleTripPhotoUpload(event)" style="font-size:0.75rem;">
+                            <div id="trip-photos-preview" style="display:flex; flex-wrap:wrap; gap:0.35rem; margin-top:0.5rem;"></div>
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Linked specimens</label>
+                            <div id="trip-linked-specimens" style="font-size:0.78rem; color:var(--text-secondary);"></div>
+                        </div>
+                    </div>
+                    <div style="display:flex; justify-content:flex-end; gap:0.5rem; margin-top:1rem; border-top:1px solid var(--border-color); padding-top:0.75rem;">
+                        <button type="button" class="btn-danger" onclick="app.deleteCurrentFieldTrip()" style="margin-right:auto; font-size:0.75rem;">Delete</button>
+                        <button type="button" class="btn-secondary" onclick="app.toggleFieldDiaryModal()">Close</button>
+                        <button type="button" class="btn-primary" onclick="app.saveCurrentFieldTrip()">Save visit</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sites (= localities) -->
+        <div id="field-diary-panel-sites" hidden>
+            <p style="font-size: 0.78rem; color: var(--text-secondary); margin: 0 0 1rem 0; line-height: 1.4;">Reusable collecting sites. Link visits to a site so GPS and place names stay consistent.</p>
+            <div class="field-diary-layout" style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 1rem; max-height: 70vh;">
+                <div style="overflow: auto; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: var(--bg-warm); padding: 0.5rem;">
+                    <button type="button" class="btn-primary" onclick="app.createNewLocality()" style="width: 100%; margin-bottom: 0.35rem; font-size: 0.78rem;">+ New site</button>
+                    <button type="button" class="btn-secondary" onclick="app.importLocalitiesFromTrips()" style="width: 100%; margin-bottom: 0.5rem; font-size: 0.72rem;">Import from visit labels</button>
+                    <div id="locality-list"></div>
+                </div>
+                <div style="overflow: auto;">
+                    <input type="hidden" id="locality-edit-id">
+                    <div class="form-grid" style="gap: 0.65rem;">
+                        <div class="form-group full-width">
+                            <label for="locality-name">Site name</label>
+                            <input type="text" id="locality-name" placeholder="e.g. Kem Kem beds">
+                        </div>
+                        <div class="form-group">
+                            <label for="locality-country">Country</label>
+                            <input type="text" id="locality-country" placeholder="e.g. Morocco">
+                        </div>
+                        <div class="form-group">
+                            <label for="locality-region">Region</label>
+                            <input type="text" id="locality-region" placeholder="Optional">
+                        </div>
+                        <div class="form-group">
+                            <label for="locality-lat">Latitude</label>
+                            <input type="number" step="any" id="locality-lat" placeholder="GPS">
+                        </div>
+                        <div class="form-group">
+                            <label for="locality-lng">Longitude</label>
+                            <input type="number" step="any" id="locality-lng" placeholder="GPS">
+                        </div>
+                        <div class="form-group full-width">
+                            <button type="button" class="btn-secondary" onclick="app.captureLocalityGps()" style="font-size:0.75rem;">📍 Use my GPS</button>
+                        </div>
+                        <div class="form-group full-width">
+                            <label for="locality-notes">Notes</label>
+                            <textarea id="locality-notes" rows="3" placeholder="Access, formations, tips…"></textarea>
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Linked visits</label>
+                            <div id="locality-linked-visits" style="font-size:0.78rem; color:var(--text-secondary);"></div>
+                        </div>
+                    </div>
+                    <div style="display:flex; justify-content:flex-end; gap:0.5rem; margin-top:1rem; border-top:1px solid var(--border-color); padding-top:0.75rem;">
+                        <button type="button" class="btn-danger" onclick="app.deleteCurrentLocality()" style="margin-right:auto; font-size:0.75rem;">Delete</button>
+                        <button type="button" class="btn-secondary" onclick="app.toggleFieldDiaryModal()">Close</button>
+                        <button type="button" class="btn-primary" onclick="app.saveCurrentLocality()">Save site</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </dialog>
+
+    <!-- Lots & Groups Modal -->
+    <dialog id="groups-modal" style="width: 95%; max-width: 720px; border: 1px solid var(--border-color); border-radius: var(--radius-md); background: var(--bg-surface); padding: 1.25rem; box-shadow: var(--shadow-lg); color: var(--text-primary); outline: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; margin-bottom: 0.85rem;">
+            <h2 style="font-size: 1.1rem; font-weight: 700; margin: 0;">📦 Lots &amp; Groups</h2>
+            <button type="button" class="btn-icon" aria-label="Close" onclick="app.toggleGroupsModal()" style="border: none; background: transparent; color: var(--text-secondary); cursor: pointer;">✕</button>
+        </div>
+        <p style="font-size: 0.78rem; color: var(--text-secondary); margin: 0 0 1rem 0; line-height: 1.4;">Group specimens that share a purchase, ex-collection, or matrix. Select cards in the archive and use <em>Add to Group</em>.</p>
         <div class="field-diary-layout" style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 1rem; max-height: 70vh;">
             <div style="overflow: auto; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: var(--bg-warm); padding: 0.5rem;">
-                <button type="button" class="btn-primary" onclick="app.createNewFieldTrip()" style="width: 100%; margin-bottom: 0.5rem; font-size: 0.78rem;">+ New trip</button>
-                <div id="field-diary-list"></div>
+                <button type="button" class="btn-primary" onclick="app.createNewGroup()" style="width: 100%; margin-bottom: 0.5rem; font-size: 0.78rem;">+ New group</button>
+                <div id="groups-list"></div>
             </div>
             <div style="overflow: auto;">
-                <input type="hidden" id="trip-edit-id">
+                <input type="hidden" id="group-edit-id">
                 <div class="form-grid" style="gap: 0.65rem;">
                     <div class="form-group full-width">
-                        <label for="trip-title">Title</label>
-                        <input type="text" id="trip-title" placeholder="e.g. Kem Kem weekend">
+                        <label for="group-name">Name</label>
+                        <input type="text" id="group-name" placeholder="e.g. Ex-John Doe collection">
                     </div>
                     <div class="form-group">
-                        <label for="trip-date">Date</label>
-                        <input type="date" id="trip-date">
+                        <label for="group-source">Source</label>
+                        <input type="text" id="group-source" placeholder="Dealer, fair, trade…">
                     </div>
                     <div class="form-group">
-                        <label for="trip-country">Country</label>
-                        <input type="text" id="trip-country" placeholder="e.g. Morocco">
-                    </div>
-                    <div class="form-group full-width">
-                        <label for="trip-locality">Locality</label>
-                        <input type="text" id="trip-locality" placeholder="Site / quarry / beach">
+                        <label for="group-acquired">Acquired</label>
+                        <input type="date" id="group-acquired">
                     </div>
                     <div class="form-group">
-                        <label for="trip-lat">Latitude</label>
-                        <input type="number" step="any" id="trip-lat" placeholder="GPS">
+                        <label for="group-price">Lot price</label>
+                        <input type="number" step="any" id="group-price" placeholder="Optional">
                     </div>
                     <div class="form-group">
-                        <label for="trip-lng">Longitude</label>
-                        <input type="number" step="any" id="trip-lng" placeholder="GPS">
-                    </div>
-                    <div class="form-group full-width" style="display:flex; gap:0.5rem; align-items:center;">
-                        <button type="button" class="btn-secondary" onclick="app.captureTripGps()" style="font-size:0.75rem;">📍 Use my GPS</button>
-                        <button type="button" class="btn-secondary" onclick="app.applyTripToNewSpecimen()" style="font-size:0.75rem;">＋ Log specimen here</button>
-                    </div>
-                    <div class="form-group full-width">
-                        <label for="trip-notes">Notes</label>
-                        <textarea id="trip-notes" rows="3" placeholder="Weather, access, finds…"></textarea>
+                        <label for="group-currency">Currency</label>
+                        <select id="group-currency">
+                            <option value="USD">USD</option>
+                            <option value="EUR">EUR</option>
+                            <option value="SEK">SEK</option>
+                            <option value="GBP">GBP</option>
+                        </select>
                     </div>
                     <div class="form-group full-width">
-                        <label>Trip photos</label>
-                        <input type="file" id="trip-photos" accept="image/*,.heic,.heif" multiple onchange="app.handleTripPhotoUpload(event)" style="font-size:0.75rem;">
-                        <div id="trip-photos-preview" style="display:flex; flex-wrap:wrap; gap:0.35rem; margin-top:0.5rem;"></div>
+                        <label for="group-notes">Notes</label>
+                        <textarea id="group-notes" rows="3" placeholder="Provenance, matrix notes…"></textarea>
                     </div>
                     <div class="form-group full-width">
-                        <label>Linked specimens</label>
-                        <div id="trip-linked-specimens" style="font-size:0.78rem; color:var(--text-secondary);"></div>
+                        <label>Members</label>
+                        <div id="group-linked-specimens" style="font-size:0.78rem; color:var(--text-secondary);"></div>
                     </div>
                 </div>
                 <div style="display:flex; justify-content:flex-end; gap:0.5rem; margin-top:1rem; border-top:1px solid var(--border-color); padding-top:0.75rem;">
-                    <button type="button" class="btn-danger" onclick="app.deleteCurrentFieldTrip()" style="margin-right:auto; font-size:0.75rem;">Delete</button>
-                    <button type="button" class="btn-secondary" onclick="app.toggleFieldDiaryModal()">Close</button>
-                    <button type="button" class="btn-primary" onclick="app.saveCurrentFieldTrip()">Save trip</button>
+                    <button type="button" class="btn-danger" onclick="app.deleteCurrentGroup()" style="margin-right:auto; font-size:0.75rem;">Delete</button>
+                    <button type="button" class="btn-secondary" onclick="app.toggleGroupsModal()">Close</button>
+                    <button type="button" class="btn-primary" onclick="app.saveCurrentGroup()">Save group</button>
                 </div>
             </div>
         </div>
@@ -2336,16 +2502,16 @@
                 <button type="button" class="btn-icon" aria-label="Close" onclick="document.getElementById('backup-center-modal').close()">&times;</button>
             </div>
 
-            <p class="backup-center-lead">Download one JSON file you own. Restore it on this browser or another device.</p>
+            <p class="backup-center-lead">Download one JSON file you own. Restore it on this browser or another device. Prefer JSON for full restore; use ZIP when you want a spreadsheet plus photo files.</p>
 
             <div class="backup-center-includes">
                 <h3>What a backup includes</h3>
                 <ul>
                     <li>All specimens (fossils &amp; minerals), photos, notes, tags, storage &amp; prices</li>
-                    <li>Field diary <strong>trips</strong> and specimen links</li>
+                    <li>Field diary <strong>trips</strong>, <strong>localities</strong>, <strong>lots/groups</strong>, and specimen links</li>
                     <li>Provenance documents attached to specimens</li>
                 </ul>
-                <p class="backup-center-excludes">Not included: optional Google Drive / P2P sync settings, and AI speech models (re-downloaded if needed).</p>
+                <p class="backup-center-excludes">ZIP export is separate: <code>collection.csv</code> + <code>photos/</code> (not a full restore). Not included in JSON: optional Google Drive / P2P sync settings, and AI speech models (re-downloaded if needed).</p>
             </div>
 
             <div class="backup-center-stats" id="backup-center-stats">
@@ -2360,6 +2526,7 @@
 
             <div class="backup-center-actions">
                 <button type="button" class="btn-primary" onclick="app.exportData();">📥 Download backup</button>
+                <button type="button" class="btn-secondary" onclick="app.exportZipArchive();">📦 Export ZIP (CSV + photos)</button>
                 <button type="button" class="btn-secondary" onclick="document.getElementById('file-restore-json').click();">📤 Restore from file…</button>
             </div>
 
@@ -2389,6 +2556,7 @@
     </dialog>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="js/lib/errors.js"></script>
     <script src="js/lib/db.js"></script>
     <script src="js/lib/changelog.js"></script>
@@ -2397,7 +2565,11 @@
     <script src="js/lib/filters.js"></script>
     <script src="js/lib/dictation-status.js"></script>
     <script src="js/lib/trips.js"></script>
+    <script src="js/lib/localities.js"></script>
+    <script src="js/lib/groups.js"></script>
     <script src="js/lib/share-catalog.js"></script>
+    <script src="js/lib/share-card.js"></script>
+    <script src="js/lib/export-zip.js"></script>
     <script src="js/lib/qr.js"></script>
     <script src="js/lib/backup.js"></script>
     <script src="js/app.js"></script>

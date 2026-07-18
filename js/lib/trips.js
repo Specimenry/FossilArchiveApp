@@ -77,6 +77,7 @@ var SpecimenryTrips = (function() {
             id: createId(),
             title: '',
             date: iso,
+            localityId: '',
             locality: '',
             country: '',
             lat: null,
