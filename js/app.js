@@ -3262,13 +3262,24 @@ window.app = {
 
     // --- Dashboard ---
     toggleStats: function() {
+        if (!isStatsOpen && (!fossils || fossils.length === 0)) {
+            this.showToast('Add a specimen first to open the Dashboard.', 'info');
+            return;
+        }
         isStatsOpen = !isStatsOpen;
         var container = document.getElementById('stats-summary');
         if (container) {
-            container.style.display = isStatsOpen && fossils.length > 0 ? 'flex' : 'none';
+            container.style.display = isStatsOpen ? 'flex' : 'none';
+            if (isStatsOpen) {
+                try {
+                    container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                } catch (e) {
+                    container.scrollIntoView(true);
+                }
+            }
         }
         
-        // Handle both mobile FAB and desktop button states
+        // Handle both mobile and desktop button states
         ['btn-toggle-stats', 'btn-toggle-stats-desktop'].forEach(function(id) {
             var btn = document.getElementById(id);
             if (btn) btn.classList.toggle('active', isStatsOpen);

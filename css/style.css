@@ -2882,7 +2882,7 @@ dialog::backdrop {
         border: 1px solid var(--border-color);
         border-radius: var(--radius-md);
         box-shadow: var(--shadow-lg);
-        z-index: 80;
+        z-index: 20040;
         padding: 0.35rem;
         display: flex;
         flex-direction: column;
@@ -3093,11 +3093,13 @@ dialog::backdrop {
         position: relative !important;
         top: 0 !important;
         box-shadow: none !important;
+        overflow: visible !important;
     }
 
     .filter-inner {
         padding: 0.5rem 0.75rem;
         gap: 0.5rem;
+        overflow: visible !important;
     }
 
     /* Row 1 has search wrapper taking up 100% width on left and funnel button on right */
@@ -3157,6 +3159,32 @@ dialog::backdrop {
         border-color: var(--accent) !important;
     }
 
+    #btn-toggle-stats {
+        display: inline-flex !important;
+        padding: 0.4rem !important;
+        width: 38px !important;
+        height: 38px !important;
+        justify-content: center !important;
+        align-items: center !important;
+        border-radius: 50% !important;
+        flex-shrink: 0 !important;
+        background: var(--bg-surface) !important;
+        border: 1px solid var(--border-color) !important;
+        color: var(--text-primary) !important;
+        cursor: pointer !important;
+        box-shadow: var(--shadow-sm) !important;
+    }
+    #btn-toggle-stats.active {
+        background: var(--accent) !important;
+        color: var(--bg-surface) !important;
+        border-color: var(--accent) !important;
+    }
+    #btn-toggle-stats svg {
+        width: 15px !important;
+        height: 15px !important;
+        margin: 0 !important;
+    }
+
     /* Active filter count indicator badge */
     .mobile-filter-badge {
         position: absolute;
@@ -3213,6 +3241,13 @@ dialog::backdrop {
     }
     body.mobile-filters-open {
         overflow: hidden;
+    }
+
+    /* Sticky filter-bar creates a stacking context (z-index: 45). Raise it while
+       the sheet is open so the panel sits ABOVE the dim backdrop. */
+    .filter-bar.show-mobile-filters {
+        z-index: 20035 !important;
+        position: relative !important;
     }
 
     /* Filters as bottom sheet */
@@ -3274,26 +3309,26 @@ dialog::backdrop {
         cursor: pointer;
     }
 
-    /* Segmented view controls - horizontal scrolling on mobile to prevent cramming while keeping labels legible */
+    /* Segmented view controls — keep overflow visible so More menu isn't clipped */
     .view-toggle-group {
         width: 100% !important;
-        overflow: hidden !important;
+        overflow: visible !important;
+    }
+    .view-toggle-row {
+        overflow: visible !important;
     }
     .view-toggle {
         width: 100% !important;
         display: flex !important;
         flex-shrink: 0 !important;
         flex-wrap: nowrap !important;
-        overflow-x: auto !important;
-        -webkit-overflow-scrolling: touch !important;
-        scrollbar-width: none !important; /* Firefox */
+        overflow: visible !important;
         margin-bottom: 0.5rem !important;
-        gap: 1.25rem !important; /* Spacing between tabs */
+        gap: 0.15rem !important;
         padding-bottom: 0 !important;
         border-bottom: 2px solid var(--border-color) !important;
         border-radius: 0 !important;
         background: transparent !important;
-        overflow-y: hidden !important;
     }
     .view-toggle::-webkit-scrollbar {
         display: none !important; /* Chrome/Safari/Edge */
