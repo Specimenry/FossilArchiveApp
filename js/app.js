@@ -1238,6 +1238,11 @@ window.addEventListener('DOMContentLoaded', function() {
         if (btnSale) btnSale.classList.toggle('active', savedView === 'sale');
         if (btnCarts) btnCarts.classList.toggle('active', savedView === 'carts');
         if (btnDream) btnDream.classList.toggle('active', savedView === 'dream');
+        var btnTraded = document.getElementById('btn-traded');
+        if (btnTraded) btnTraded.classList.toggle('active', savedView === 'traded');
+        if (window.app && typeof window.app.updateViewMoreButton === 'function') {
+            window.app.updateViewMoreButton(savedView);
+        }
 
         var cartsContainer = document.getElementById('carts-container');
         var grid = document.getElementById('fossil-grid');
@@ -1450,7 +1455,8 @@ window.addEventListener('DOMContentLoaded', function() {
     });
 
     // Close dropdowns on outside clicks
-    document.addEventListener('click', function() {
+    document.addEventListener('click', function(e) {
+        var t = e.target;
         var menu = document.getElementById('enrich-dropdown');
         if (menu && menu.classList.contains('active')) {
             menu.classList.remove('active');
@@ -1460,19 +1466,44 @@ window.addEventListener('DOMContentLoaded', function() {
             dbMenu.classList.remove('active');
         }
         var mobileMenu = document.getElementById('mobile-menu-dropdown-content');
+        var mobileBtn = document.getElementById('btn-mobile-menu');
         if (mobileMenu && mobileMenu.classList.contains('active')) {
-            mobileMenu.classList.remove('active');
+            if (!(mobileMenu.contains(t) || (mobileBtn && mobileBtn.contains(t)))) {
+                if (window.app && typeof window.app.closeMobileMenu === 'function') {
+                    window.app.closeMobileMenu();
+                }
+            }
+        }
+        var viewMore = document.getElementById('view-more-menu');
+        var viewMoreBtn = document.getElementById('btn-view-more');
+        if (viewMore && !viewMore.hasAttribute('hidden')) {
+            if (!(viewMore.contains(t) || (viewMoreBtn && viewMoreBtn.contains(t)))) {
+                if (window.app && typeof window.app.closeViewMoreMenu === 'function') {
+                    window.app.closeViewMoreMenu();
+                }
+            }
+        }
+        var selMore = document.getElementById('selection-more-menu');
+        var selMoreBtn = document.getElementById('btn-selection-more');
+        if (selMore && !selMore.hasAttribute('hidden')) {
+            if (!(selMore.contains(t) || (selMoreBtn && selMoreBtn.contains(t)))) {
+                if (window.app && typeof window.app.closeSelectionMoreMenu === 'function') {
+                    window.app.closeSelectionMoreMenu();
+                }
+            }
         }
         if (window.app && typeof window.app.closeAllCardMenus === 'function') {
             window.app.closeAllCardMenus();
         }
     });
 
-    // Floating Back to Top Button scroll handler
+    // Floating Back to Top + Add FAB scroll handler
     var backToTopBtn = document.getElementById('btn-back-to-top');
-    if (backToTopBtn) {
-        window.addEventListener('scroll', function() {
-            if (window.scrollY > 300) {
+    var fabAddBtn = document.getElementById('btn-fab-add');
+    window.addEventListener('scroll', function() {
+        var scrolled = window.scrollY > 220;
+        if (backToTopBtn) {
+            if (scrolled) {
                 backToTopBtn.style.opacity = '1';
                 backToTopBtn.style.pointerEvents = 'auto';
                 backToTopBtn.style.transform = 'translateY(0)';
@@ -1481,8 +1512,12 @@ window.addEventListener('DOMContentLoaded', function() {
                 backToTopBtn.style.pointerEvents = 'none';
                 backToTopBtn.style.transform = 'translateY(15px)';
             }
-        }, { passive: true });
-    }
+        }
+        if (fabAddBtn) {
+            fabAddBtn.classList.toggle('visible', scrolled);
+            fabAddBtn.setAttribute('aria-hidden', scrolled ? 'false' : 'true');
+        }
+    }, { passive: true });
 });
 
 // Global keyboard navigation (Lightbox & Showcase & Zoom & Compare)
@@ -5919,10 +5954,13 @@ window.app = {
                 document.getElementById('shop-margin-percent').textContent = '0.0%';
             }
 
-            // Quick add checkbox state
+            // Quick add checkbox state — default Simple on phones for new specimens
             var quickChk = document.getElementById('f-quick-add');
             if (quickChk) {
-                var savedMode = localStorage.getItem('pref_editor_mode') || 'advanced';
+                var savedMode = localStorage.getItem('pref_editor_mode');
+                if (!savedMode) {
+                    savedMode = (window.innerWidth <= 768) ? 'simple' : 'advanced';
+                }
                 quickChk.checked = (savedMode === 'simple');
                 if (window.app && typeof window.app.toggleQuickAddMode === 'function') {
                     window.app.toggleQuickAddMode();
@@ -6579,6 +6617,9 @@ window.app = {
         if (document.getElementById('btn-traded')) {
             document.getElementById('btn-traded').classList.toggle('active', view === 'traded');
         }
+        if (typeof window.app.updateViewMoreButton === 'function') {
+            window.app.updateViewMoreButton(view);
+        }
 
         // Smoothly scroll active button into view on mobile view-toggle scrollable containers
         var activeBtn = null;
@@ -6590,7 +6631,7 @@ window.app = {
         else if (view === 'dream') activeBtn = document.getElementById('btn-dream');
         else if (view === 'traded') activeBtn = document.getElementById('btn-traded');
 
-        if (!skipScroll && activeBtn && typeof activeBtn.scrollIntoView === 'function') {
+        if (!skipScroll && activeBtn && typeof activeBtn.scrollIntoView === 'function' && window.innerWidth > 768) {
             activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
         }
 
@@ -8130,6 +8171,9 @@ window.app = {
                 selectionBar.classList.add('active');
             } else {
                 selectionBar.classList.remove('active');
+                if (window.app && typeof window.app.closeSelectionMoreMenu === 'function') {
+                    window.app.closeSelectionMoreMenu();
+                }
                 if (window.app._selectionBarTimeout) {
                     clearTimeout(window.app._selectionBarTimeout);
                 }
@@ -8780,35 +8824,136 @@ window.app = {
 
     toggleMobileFilters: function() {
         var filterBar = document.querySelector('.filter-bar');
-        if (filterBar) {
-            filterBar.classList.toggle('show-mobile-filters');
-            var isShow = filterBar.classList.contains('show-mobile-filters');
-            var btn = document.getElementById('btn-mobile-filter-toggle');
-            if (btn) {
-                btn.classList.toggle('active', isShow);
-            }
+        if (!filterBar) return;
+        var opening = !filterBar.classList.contains('show-mobile-filters');
+        if (opening) this.openMobileFilters();
+        else this.closeMobileFilters();
+    },
+
+    openMobileFilters: function() {
+        this.closeMobileMenu();
+        var filterBar = document.querySelector('.filter-bar');
+        var backdrop = document.getElementById('mobile-filter-backdrop');
+        var btn = document.getElementById('btn-mobile-filter-toggle');
+        if (filterBar) filterBar.classList.add('show-mobile-filters');
+        if (backdrop) {
+            backdrop.hidden = false;
+            backdrop.classList.add('active');
         }
+        if (btn) btn.classList.add('active');
+        document.body.classList.add('mobile-filters-open');
+    },
+
+    closeMobileFilters: function() {
+        var filterBar = document.querySelector('.filter-bar');
+        var backdrop = document.getElementById('mobile-filter-backdrop');
+        var btn = document.getElementById('btn-mobile-filter-toggle');
+        if (filterBar) filterBar.classList.remove('show-mobile-filters');
+        if (backdrop) {
+            backdrop.hidden = true;
+            backdrop.classList.remove('active');
+        }
+        if (btn) btn.classList.remove('active');
+        document.body.classList.remove('mobile-filters-open');
+    },
+
+    toggleSelectionMoreMenu: function(event) {
+        if (event) event.stopPropagation();
+        var menu = document.getElementById('selection-more-menu');
+        var btn = document.getElementById('btn-selection-more');
+        if (!menu) return;
+        var open = menu.hasAttribute('hidden');
+        if (open) menu.removeAttribute('hidden');
+        else menu.setAttribute('hidden', '');
+        if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    },
+
+    closeSelectionMoreMenu: function() {
+        var menu = document.getElementById('selection-more-menu');
+        var btn = document.getElementById('btn-selection-more');
+        if (menu) menu.setAttribute('hidden', '');
+        if (btn) btn.setAttribute('aria-expanded', 'false');
     },
 
     toggleMobileMenu: function(event) {
         if (event) event.stopPropagation();
+        this.closeMobileFilters();
         
-        // Close other dropdowns
         var dbMenu = document.getElementById('db-dropdown');
         if (dbMenu) dbMenu.classList.remove('active');
         var enrichMenu = document.getElementById('enrich-dropdown');
         if (enrichMenu) enrichMenu.classList.remove('active');
         
         var menu = document.getElementById('mobile-menu-dropdown-content');
-        if (menu) {
-            menu.classList.toggle('active');
+        var backdrop = document.getElementById('mobile-menu-backdrop');
+        var btn = document.getElementById('btn-mobile-menu');
+        if (!menu) return;
+        var opening = !menu.classList.contains('active');
+        menu.classList.toggle('active', opening);
+        menu.setAttribute('aria-hidden', opening ? 'false' : 'true');
+        if (backdrop) {
+            backdrop.hidden = !opening;
+            backdrop.classList.toggle('active', opening);
         }
+        if (btn) btn.classList.toggle('active', opening);
+        document.body.classList.toggle('mobile-menu-open', opening);
     },
 
     closeMobileMenu: function() {
         var menu = document.getElementById('mobile-menu-dropdown-content');
+        var backdrop = document.getElementById('mobile-menu-backdrop');
+        var btn = document.getElementById('btn-mobile-menu');
         if (menu) {
             menu.classList.remove('active');
+            menu.setAttribute('aria-hidden', 'true');
+        }
+        if (backdrop) {
+            backdrop.hidden = true;
+            backdrop.classList.remove('active');
+        }
+        if (btn) btn.classList.remove('active');
+        document.body.classList.remove('mobile-menu-open');
+    },
+
+    toggleViewMoreMenu: function(event) {
+        if (event) event.stopPropagation();
+        var menu = document.getElementById('view-more-menu');
+        var btn = document.getElementById('btn-view-more');
+        if (!menu) return;
+        var open = menu.hasAttribute('hidden');
+        if (open) menu.removeAttribute('hidden');
+        else menu.setAttribute('hidden', '');
+        if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    },
+
+    closeViewMoreMenu: function() {
+        var menu = document.getElementById('view-more-menu');
+        var btn = document.getElementById('btn-view-more');
+        if (menu) menu.setAttribute('hidden', '');
+        if (btn) btn.setAttribute('aria-expanded', 'false');
+    },
+
+    setViewFromMore: function(view) {
+        this.closeViewMoreMenu();
+        this.setView(view);
+    },
+
+    updateViewMoreButton: function(view) {
+        var btn = document.getElementById('btn-view-more');
+        var label = document.getElementById('btn-view-more-label');
+        if (!btn || !label) return;
+        var moreViews = {
+            sold: 'Sold',
+            traded: 'Traded',
+            carts: 'Carts',
+            dream: 'Dream'
+        };
+        var isMore = !!moreViews[view];
+        btn.classList.toggle('active', isMore);
+        label.textContent = isMore ? moreViews[view] : 'More';
+        var items = document.querySelectorAll('#view-more-menu .view-more-item');
+        for (var i = 0; i < items.length; i++) {
+            items[i].classList.toggle('active', items[i].getAttribute('data-view') === view);
         }
     },
 
@@ -10734,8 +10879,9 @@ window.app = {
                                     ) +
                                     '<div class="card-more-menu-container">' +
                                         '<button class="btn-card-more" title="Curator Toolkit" onclick="event.stopPropagation(); app.toggleCardMenu(event, \'' + f.id + '\')">' +
-                                            '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>' +
+                                            '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>' +
                                             '<span class="btn-text">Manage</span>' +
+                                            '<span class="btn-text-mobile">More</span>' +
                                             '<svg class="chevron-indicator" xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.85; margin-left: 1px;"><path d="m6 9 6 6 6-6"/></svg>' +
                                         '</button>' +
                                         '<div class="card-dropdown-list" id="dropdown-' + f.id + '">' +
@@ -14790,11 +14936,21 @@ window.app = {
         var overlay = document.createElement('div');
         overlay.id = 'tour-overlay';
         overlay.className = 'tour-overlay';
-        overlay.onclick = function() { window.app.endTour(false); };
+        overlay.setAttribute('role', 'presentation');
+        // Require intentional dismiss on mobile — accidental backdrop taps were ending the tour
+        // before users noticed the card (especially when it failed to animate in).
+        overlay.addEventListener('click', function(e) {
+            if (e.target !== overlay) return;
+            if (window.innerWidth <= 768) return;
+            window.app.endTour(false);
+        });
         document.body.appendChild(overlay);
         var card = document.createElement('div');
         card.id = 'tour-card';
         card.className = 'tour-card';
+        card.setAttribute('role', 'dialog');
+        card.setAttribute('aria-modal', 'true');
+        card.addEventListener('click', function(e) { e.stopPropagation(); });
         card.innerHTML = 
             '<div class="tour-card-header">' +
                 '<span class="tour-card-title"></span>' +
@@ -14810,6 +14966,9 @@ window.app = {
             '</div>' +
             '<div id="tour-arrow" class="tour-arrow"></div>';
         document.body.appendChild(card);
+        // Force visible immediately (mobile kills CSS animations globally)
+        card.style.opacity = '1';
+        card.style.transform = 'none';
         this.renderTourStep();
     },
     nextTourStep: function() {
@@ -14845,6 +15004,7 @@ window.app = {
         }
     },
     getTourSteps: function() {
+        var isMobile = window.innerWidth <= 768;
         return [
             {
                 title: "Welcome to Specimenry",
@@ -14853,23 +15013,31 @@ window.app = {
             },
             {
                 title: "Log specimens",
-                body: "Add fossils or minerals here. On a phone in the field, switch to Simple mode: name, photo, location, notes, and trip.",
+                body: isMobile
+                    ? "Tap + to add a fossil or mineral. Use Simple mode in the field: name, photo, location, notes."
+                    : "Add fossils or minerals here. On a phone in the field, switch to Simple mode: name, photo, location, notes, and trip.",
                 target: "#btn-add-fossil"
             },
             {
-                title: "Backup & Restore",
-                body: "Open Backup & Restore to download one JSON file with specimens and field diary trips. Your data lives in this browser — export regularly.",
-                target: "#btn-db-center"
+                title: isMobile ? "Menu (☰)" : "Backup & Restore",
+                body: isMobile
+                    ? "Open the menu for Backup & Restore, Field Diary, Sync, and About. Export backups regularly — data lives in this browser."
+                    : "Open Backup & Restore to download one JSON file with specimens and field diary trips. Your data lives in this browser — export regularly.",
+                target: isMobile ? "#btn-mobile-menu" : "#btn-db-center"
             },
             {
-                title: "Utilities",
-                body: "Compare specimens, print labels, Field Diary, shareable catalogs, and more.",
-                target: "#btn-enrich-center"
+                title: isMobile ? "Backup tip" : "Utilities",
+                body: isMobile
+                    ? "After a few specimens, use Menu → Backup & Restore. On iPhone, check Files → Downloads for the file."
+                    : "Compare specimens, print labels, Field Diary, shareable catalogs, and more.",
+                target: isMobile ? "#btn-mobile-menu" : "#btn-enrich-center"
             },
             {
                 title: "Free & optional support",
-                body: "Specimenry is free. Ko-fi tips are optional — core features are not paywalled.",
-                target: "#btn-support-project"
+                body: isMobile
+                    ? "Specimenry is free. Optional Ko-fi tips are in the ☰ menu — core features are not paywalled."
+                    : "Specimenry is free. Ko-fi tips are optional — core features are not paywalled.",
+                target: isMobile ? "#btn-mobile-menu" : "#btn-support-project"
             }
         ];
     },
@@ -14893,15 +15061,18 @@ window.app = {
         var arrow = document.getElementById('tour-arrow');
         
         // Reset dynamic styles
-        card.style.position = '';
+        card.style.position = 'fixed';
         card.style.top = '';
         card.style.bottom = '';
         card.style.left = '';
         card.style.right = '';
         card.style.margin = '';
-        card.style.transform = '';
         card.style.width = '';
         card.style.height = '';
+        card.style.maxWidth = '';
+        // Keep card visible — mobile stylesheet disables the entrance animation
+        card.style.opacity = '1';
+        card.style.transform = 'none';
         
         if (arrow) {
             arrow.style.top = '';
@@ -14912,36 +15083,31 @@ window.app = {
         }
 
         var isMobile = window.innerWidth <= 768;
+        var targetVisible = !!(targetEl && targetEl.offsetWidth > 0 && targetEl.offsetHeight > 0 &&
+            window.getComputedStyle(targetEl).display !== 'none' &&
+            window.getComputedStyle(targetEl).visibility !== 'hidden');
 
         if (isMobile) {
-            if (targetEl && targetEl.offsetWidth > 0 && targetEl.offsetHeight > 0) {
-                // Mobile layout with target highlight: anchor card at the bottom using auto-margins (bypassing transform scale overrides)
-                card.style.position = 'fixed';
-                card.style.top = 'auto';
-                card.style.bottom = '20px';
-                card.style.left = '16px';
-                card.style.right = '16px';
-                card.style.margin = '0 auto';
-                card.style.width = 'auto';
-                card.style.maxWidth = '320px';
-                
+            card.style.left = '16px';
+            card.style.right = '16px';
+            card.style.bottom = '20px';
+            card.style.top = 'auto';
+            card.style.margin = '0 auto';
+            card.style.width = 'auto';
+            card.style.maxWidth = '340px';
+            card.style.height = 'auto';
+
+            if (targetVisible) {
                 targetEl.classList.add('tour-highlighted');
-                targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            } else {
-                // Mobile layout without target (or target is hidden on mobile): center card vertically and horizontally
-                card.style.position = 'fixed';
-                card.style.top = '0px';
-                card.style.bottom = '0px';
-                card.style.left = '0px';
-                card.style.right = '0px';
-                card.style.margin = 'auto';
-                card.style.width = 'calc(100% - 32px)';
-                card.style.maxWidth = '320px';
-                card.style.height = 'fit-content';
+                try {
+                    targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                } catch (e) {
+                    try { targetEl.scrollIntoView(true); } catch (e2) {}
+                }
             }
         } else {
             // Desktop format
-            if (targetEl && targetEl.offsetWidth > 0 && targetEl.offsetHeight > 0) {
+            if (targetVisible) {
                 card.style.position = 'absolute';
                 targetEl.classList.add('tour-highlighted');
                 
@@ -14968,6 +15134,8 @@ window.app = {
                 }
                 card.style.top = cardTop + 'px';
                 card.style.left = cardLeft + 'px';
+                card.style.bottom = 'auto';
+                card.style.right = 'auto';
                 if (arrow) {
                     arrow.style.display = 'block';
                     var arrowLeft = rect.left + window.scrollX + (rect.width / 2) - cardLeft - 5;
@@ -14975,15 +15143,13 @@ window.app = {
                 }
             } else {
                 // Centered modal layout for untargeted step (Welcome step)
-                // Using margin: auto positioning to bypass scale animation transform overrides
-                card.style.position = 'fixed';
-                card.style.top = '0px';
-                card.style.bottom = '0px';
-                card.style.left = '0px';
-                card.style.right = '0px';
-                card.style.margin = 'auto';
+                card.style.top = '50%';
+                card.style.left = '50%';
+                card.style.bottom = 'auto';
+                card.style.right = 'auto';
                 card.style.width = '320px';
-                card.style.height = 'fit-content';
+                card.style.transform = 'translate(-50%, -50%)';
+                card.style.margin = '0';
             }
         }
     },
