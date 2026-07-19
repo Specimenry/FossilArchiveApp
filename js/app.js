@@ -5,7 +5,7 @@
 // =========================================================================
 
 // --- CONSTANTS ---
-var SPECIMENRY_VERSION = '0.9.18';
+var SPECIMENRY_VERSION = '0.9.19';
 var SPECIMENRY_BUILD_DATE = '2026-07-19';
 
 var CATEGORIES = [
@@ -1154,7 +1154,15 @@ var isPortfolioOpen = false;
 var isPhylogenyOpen = false;
 var portfolioSortField = 'specimen';
 var portfolioSortAsc = true;
-var activeBaseCurrency = 'USD';
+/** Preferred currency for dashboard totals & new-entry defaults. Stored prices keep their own currency. */
+var preferredDisplayCurrency = (function() {
+    try {
+        var c = localStorage.getItem('pref_display_currency');
+        if (c === 'USD' || c === 'EUR' || c === 'SEK') return c;
+    } catch (e) {}
+    return 'SEK';
+})();
+var activeBaseCurrency = preferredDisplayCurrency;
 var leafletMapInstance = null;
 var leafletMarkerGroup = null;
 var leafletActiveTileLayer = null;
@@ -3573,6 +3581,14 @@ window.app = {
                 return total;
             }
 
+            var displayCurr = (typeof window.app.getPreferredDisplayCurrency === 'function')
+                ? window.app.getPreferredDisplayCurrency()
+                : (preferredDisplayCurrency || 'SEK');
+            var formatDashMoney = function(sekAmount) {
+                var converted = window.app._convertCurrency(sekAmount, 'SEK', displayCurr);
+                return Math.round(converted).toLocaleString() + ' ' + displayCurr;
+            };
+
             var totalCostSEK = calculateTotalSEK(valueByCurrency);
             var totalEstSEK = calculateTotalSEK(estValueByCurrency);
             var totalAppreciation = totalEstSEK - totalCostSEK;
@@ -3601,7 +3617,7 @@ window.app = {
                 if (totalCostSEK > 0) {
                     statsHtml += '<div class="stats-pill" style="display: flex; align-items: center; gap: 0.5rem; background: var(--bg-warm); padding: 0.4rem 0.85rem; border-radius: 2rem; border: 1px solid var(--border-color); font-size: 0.85rem; font-weight: 500;">' +
                                     '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b5d4d" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M16 8l-8 8M8 8l8 8"/></svg>' +
-                                    '<span>Acquisition Cost: <strong>' + Math.round(totalCostSEK).toLocaleString() + ' SEK</strong></span>' +
+                                    '<span>Acquisition Cost: <strong>' + formatDashMoney(totalCostSEK) + '</strong></span>' +
                                   '</div>';
                 }
 
@@ -3609,7 +3625,7 @@ window.app = {
                 if (totalSaleSEK > 0) {
                     statsHtml += '<div class="stats-pill" style="display: flex; align-items: center; gap: 0.5rem; background: var(--bg-warm); padding: 0.4rem 0.85rem; border-radius: 2rem; border: 1px solid var(--border-color); font-size: 0.85rem; font-weight: 500;">' +
                                     '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>' +
-                                    '<span>Sales Revenue: <strong>' + Math.round(totalSaleSEK).toLocaleString() + ' SEK</strong></span>' +
+                                    '<span>Sales Revenue: <strong>' + formatDashMoney(totalSaleSEK) + '</strong></span>' +
                                   '</div>';
                 }
 
@@ -3619,9 +3635,10 @@ window.app = {
                     var profitColor = totalProfitSEK >= 0 ? '#439775' : '#b33a3a';
                     var profitBg = totalProfitSEK >= 0 ? 'rgba(67, 151, 117, 0.1)' : 'rgba(179, 58, 58, 0.1)';
                     var profitBorder = totalProfitSEK >= 0 ? 'rgba(67, 151, 117, 0.2)' : 'rgba(179, 58, 58, 0.2)';
+                    var profitDisp = window.app._convertCurrency(totalProfitSEK, 'SEK', displayCurr);
                     statsHtml += '<div class="stats-pill" style="display: flex; align-items: center; gap: 0.5rem; background: ' + profitBg + '; color: ' + profitColor + '; padding: 0.4rem 0.85rem; border-radius: 2rem; border: 1px solid ' + profitBorder + '; font-size: 0.85rem; font-weight: 700;">' +
                                     '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>' +
-                                    '<span>Net Profit: ' + (totalProfitSEK >= 0 ? '+' : '') + Math.round(totalProfitSEK).toLocaleString() + ' SEK (' + (totalProfitSEK >= 0 ? '↑' : '↓') + percentProfit + '%)</span>' +
+                                    '<span>Net Profit: ' + (profitDisp >= 0 ? '+' : '') + Math.round(profitDisp).toLocaleString() + ' ' + displayCurr + ' (' + (totalProfitSEK >= 0 ? '↑' : '↓') + percentProfit + '%)</span>' +
                                   '</div>';
                 }
             } else {
@@ -3652,7 +3669,7 @@ window.app = {
                 if (totalCostSEK > 0) {
                     statsHtml += '<div class="stats-pill" style="display: flex; align-items: center; gap: 0.5rem; background: var(--bg-warm); padding: 0.4rem 0.85rem; border-radius: 2rem; border: 1px solid var(--border-color); font-size: 0.85rem; font-weight: 500;">' +
                                     '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b5d4d" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M16 8l-8 8M8 8l8 8"/></svg>' +
-                                    '<span>Cost: <strong>' + Math.round(totalCostSEK).toLocaleString() + ' SEK</strong></span>' +
+                                    '<span>Cost: <strong>' + formatDashMoney(totalCostSEK) + '</strong></span>' +
                                   '</div>';
                 }
 
@@ -3660,7 +3677,7 @@ window.app = {
                 if (totalEstSEK > 0) {
                     statsHtml += '<div class="stats-pill" style="display: flex; align-items: center; gap: 0.5rem; background: var(--bg-warm); padding: 0.4rem 0.85rem; border-radius: 2rem; border: 1px solid var(--border-color); font-size: 0.85rem; font-weight: 500;">' +
                                     '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e6a817" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v12M17 12H7"/></svg>' +
-                                    '<span>Value: <strong>' + Math.round(totalEstSEK).toLocaleString() + ' SEK</strong></span>' +
+                                    '<span>Value: <strong>' + formatDashMoney(totalEstSEK) + '</strong></span>' +
                                   '</div>';
                 }
 
@@ -3669,7 +3686,7 @@ window.app = {
                     var percentGain = Math.round((totalAppreciation / totalCostSEK) * 100);
                     statsHtml += '<div class="stats-pill" style="display: flex; align-items: center; gap: 0.5rem; background: rgba(67, 151, 117, 0.1); color: #439775; padding: 0.4rem 0.85rem; border-radius: 2rem; border: 1px solid rgba(67, 151, 117, 0.2); font-size: 0.85rem; font-weight: 700;">' +
                                     '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>' +
-                                    '<span>Appreciation: +' + Math.round(totalAppreciation).toLocaleString() + ' SEK (↑' + percentGain + '%)</span>' +
+                                    '<span>Appreciation: +' + formatDashMoney(totalAppreciation) + ' (↑' + percentGain + '%)</span>' +
                                   '</div>';
                 }
             }
@@ -3755,7 +3772,7 @@ window.app = {
                                     '<div class="data-card" style="background: var(--bg-warm); padding: 1.5rem; border-radius: 1rem; border: 1px solid var(--border-color); text-align: center; box-shadow: var(--shadow-sm);">' +
                                         '<div style="color: var(--accent); margin-bottom: 0.5rem;"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>' +
                                         '<div style="font-size: 0.9rem; opacity: 0.7; font-weight: 600; text-transform: uppercase;">Total Target Budget</div>' +
-                                        '<div style="font-size: 2.25rem; font-weight: 800; color: var(--text-main); margin-top: 0.5rem;">' + Math.round(totalBudget).toLocaleString() + ' SEK</div>' +
+                                        '<div style="font-size: 2.25rem; font-weight: 800; color: var(--text-main); margin-top: 0.5rem;">' + formatDashMoney(totalBudget) + '</div>' +
                                         '<div style="font-size: 0.8rem; opacity: 0.6; margin-top: 0.25rem;">For ' + missingCount + ' tracked specimens</div>' +
                                     '</div>' +
                                     // Most Wanted Card
@@ -4320,21 +4337,62 @@ window.app = {
     },
 
     _convertCurrency: function(amount, from, to) {
-        if (!amount) return 0;
+        if (!amount && amount !== 0) return 0;
         var val = parseFloat(amount);
         if (isNaN(val)) return 0;
+        from = (from || 'USD').toUpperCase();
+        to = (to || 'SEK').toUpperCase();
         if (from === to) return val;
-        
-        // Normalize to SEK
-        var inSek = val;
-        if (from === 'USD') inSek = val * 10.5;
-        else if (from === 'EUR') inSek = val * 11.4;
-        
-        // Convert SEK to target
-        var rate = 1;
-        if (to === 'USD') rate = 1 / 10.5;
-        else if (to === 'EUR') rate = 1 / 11.4;
-        return inSek * rate;
+
+        var toSek = function(v, code) {
+            if (code === 'SEK') return v;
+            if (exchangeRates && exchangeRates[code]) return v / exchangeRates[code];
+            if (code === 'USD') return v * 10.5;
+            if (code === 'EUR') return v * 11.4;
+            return v;
+        };
+        var fromSek = function(sek, code) {
+            if (code === 'SEK') return sek;
+            if (exchangeRates && exchangeRates[code]) return sek * exchangeRates[code];
+            if (code === 'USD') return sek / 10.5;
+            if (code === 'EUR') return sek / 11.4;
+            return sek;
+        };
+        return fromSek(toSek(val, from), to);
+    },
+
+    getPreferredDisplayCurrency: function() {
+        try {
+            var c = localStorage.getItem('pref_display_currency');
+            if (c === 'USD' || c === 'EUR' || c === 'SEK') return c;
+        } catch (e) {}
+        return preferredDisplayCurrency || 'SEK';
+    },
+
+    setPreferredDisplayCurrency: function(code, opts) {
+        opts = opts || {};
+        code = (code || 'SEK').toUpperCase();
+        if (code !== 'USD' && code !== 'EUR' && code !== 'SEK') code = 'SEK';
+        preferredDisplayCurrency = code;
+        activeBaseCurrency = code;
+        try { localStorage.setItem('pref_display_currency', code); } catch (e) {}
+        var sel = document.getElementById('settings-display-currency');
+        if (sel) sel.value = code;
+        if (!opts.silent) {
+            this.showToast('Display currency: ' + code + ' (totals & new entries). Specimens keep their own currency.', 'success', 2800);
+        }
+        if (isStatsOpen) {
+            this.renderFossils();
+        }
+        if (isPortfolioOpen && typeof this.renderPortfolio === 'function') {
+            this.renderPortfolio();
+        }
+    },
+
+    setPortfolioBaseCurrency: function(code) {
+        // Portfolio picker shares the preferred display currency so Settings stay in sync.
+        this.setPreferredDisplayCurrency(code, { silent: true });
+        if (typeof this.renderPortfolio === 'function') this.renderPortfolio();
     },
 
     _getChronoPeriods: function() {
@@ -6038,9 +6096,9 @@ window.app = {
             var tDisp = document.getElementById('f-thickness-unit-display');
             if (wDisp) wDisp.textContent = 'cm';
             if (tDisp) tDisp.textContent = 'cm';
-            document.getElementById('f-currency').value = 'USD';
+            document.getElementById('f-currency').value = window.app.getPreferredDisplayCurrency();
             document.getElementById('f-est-value').value = '';
-            document.getElementById('f-est-currency').value = 'USD';
+            document.getElementById('f-est-currency').value = window.app.getPreferredDisplayCurrency();
             document.getElementById('f-link').value = '';
             document.getElementById('f-etymology').value = '';
             document.getElementById('f-restoration').value = '';
@@ -6082,7 +6140,7 @@ window.app = {
             }
             document.getElementById('f-wishlist').value = 'false';
             document.getElementById('f-sale-price').value = '';
-            document.getElementById('f-sale-currency').value = 'USD';
+            document.getElementById('f-sale-currency').value = window.app.getPreferredDisplayCurrency();
             window.app.toggleSalePriceField();
             
             window.app.updateEpochs(localStorage.getItem('last_epoch') || '');
@@ -6129,9 +6187,9 @@ window.app = {
 
             // Reset shop fields
             document.getElementById('f-cogs').value = '';
-            document.getElementById('f-cogs-currency').value = 'USD';
+            document.getElementById('f-cogs-currency').value = window.app.getPreferredDisplayCurrency();
             document.getElementById('f-sold-price').value = '';
-            document.getElementById('f-sold-currency').value = 'USD';
+            document.getElementById('f-sold-currency').value = window.app.getPreferredDisplayCurrency();
             if (document.getElementById('shop-margin-profit')) {
                 document.getElementById('shop-margin-profit').textContent = '$0.00';
                 document.getElementById('shop-margin-percent').textContent = '0.0%';
@@ -13072,6 +13130,9 @@ window.app = {
             }
         } else {
             titleEl.innerText = 'Add Draft Specimen';
+            var prefCurr = this.getPreferredDisplayCurrency();
+            var cartCurr = document.getElementById('cart-f-currency');
+            if (cartCurr) cartCurr.value = prefCurr;
         }
 
         this.renderCartImagePreview();
@@ -13188,6 +13249,9 @@ window.app = {
             }
         } else {
             titleEl.innerText = 'Add Dream Specimen';
+            var prefCurr = this.getPreferredDisplayCurrency();
+            var dreamCurr = document.getElementById('dream-f-currency');
+            if (dreamCurr) dreamCurr.value = prefCurr;
         }
 
         this.renderDreamImagePreview();
@@ -17945,6 +18009,10 @@ window.app = {
             if (fieldOutdoorChk) {
                 fieldOutdoorChk.checked = localStorage.getItem('pref_field_outdoor') === 'true';
             }
+            var currencySel = document.getElementById('settings-display-currency');
+            if (currencySel) {
+                currencySel.value = this.getPreferredDisplayCurrency();
+            }
             var curatorInput = document.getElementById('settings-curator-name');
             if (curatorInput && typeof SpecimenryChangeLog !== 'undefined') {
                 curatorInput.value = SpecimenryChangeLog.getActor() === 'Local curator' ? '' : SpecimenryChangeLog.getActor();
@@ -17987,6 +18055,10 @@ window.app = {
         var fieldOutdoorChk = document.getElementById('settings-field-outdoor');
         var fieldOutdoorEnabled = fieldOutdoorChk ? fieldOutdoorChk.checked : false;
         var wasOutdoor = localStorage.getItem('pref_field_outdoor') === 'true';
+        var currencySel = document.getElementById('settings-display-currency');
+        if (currencySel) {
+            this.setPreferredDisplayCurrency(currencySel.value, { silent: true });
+        }
 
         localStorage.setItem('pref_museum_fields', museumEnabled);
         localStorage.setItem('pref_shop_fields', shopEnabled);
@@ -18022,6 +18094,8 @@ window.app = {
         if (chkShop) chkShop.checked = shopEnabled;
         if (chkStorage) chkStorage.checked = storageEnabled;
         if (chkFieldOutdoor) chkFieldOutdoor.checked = fieldOutdoorEnabled;
+        var currencySel = document.getElementById('settings-display-currency');
+        if (currencySel) currencySel.value = this.getPreferredDisplayCurrency();
 
         var outdoorBadge = document.getElementById('field-outdoor-badge');
         if (outdoorBadge) {

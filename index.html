@@ -2198,6 +2198,16 @@
             </div>
 
             <div style="padding: 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-warm);">
+                <label for="settings-display-currency" style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.35rem;">💱 Preferred display currency</label>
+                <p style="font-size: 0.7rem; color: var(--text-secondary); margin: 0 0 0.5rem 0; line-height: 1.4;">Used for dashboard totals and as the default when you add a new specimen. Each specimen still keeps the currency you entered on it.</p>
+                <select id="settings-display-currency" onchange="app.setPreferredDisplayCurrency(this.value)" style="width: 100%;">
+                    <option value="SEK">SEK (kr)</option>
+                    <option value="USD">USD ($)</option>
+                    <option value="EUR">EUR (€)</option>
+                </select>
+            </div>
+
+            <div style="padding: 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-warm);">
                 <label for="settings-curator-name" style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.35rem;">👤 Curator name (change log)</label>
                 <p style="font-size: 0.7rem; color: var(--text-secondary); margin: 0 0 0.5rem 0; line-height: 1.4;">Shown on local specimen change history (e.g. “price changed”). Not an account — stays on this device.</p>
                 <input type="text" id="settings-curator-name" placeholder="e.g. L. Linné" onchange="app.saveCuratorName()" style="width: 100%;">
