@@ -5,7 +5,7 @@
 // =========================================================================
 
 // --- CONSTANTS ---
-var SPECIMENRY_VERSION = '0.9.10';
+var SPECIMENRY_VERSION = '0.9.14';
 var SPECIMENRY_BUILD_DATE = '2026-07-19';
 
 var CATEGORIES = [
@@ -1246,6 +1246,9 @@ window.addEventListener('DOMContentLoaded', function() {
         if (window.app && typeof window.app.updateViewMoreButton === 'function') {
             window.app.updateViewMoreButton(savedView);
         }
+        if (window.app && typeof window.app.syncArchiveViewChrome === 'function') {
+            window.app.syncArchiveViewChrome(savedView);
+        }
 
         var cartsContainer = document.getElementById('carts-container');
         var grid = document.getElementById('fossil-grid');
@@ -1262,10 +1265,20 @@ window.addEventListener('DOMContentLoaded', function() {
             if (grid) grid.style.display = '';
         }
 
-        // Restore Grid/List layout view — default to compact list on phones
+        // Restore Grid/List — mobile defaults to polished card grid (not desktop list columns)
         var layout = localStorage.getItem('fossil_layout_view');
+        try {
+            // One-time: drop the unfinished mobile-list default from earlier builds
+            if (window.innerWidth <= 768 && !localStorage.getItem('specimenry_mobile_grid_v1')) {
+                localStorage.setItem('specimenry_mobile_grid_v1', '1');
+                if (layout === 'list') {
+                    localStorage.setItem('fossil_layout_view', 'grid');
+                    layout = 'grid';
+                }
+            }
+        } catch (migrateErr) {}
         if (!layout) {
-            layout = (window.innerWidth <= 768) ? 'list' : 'grid';
+            layout = 'grid';
         }
         var btnGrid = document.getElementById('btn-layout-grid');
         var btnList = document.getElementById('btn-layout-list');
@@ -6939,6 +6952,7 @@ window.app = {
         if (typeof window.app.updateViewMoreButton === 'function') {
             window.app.updateViewMoreButton(view);
         }
+        this.syncArchiveViewChrome(view);
 
         // Smoothly scroll active button into view on mobile view-toggle scrollable containers
         var activeBtn = null;
@@ -6955,6 +6969,76 @@ window.app = {
         }
 
         window.app.renderFossils();
+    },
+
+    /** Body data attr + primary Add targets so wishlist/dream/carts don’t show two Add CTAs on mobile. */
+    syncArchiveViewChrome: function(view) {
+        view = view != null ? view : currentView;
+        var slug = 'collection';
+        if (view === 'true') slug = 'wishlist';
+        else if (view === 'sale') slug = 'sale';
+        else if (view === 'sold') slug = 'sold';
+        else if (view === 'traded') slug = 'traded';
+        else if (view === 'carts') slug = 'carts';
+        else if (view === 'dream') slug = 'dream';
+        document.body.setAttribute('data-archive-view', slug);
+
+        var addBtn = document.getElementById('btn-add-fossil');
+        var fab = document.getElementById('btn-fab-add');
+        var labelMobile = addBtn ? addBtn.querySelector('.btn-text-mobile') : null;
+        var labelDesktop = addBtn ? addBtn.querySelector('.btn-text') : null;
+
+        if (slug === 'wishlist') {
+            if (addBtn) {
+                addBtn.setAttribute('onclick', "app.focusWishlistQuickAdd()");
+                addBtn.setAttribute('aria-label', 'Add to wishlist');
+                addBtn.title = 'Add to wishlist';
+            }
+            if (labelMobile) labelMobile.textContent = 'Add';
+            if (labelDesktop) labelDesktop.textContent = 'Add Want';
+            if (fab) fab.setAttribute('onclick', "app.focusWishlistQuickAdd()");
+        } else if (slug === 'dream') {
+            if (addBtn) {
+                addBtn.setAttribute('onclick', "app.openDreamItemModal()");
+                addBtn.setAttribute('aria-label', 'Add dream specimen');
+                addBtn.title = 'Add dream specimen';
+            }
+            if (labelMobile) labelMobile.textContent = 'Add';
+            if (labelDesktop) labelDesktop.textContent = 'Add Dream';
+            if (fab) fab.setAttribute('onclick', "app.openDreamItemModal()");
+        } else if (slug === 'carts') {
+            if (addBtn) {
+                addBtn.setAttribute('onclick', "app.openCartItemModal()");
+                addBtn.setAttribute('aria-label', 'Add draft item');
+                addBtn.title = 'Add draft item';
+            }
+            if (labelMobile) labelMobile.textContent = 'Add';
+            if (labelDesktop) labelDesktop.textContent = 'Add Draft';
+            if (fab) fab.setAttribute('onclick', "app.openCartItemModal()");
+        } else {
+            if (addBtn) {
+                addBtn.setAttribute('onclick', "app.openModal()");
+                addBtn.setAttribute('aria-label', 'Add specimen');
+                addBtn.title = 'Add specimen';
+            }
+            if (labelMobile) labelMobile.textContent = 'Add';
+            if (labelDesktop) labelDesktop.textContent = 'Add Fossil';
+            if (fab) fab.setAttribute('onclick', "app.openQuickCapture()");
+        }
+    },
+
+    focusWishlistQuickAdd: function() {
+        var input = document.getElementById('wl-quick-name');
+        if (input) {
+            try { input.focus(); } catch (e) {}
+            if (typeof input.scrollIntoView === 'function') {
+                input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        } else if (typeof this.openModal === 'function') {
+            this.openModal();
+            var wl = document.getElementById('f-wishlist');
+            if (wl) wl.value = 'true';
+        }
     },
 
     // --- Images ---
@@ -9323,12 +9407,79 @@ window.app = {
     syncMobileSortOptions: function() {
         var select = document.getElementById('filter-sort');
         var val = select ? (select.value || 'newest') : 'newest';
-        var options = document.querySelectorAll('#mobile-sort-list .mobile-sort-option');
-        for (var i = 0; i < options.length; i++) {
-            var isActive = (options[i].getAttribute('data-sort') || '') === val;
-            options[i].classList.toggle('is-active', isActive);
-            options[i].setAttribute('aria-checked', isActive ? 'true' : 'false');
+        var map = {
+            newest: { field: 'date', dir: 'a' },
+            oldest: { field: 'date', dir: 'b' },
+            'name-asc': { field: 'name', dir: 'a' },
+            'name-desc': { field: 'name', dir: 'b' },
+            'age-desc': { field: 'age', dir: 'a' },
+            'age-asc': { field: 'age', dir: 'b' },
+            'price-desc': { field: 'price', dir: 'a' },
+            'price-asc': { field: 'price', dir: 'b' },
+            'tier-desc': { field: 'tier', dir: 'a' },
+            'tier-asc': { field: 'tier', dir: 'b' }
+        };
+        var parsed = map[val] || map.newest;
+        this._mobileSortField = parsed.field;
+        this._mobileSortDir = parsed.dir;
+
+        var fields = document.querySelectorAll('.mobile-sort-fields .mf-chip');
+        for (var i = 0; i < fields.length; i++) {
+            fields[i].classList.toggle('is-active', (fields[i].getAttribute('data-sort-field') || '') === parsed.field);
         }
+        var dirA = document.getElementById('mobile-sort-dir-a');
+        var dirB = document.getElementById('mobile-sort-dir-b');
+        if (dirA) dirA.classList.toggle('is-active', parsed.dir === 'a');
+        if (dirB) dirB.classList.toggle('is-active', parsed.dir === 'b');
+        this._updateMobileSortDirLabels();
+    },
+
+    _updateMobileSortDirLabels: function() {
+        var field = this._mobileSortField || 'date';
+        var labels = {
+            date: ['Newest first', 'Oldest first'],
+            name: ['A → Z', 'Z → A'],
+            age: ['Oldest first', 'Youngest first'],
+            price: ['High → low', 'Low → high'],
+            tier: ['S → D', 'D → S']
+        };
+        var pair = labels[field] || labels.date;
+        var dirA = document.getElementById('mobile-sort-dir-a');
+        var dirB = document.getElementById('mobile-sort-dir-b');
+        if (dirA) dirA.textContent = pair[0];
+        if (dirB) dirB.textContent = pair[1];
+    },
+
+    _mobileSortValueFromParts: function(field, dir) {
+        var table = {
+            date: { a: 'newest', b: 'oldest' },
+            name: { a: 'name-asc', b: 'name-desc' },
+            age: { a: 'age-desc', b: 'age-asc' },
+            price: { a: 'price-desc', b: 'price-asc' },
+            tier: { a: 'tier-desc', b: 'tier-asc' }
+        };
+        var row = table[field] || table.date;
+        return row[dir] || row.a;
+    },
+
+    setMobileSortField: function(field) {
+        this._mobileSortField = field || 'date';
+        if (!this._mobileSortDir) this._mobileSortDir = 'a';
+        this._updateMobileSortDirLabels();
+        var fields = document.querySelectorAll('.mobile-sort-fields .mf-chip');
+        for (var i = 0; i < fields.length; i++) {
+            fields[i].classList.toggle('is-active', (fields[i].getAttribute('data-sort-field') || '') === this._mobileSortField);
+        }
+        this.setMobileSort(this._mobileSortValueFromParts(this._mobileSortField, this._mobileSortDir));
+    },
+
+    setMobileSortDir: function(dir) {
+        this._mobileSortDir = dir === 'b' ? 'b' : 'a';
+        var dirA = document.getElementById('mobile-sort-dir-a');
+        var dirB = document.getElementById('mobile-sort-dir-b');
+        if (dirA) dirA.classList.toggle('is-active', this._mobileSortDir === 'a');
+        if (dirB) dirB.classList.toggle('is-active', this._mobileSortDir === 'b');
+        this.setMobileSort(this._mobileSortValueFromParts(this._mobileSortField || 'date', this._mobileSortDir));
     },
 
     setMobileSort: function(value) {
@@ -11560,18 +11711,12 @@ window.app = {
                     empty.innerHTML =
                         iconHeart +
                         '<h3>Wishlist is empty</h3>' +
-                        '<p>Track specimens you want to acquire.</p>' +
-                        '<div class="empty-state-actions">' +
-                            '<button type="button" class="btn-primary" onclick="document.getElementById(\'wl-quick-name\') && document.getElementById(\'wl-quick-name\').focus()">Add a want</button>' +
-                        '</div>';
+                        '<p>Use the form above to track something you want.</p>';
                 } else if (dreamQ) {
                     empty.innerHTML =
                         iconStar +
                         '<h3>No dream specimens yet</h3>' +
-                        '<p>Save superb finds you can\'t buy right now.</p>' +
-                        '<div class="empty-state-actions">' +
-                            '<button type="button" class="btn-primary" onclick="app.openDreamItemModal()">Add Dream Specimen</button>' +
-                        '</div>';
+                        '<p>Save superb finds you can\'t buy right now — tap Add above.</p>';
                 } else if (soldQ) {
                     empty.innerHTML =
                         iconSold +
@@ -11875,7 +12020,7 @@ window.app = {
                             '<h3 class="card-title">' + annotateSpecimenName(f.specimen, f) + '</h3>' +
                             (f.description ? '<p class="card-description-snippet" style="font-size: 0.8rem; font-style: italic; color: var(--text-secondary); margin-top: 0.15rem; margin-bottom: 0.4rem; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;" title="' + escapeHtml(f.description) + '">' + escapeHtml(f.description) + '</p>' : '') +
                             metaHtmlStr +
-                            '<p class="card-meta" style="margin-top: 0.35rem;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> <span style="word-break: break-word;">' + locationHtmlStr + '</span></p>' +
+                            '<p class="card-meta card-location" style="margin-top: 0.35rem;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> <span style="word-break: break-word;">' + locationHtmlStr + '</span></p>' +
                             detailsHtml +
                             ((f.tags && f.tags.length > 0) ? '<div class="card-tags">' + f.tags.map(function(t) { return '<span class="tag-pill" onclick="event.stopPropagation(); document.getElementById(\'search\').value = \'#' + t + '\'; app.renderFossils();">#' + t + '</span>'; }).join('') + '</div>' : '') +
                             '<div class="card-footer">' +
@@ -12721,10 +12866,7 @@ window.app = {
             html += '  <div class="empty-state" style="grid-column: 1 / -1;">';
             html += '    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>';
             html += '    <h3>This draft cart is empty</h3>';
-            html += '    <p>Add draft specimens to compare prices, sizes, and photos before you buy.</p>';
-            html += '    <div class="empty-state-actions">';
-            html += '      <button type="button" class="btn-primary" onclick="app.openCartItemModal()">➕ Add Draft Item</button>';
-            html += '    </div>';
+            html += '    <p>Tap Add Draft Item above to compare prices, sizes, and photos before you buy.</p>';
             html += '  </div>';
         } else {
             activeCartItems.forEach(function(f) {

@@ -229,34 +229,472 @@
         flex-wrap: nowrap !important;
     }
 
-    /* --- Compact list rows --- */
+    /* --- Collection cards: polished mobile grid --- */
+    .fossil-grid:not(.list-view-active) {
+        grid-template-columns: 1fr !important;
+        gap: 1rem !important;
+    }
+    .fossil-grid:not(.list-view-active) .fossil-card {
+        border-radius: 14px !important;
+        overflow: hidden !important;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06) !important;
+    }
+    .fossil-grid:not(.list-view-active) .card-img-container {
+        aspect-ratio: 4 / 3 !important;
+        width: 100% !important;
+        max-height: none !important;
+    }
+    .fossil-grid:not(.list-view-active) .card-content {
+        padding: 0.85rem 0.95rem 0.95rem !important;
+    }
+    .fossil-grid:not(.list-view-active) .card-title {
+        font-size: 1.05rem !important;
+        line-height: 1.3 !important;
+        margin-bottom: 0.35rem !important;
+    }
+
+    /* --- Compact list rows (real phone layout, not desktop columns) --- */
     .fossil-grid.list-view-active {
-        gap: 0.45rem !important;
+        gap: 0.5rem !important;
     }
     .fossil-grid.list-view-active .fossil-card {
-        padding: 0.55rem 0.7rem !important;
-        gap: 0.65rem !important;
-        border-radius: var(--radius-sm) !important;
+        padding: 0.6rem 0.75rem !important;
+        gap: 0.7rem !important;
+        border-radius: 12px !important;
         align-items: center !important;
+        flex-wrap: nowrap !important;
     }
     .fossil-grid.list-view-active .card-img-container,
     .fossil-grid.list-view-active .card-image-wrap {
-        width: 64px !important;
-        min-width: 64px !important;
-        height: 64px !important;
+        width: 72px !important;
+        min-width: 72px !important;
+        height: 72px !important;
         aspect-ratio: 1 / 1 !important;
-        border-radius: 8px !important;
+        border-radius: 10px !important;
         overflow: hidden !important;
         flex-shrink: 0 !important;
     }
-    .fossil-grid.list-view-active .card-title {
-        font-size: 0.95rem !important;
+    .fossil-grid.list-view-active .card-content {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        justify-content: center !important;
+        gap: 0.15rem !important;
+        min-width: 0 !important;
+        flex: 1 1 auto !important;
+        grid-template-columns: none !important;
+    }
+    .fossil-grid.list-view-active .card-content > div:first-child {
+        display: flex !important;
+        order: 0;
         margin: 0 !important;
+    }
+    .fossil-grid.list-view-active .card-title {
+        order: 1;
+        font-size: 0.98rem !important;
+        margin: 0 !important;
+        -webkit-line-clamp: 2;
+        grid-column: auto !important;
+        grid-row: auto !important;
     }
     .fossil-grid.list-view-active .card-description-snippet {
         display: none !important;
     }
-    .fossil-grid:not(.list-view-active) .card-img-container {
-        aspect-ratio: 4 / 3 !important;
+    .fossil-grid.list-view-active .card-meta {
+        display: none !important;
+    }
+    .fossil-grid.list-view-active .card-meta.card-location {
+        display: block !important;
+        order: 2;
+        font-size: 0.72rem !important;
+        color: var(--text-secondary) !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        margin: 0 !important;
+        grid-column: auto !important;
+        grid-row: auto !important;
+        max-width: 100% !important;
+    }
+    .fossil-grid.list-view-active .card-meta::before,
+    .fossil-grid.list-view-active .card-specs-bar::before,
+    .fossil-grid.list-view-active .card-footer::before {
+        display: none !important;
+        content: none !important;
+    }
+    .fossil-grid.list-view-active .card-specs-bar {
+        display: none !important;
+    }
+    .fossil-grid.list-view-active .card-footer {
+        order: 3;
+        display: flex !important;
+        flex-wrap: wrap !important;
+        align-items: center !important;
+        gap: 0.35rem !important;
+        margin-top: 0.2rem !important;
+        padding: 0 !important;
+        border: none !important;
+        grid-column: auto !important;
+        grid-row: auto !important;
+        justify-content: space-between !important;
+        width: 100% !important;
+    }
+    .fossil-grid.list-view-active .card-actions {
+        gap: 0.25rem !important;
+    }
+    .fossil-grid.list-view-active .card-actions button {
+        width: auto !important;
+        min-width: 36px !important;
+        height: 36px !important;
+        padding: 0 0.45rem !important;
+    }
+    .fossil-grid.list-view-active .btn-card-more .btn-text,
+    .fossil-grid.list-view-active .btn-card-more .chevron-indicator {
+        display: none !important;
+    }
+    .fossil-grid.list-view-active .btn-card-more .btn-text-mobile {
+        display: none !important;
+    }
+    .fossil-grid.list-view-active .taxonomy-tray {
+        flex-basis: 100% !important;
+        width: 100% !important;
+    }
+
+    /* =====================================================================
+       App-like dialogs: Backup, Settings, and other full-screen sheets
+       ===================================================================== */
+    #backup-center-modal[open],
+    #settings-modal[open],
+    #cloud-sync-modal[open],
+    #storage-explorer-modal[open],
+    #shop-ledger-modal[open],
+    #share-catalog-modal[open],
+    #groups-modal[open],
+    #field-diary-modal[open],
+    #ai-export-modal[open],
+    #wishlist-export-modal[open],
+    #bug-report-modal[open],
+    #csv-import-instructions-modal[open] {
+        display: flex !important;
+        flex-direction: column !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+    }
+
+    #backup-center-modal[open] .backup-center-inner,
+    #settings-modal[open],
+    #cloud-sync-modal[open],
+    #storage-explorer-modal[open],
+    #shop-ledger-modal[open],
+    #share-catalog-modal[open],
+    #groups-modal[open],
+    #field-diary-modal[open],
+    #ai-export-modal[open],
+    #wishlist-export-modal[open],
+    #bug-report-modal[open],
+    #csv-import-instructions-modal[open] {
+        display: flex !important;
+        flex-direction: column !important;
+        height: 100% !important;
+        max-height: 100dvh !important;
+        min-height: 0 !important;
+        padding: 0 !important;
+        box-sizing: border-box !important;
+    }
+
+    .backup-center-header,
+    #settings-modal[open] > div:first-child,
+    #storage-explorer-modal[open] > div:first-child,
+    #cloud-sync-modal[open] > div:first-child,
+    #shop-ledger-modal[open] > div:first-child,
+    #share-catalog-modal[open] > div:first-child,
+    #bug-report-modal[open] > div:first-child,
+    #ai-export-modal[open] > div:first-child,
+    #wishlist-export-modal[open] > div:first-child,
+    #csv-import-instructions-modal[open] > div:first-child {
+        position: sticky !important;
+        top: 0 !important;
+        z-index: 5 !important;
+        flex-shrink: 0 !important;
+        margin: 0 !important;
+        padding: max(0.85rem, env(safe-area-inset-top, 0px)) 1rem 0.85rem !important;
+        background: var(--bg-surface) !important;
+        border-bottom: 1px solid var(--border-color) !important;
+    }
+
+    .backup-center-header h2,
+    #settings-modal[open] > div:first-child h2,
+    #storage-explorer-modal[open] > div:first-child h2 {
+        font-size: 1.2rem !important;
+        letter-spacing: -0.02em;
+    }
+
+    .backup-center-scroll {
+        flex: 1 1 auto !important;
+        min-height: 0 !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+        padding: 1rem 1rem 1.25rem !important;
+        gap: 0.85rem !important;
+    }
+
+    #settings-modal[open] > div:nth-child(2),
+    #storage-explorer-modal[open] > div:nth-child(2),
+    #cloud-sync-modal[open] > div:nth-child(2),
+    #shop-ledger-modal[open] > div:nth-child(2),
+    #share-catalog-modal[open] > div:nth-child(2),
+    #bug-report-modal[open] form,
+    #ai-export-modal[open] > div:nth-child(2),
+    #wishlist-export-modal[open] > div:nth-child(2),
+    #csv-import-instructions-modal[open] > div:nth-child(2) {
+        flex: 1 1 auto !important;
+        min-height: 0 !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch;
+        padding: 1rem !important;
+        margin: 0 !important;
+    }
+
+    .backup-center-actions,
+    #settings-modal[open] .modal-footer,
+    #storage-explorer-modal[open] .modal-footer,
+    #shop-ledger-modal[open] .modal-footer,
+    #bug-report-modal[open] .modal-footer,
+    #ai-export-modal[open] .modal-footer,
+    #wishlist-export-modal[open] .modal-footer {
+        flex-shrink: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 0.5rem !important;
+        margin: 0 !important;
+        padding: 0.75rem 1rem max(1rem, env(safe-area-inset-bottom, 0px)) !important;
+        border-top: 1px solid var(--border-color) !important;
+        background: var(--bg-surface) !important;
+        box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.06);
+    }
+
+    .backup-center-actions .btn-primary,
+    .backup-center-actions .btn-secondary,
+    #settings-modal[open] .modal-footer .btn-primary,
+    #settings-modal[open] .modal-footer .btn-secondary,
+    #storage-explorer-modal[open] .modal-footer .btn-primary,
+    #storage-explorer-modal[open] .modal-footer .btn-secondary,
+    #shop-ledger-modal[open] .modal-footer .btn-primary,
+    #shop-ledger-modal[open] .modal-footer .btn-secondary {
+        width: 100% !important;
+        min-height: 48px !important;
+        justify-content: center !important;
+        font-size: 0.95rem !important;
+        font-weight: 700 !important;
+        border-radius: 12px !important;
+    }
+
+    #storage-explorer-modal[open] > div:nth-child(2),
+    #shop-ledger-modal[open] > div:nth-child(2),
+    #cloud-sync-modal[open] > div:nth-child(2),
+    #field-diary-modal[open] > div:nth-child(2),
+    #groups-modal[open] > div:nth-child(2) {
+        max-height: none !important;
+    }
+
+    #field-diary-modal[open],
+    #groups-modal[open] {
+        display: flex !important;
+        flex-direction: column !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+    }
+    #field-diary-modal[open] > div:first-child,
+    #groups-modal[open] > div:first-child {
+        position: sticky !important;
+        top: 0 !important;
+        z-index: 5 !important;
+        flex-shrink: 0 !important;
+        margin: 0 !important;
+        padding: max(0.85rem, env(safe-area-inset-top, 0px)) 1rem 0.85rem !important;
+        background: var(--bg-surface) !important;
+        border-bottom: 1px solid var(--border-color) !important;
+    }
+    #field-diary-modal[open] > *:not(:first-child),
+    #groups-modal[open] > *:not(:first-child) {
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
+    #field-diary-modal[open] > *:last-child,
+    #groups-modal[open] > *:last-child {
+        padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px)) !important;
+    }
+    #field-diary-modal[open] .field-diary-layout,
+    #groups-modal[open] .groups-layout {
+        grid-template-columns: 1fr !important;
+        max-height: none !important;
+        gap: 0.85rem !important;
+    }
+    #field-diary-modal[open] .field-diary-tabs {
+        position: sticky;
+        top: 3.25rem;
+        z-index: 4;
+        background: var(--bg-surface);
+        padding-bottom: 0.5rem;
+    }
+    #field-diary-modal[open] .field-diary-tab {
+        min-height: 42px !important;
+        border-radius: 10px !important;
+    }
+
+    .backup-center-lead {
+        font-size: 0.88rem !important;
+        line-height: 1.45 !important;
+        margin: 0 !important;
+    }
+
+    .backup-center-stats {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 0.45rem !important;
+        margin: 0 !important;
+    }
+    .backup-center-stats span {
+        display: block !important;
+        padding: 0.6rem 0.7rem !important;
+        border-radius: 10px !important;
+        border: 1px solid var(--border-color) !important;
+        background: var(--bg-warm) !important;
+        font-size: 0.74rem !important;
+        font-weight: 650 !important;
+        line-height: 1.35 !important;
+    }
+    .backup-center-stats span:last-child:nth-child(odd) {
+        grid-column: 1 / -1;
+    }
+
+    .backup-move-guide {
+        margin: 0 !important;
+        border-radius: 12px !important;
+    }
+    .backup-move-guide summary {
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        padding: 0.15rem 0;
+        font-size: 0.88rem !important;
+    }
+    .backup-center-foot,
+    .backup-download-hint {
+        font-size: 0.7rem !important;
+        margin: 0 !important;
+    }
+    .backup-download-hint:empty {
+        display: none !important;
+    }
+
+    /* Settings: taller tap rows */
+    #settings-modal[open] label {
+        min-height: 52px;
+        border-radius: 12px !important;
+        padding: 0.85rem !important;
+    }
+    #settings-modal[open] input[type="checkbox"] {
+        width: 22px !important;
+        height: 22px !important;
+    }
+    #settings-modal[open] input[type="text"],
+    #settings-modal[open] select {
+        min-height: 44px !important;
+        font-size: 1rem !important;
+    }
+
+    /* =====================================================================
+       Dashboard — phone-first panels
+       ===================================================================== */
+    .stats-summary {
+        margin: 0 0 1rem !important;
+        padding: 0.85rem 0.75rem 1rem !important;
+        border-radius: 14px !important;
+        gap: 0.85rem !important;
+        box-shadow: none !important;
+    }
+    .stats-summary .stats-header {
+        padding-bottom: 0.65rem !important;
+        margin-bottom: 0 !important;
+        align-items: center !important;
+    }
+    .stats-text {
+        font-size: 0.82rem !important;
+        line-height: 1.55 !important;
+    }
+    .stats-segmented-control {
+        position: sticky !important;
+        top: 0 !important;
+        z-index: 4 !important;
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        gap: 0.35rem !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        scrollbar-width: none !important;
+        padding: 0.35rem 0.15rem 0.55rem !important;
+        margin: 0 -0.15rem 0.25rem !important;
+        background: linear-gradient(to bottom, var(--bg-surface) 70%, transparent) !important;
+        border: none !important;
+    }
+    .stats-segmented-control::-webkit-scrollbar {
+        display: none !important;
+    }
+    .stats-segmented-control button {
+        flex: 0 0 auto !important;
+        min-height: 40px !important;
+        padding: 0.5rem 0.8rem !important;
+        border-radius: 999px !important;
+        border: 1px solid var(--border-color) !important;
+        background: var(--bg-warm) !important;
+        font-size: 0.75rem !important;
+        font-weight: 650 !important;
+        white-space: nowrap !important;
+    }
+    .stats-segmented-control button.active {
+        background: var(--accent) !important;
+        border-color: var(--accent) !important;
+        color: #fff !important;
+    }
+    .stats-segmented-control button svg {
+        width: 13px !important;
+        height: 13px !important;
+    }
+    .stats-charts {
+        flex-direction: column !important;
+        gap: 1.25rem !important;
+        padding: 0.75rem 0 0.25rem !important;
+        border-top: none !important;
+        align-items: stretch !important;
+    }
+    .chart-wrapper {
+        max-width: 100% !important;
+        min-height: 260px !important;
+        width: 100% !important;
+    }
+    .chart-title {
+        font-size: 0.75rem !important;
+        margin-bottom: 0.65rem !important;
+        align-self: flex-start;
+    }
+    .dashboard-visual-container,
+    .data-insights-container {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    #fossil-map-container {
+        height: min(58vh, 420px) !important;
+        min-height: 280px !important;
+        border-radius: 12px !important;
+        overflow: hidden !important;
+    }
+    .portfolio-dashboard-grid,
+    .chrono-dashboard-wrapper {
+        grid-template-columns: 1fr !important;
+        gap: 0.85rem !important;
     }
 }

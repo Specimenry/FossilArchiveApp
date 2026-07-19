@@ -265,7 +265,7 @@
                         </button>
                         <button type="button" id="btn-sale" class="toggle-btn view-tab-primary" aria-pressed="false" onclick="app.setView('sale')">
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-                            <span class="btn-text">For Sale</span>
+                            <span class="btn-text">Sale</span>
                         </button>
                         <button type="button" id="btn-sold" class="toggle-btn view-tab-more" aria-pressed="false" onclick="app.setView('sold')">
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
@@ -347,77 +347,18 @@
 
                 <div class="form-group filter-select mobile-sort-block">
                     <label for="filter-sort">Sort by</label>
-                    <div class="mobile-sort-list mobile-only" id="mobile-sort-list" role="radiogroup" aria-label="Sort by">
-                        <button type="button" class="mobile-sort-option is-active" role="radio" aria-checked="true" data-sort="newest" onclick="app.setMobileSort('newest')">
-                            <span class="mobile-sort-option-main">
-                                <span class="mobile-sort-option-title">Date added</span>
-                                <span class="mobile-sort-option-sub">Newest first</span>
-                            </span>
-                            <span class="mobile-sort-check" aria-hidden="true"></span>
-                        </button>
-                        <button type="button" class="mobile-sort-option" role="radio" aria-checked="false" data-sort="oldest" onclick="app.setMobileSort('oldest')">
-                            <span class="mobile-sort-option-main">
-                                <span class="mobile-sort-option-title">Date added</span>
-                                <span class="mobile-sort-option-sub">Oldest first</span>
-                            </span>
-                            <span class="mobile-sort-check" aria-hidden="true"></span>
-                        </button>
-                        <button type="button" class="mobile-sort-option" role="radio" aria-checked="false" data-sort="name-asc" onclick="app.setMobileSort('name-asc')">
-                            <span class="mobile-sort-option-main">
-                                <span class="mobile-sort-option-title">Name</span>
-                                <span class="mobile-sort-option-sub">A → Z</span>
-                            </span>
-                            <span class="mobile-sort-check" aria-hidden="true"></span>
-                        </button>
-                        <button type="button" class="mobile-sort-option" role="radio" aria-checked="false" data-sort="name-desc" onclick="app.setMobileSort('name-desc')">
-                            <span class="mobile-sort-option-main">
-                                <span class="mobile-sort-option-title">Name</span>
-                                <span class="mobile-sort-option-sub">Z → A</span>
-                            </span>
-                            <span class="mobile-sort-check" aria-hidden="true"></span>
-                        </button>
-                        <button type="button" class="mobile-sort-option" role="radio" aria-checked="false" data-sort="age-desc" onclick="app.setMobileSort('age-desc')">
-                            <span class="mobile-sort-option-main">
-                                <span class="mobile-sort-option-title">Geological age</span>
-                                <span class="mobile-sort-option-sub">Oldest first</span>
-                            </span>
-                            <span class="mobile-sort-check" aria-hidden="true"></span>
-                        </button>
-                        <button type="button" class="mobile-sort-option" role="radio" aria-checked="false" data-sort="age-asc" onclick="app.setMobileSort('age-asc')">
-                            <span class="mobile-sort-option-main">
-                                <span class="mobile-sort-option-title">Geological age</span>
-                                <span class="mobile-sort-option-sub">Youngest first</span>
-                            </span>
-                            <span class="mobile-sort-check" aria-hidden="true"></span>
-                        </button>
-                        <button type="button" class="mobile-sort-option" role="radio" aria-checked="false" data-sort="price-desc" onclick="app.setMobileSort('price-desc')">
-                            <span class="mobile-sort-option-main">
-                                <span class="mobile-sort-option-title">Value</span>
-                                <span class="mobile-sort-option-sub">High → low</span>
-                            </span>
-                            <span class="mobile-sort-check" aria-hidden="true"></span>
-                        </button>
-                        <button type="button" class="mobile-sort-option" role="radio" aria-checked="false" data-sort="price-asc" onclick="app.setMobileSort('price-asc')">
-                            <span class="mobile-sort-option-main">
-                                <span class="mobile-sort-option-title">Value</span>
-                                <span class="mobile-sort-option-sub">Low → high</span>
-                            </span>
-                            <span class="mobile-sort-check" aria-hidden="true"></span>
-                        </button>
-                        <button type="button" class="mobile-sort-option" role="radio" aria-checked="false" data-sort="tier-desc" onclick="app.setMobileSort('tier-desc')">
-                            <span class="mobile-sort-option-main">
-                                <span class="mobile-sort-option-title">Preservation</span>
-                                <span class="mobile-sort-option-sub">S → D</span>
-                            </span>
-                            <span class="mobile-sort-check" aria-hidden="true"></span>
-                        </button>
-                        <button type="button" class="mobile-sort-option" role="radio" aria-checked="false" data-sort="tier-asc" onclick="app.setMobileSort('tier-asc')">
-                            <span class="mobile-sort-option-main">
-                                <span class="mobile-sort-option-title">Preservation</span>
-                                <span class="mobile-sort-option-sub">D → S</span>
-                            </span>
-                            <span class="mobile-sort-check" aria-hidden="true"></span>
-                        </button>
+                    <div class="mobile-sort-controls mobile-only" id="mobile-sort-controls">
+                        <div class="mobile-sort-fields" role="group" aria-label="Sort field">
+                            <button type="button" class="mf-chip is-active" data-sort-field="date" onclick="app.setMobileSortField('date')">Date</button>
+                            <button type="button" class="mf-chip" data-sort-field="name" onclick="app.setMobileSortField('name')">Name</button>
+                            <button type="button" class="mf-chip" data-sort-field="age" onclick="app.setMobileSortField('age')">Age</button>
+                            <button type="button" class="mf-chip" data-sort-field="price" onclick="app.setMobileSortField('price')">Value</button>
+                            <button type="button" class="mf-chip" data-sort-field="tier" onclick="app.setMobileSortField('tier')">Tier</button>
+                        </div>
+                        <div class="mobile-sort-dirs" role="group" aria-label="Sort direction">
+                            <button type="button" class="mf-chip is-active" id="mobile-sort-dir-a" data-sort-dir="a" onclick="app.setMobileSortDir('a')">Newest first</button>
+                            <button type="button" class="mf-chip" id="mobile-sort-dir-b" data-sort-dir="b" onclick="app.setMobileSortDir('b')">Oldest first</button>
+                        </div>
                     </div>
                     <select id="filter-sort" class="desktop-filter-select" onchange="app.onSortFilterChange()">
                         <option value="newest">Newest First</option>
@@ -457,7 +398,7 @@
                 <div class="form-group mobile-filter-layout-block mobile-only">
                     <label>Layout</label>
                     <div class="mobile-filter-layout-toggle" role="group" aria-label="Card layout">
-                        <button type="button" id="btn-layout-grid-mobile" class="mf-chip" onclick="app.setLayoutView('grid')">Grid</button>
+                        <button type="button" id="btn-layout-grid-mobile" class="mf-chip is-active" onclick="app.setLayoutView('grid')">Grid</button>
                         <button type="button" id="btn-layout-list-mobile" class="mf-chip" onclick="app.setLayoutView('list')">List</button>
                     </div>
                 </div>
@@ -2616,56 +2557,56 @@
                 <button type="button" class="btn-icon" aria-label="Close" onclick="document.getElementById('backup-center-modal').close()">&times;</button>
             </div>
 
-            <p class="backup-center-lead">Download one JSON file you own. Restore it on this browser or another device. Prefer JSON for full restore; use ZIP when you want a spreadsheet plus photo files.</p>
+            <div class="backup-center-scroll">
+                <p class="backup-center-lead">Your collection lives in this browser. Download a backup file you own, then restore it here or on another device.</p>
 
-            <div class="backup-center-includes">
-                <h3>What a backup includes</h3>
-                <ul>
-                    <li>All specimens (fossils &amp; minerals), photos, notes, tags, storage &amp; prices</li>
-                    <li>Field diary <strong>trips</strong>, <strong>localities</strong>, <strong>lots/groups</strong>, and specimen links</li>
-                    <li>Provenance documents attached to specimens</li>
-                </ul>
-                <p class="backup-center-excludes">ZIP export is separate: <code>collection.csv</code> + <code>photos/</code> (not a full restore). Not included in JSON: optional Google Drive / P2P sync settings, and AI speech models (re-downloaded if needed).</p>
+                <div class="backup-center-stats" id="backup-center-stats">
+                    <span id="backup-stat-specimens">—</span>
+                    <span id="backup-stat-trips">—</span>
+                    <span id="backup-stat-last">—</span>
+                    <span id="backup-stat-added">—</span>
+                    <span id="backup-stat-ok">—</span>
+                </div>
+
+                <p class="welcome-landing-risk backup-center-risk" role="note">Export regularly — clearing browser data can erase your archive.</p>
+
+                <details class="backup-move-guide backup-center-includes-details">
+                    <summary>What’s in a backup</summary>
+                    <ul class="backup-center-includes-list">
+                        <li>All specimens, photos, notes, tags, storage &amp; prices</li>
+                        <li>Field diary trips, localities, lots/groups</li>
+                        <li>Provenance documents on specimens</li>
+                    </ul>
+                    <p class="backup-center-excludes">ZIP is separate (CSV + photos). Not in JSON: Drive/P2P sync settings and speech models.</p>
+                </details>
+
+                <details class="backup-move-guide">
+                    <summary>Move to a new phone</summary>
+                    <ol class="backup-move-steps">
+                        <li><strong>Here:</strong> Download backup and save the JSON where the new phone can open it.</li>
+                        <li><strong>New phone:</strong> open <a href="https://specimenry.online/" target="_blank" rel="noopener">specimenry.online</a> in the browser you’ll keep using.</li>
+                        <li><strong>Restore:</strong> Backup &amp; Restore → Restore from file → confirm the check summary.</li>
+                    </ol>
+                </details>
+
+                <details class="backup-move-guide">
+                    <summary>Quick smoke check</summary>
+                    <ol class="backup-move-steps">
+                        <li>Add a test specimen, then Download backup.</li>
+                        <li>Confirm the file appears in Downloads / Files.</li>
+                        <li>(Optional) Restore in a private window and confirm “Restore verified OK”.</li>
+                    </ol>
+                </details>
+
+                <p class="backup-center-foot">Restore merges by ID (same ID overwrites). Prefer an empty browser profile when moving devices.</p>
             </div>
-
-            <div class="backup-center-stats" id="backup-center-stats">
-                <span id="backup-stat-specimens">—</span>
-                <span id="backup-stat-trips">—</span>
-                <span id="backup-stat-last">—</span>
-                <span id="backup-stat-added">—</span>
-                <span id="backup-stat-ok">—</span>
-            </div>
-
-            <p class="welcome-landing-risk" role="note">Your data lives in this browser — export backups regularly.</p>
 
             <div class="backup-center-actions">
                 <button type="button" class="btn-primary" onclick="app.exportData();">📥 Download backup</button>
-                <button type="button" class="btn-secondary" onclick="app.exportZipArchive();">📦 Export ZIP (CSV + photos)</button>
                 <button type="button" class="btn-secondary" onclick="document.getElementById('file-restore-json').click();">📤 Restore from file…</button>
+                <button type="button" class="btn-secondary backup-zip-btn" onclick="app.exportZipArchive();">📦 Export ZIP (CSV + photos)</button>
+                <p id="backup-download-hint" class="backup-download-hint"></p>
             </div>
-
-            <p id="backup-download-hint" class="backup-download-hint"></p>
-
-            <details class="backup-move-guide">
-                <summary>Move to a new phone (3 steps)</summary>
-                <ol class="backup-move-steps">
-                    <li><strong>On this device:</strong> tap <em>Download backup</em>. Save the JSON file somewhere you can open on the new phone (Files, Drive, AirDrop, email to yourself).</li>
-                    <li><strong>On the new phone:</strong> open <a href="https://specimenry.online/" target="_blank" rel="noopener">specimenry.online</a> in the browser you will keep using (Safari / Chrome). Prefer a clean profile so you do not merge with old leftovers.</li>
-                    <li><strong>Restore:</strong> Database → Backup &amp; Restore → <em>Restore from file…</em>, pick the JSON. Confirm the “Backup check: OK” summary, then wait for “Restore verified OK”.</li>
-                </ol>
-                <p class="backup-move-note">Tip: after a successful restore on the new phone, download one fresh backup there too — that becomes the new “last backup OK”.</p>
-            </details>
-
-            <details class="backup-move-guide">
-                <summary>Quick smoke check (2 minutes)</summary>
-                <ol class="backup-move-steps">
-                    <li>Add a test specimen in <strong>Simple</strong> mode (name + note), then delete or keep it.</li>
-                    <li><em>Download backup</em> — confirm toast says Backup OK and the file appears in Downloads / Files.</li>
-                    <li>(Optional) Restore that file in a private/incognito window and confirm “Restore verified OK”.</li>
-                </ol>
-            </details>
-
-            <p class="backup-center-foot">Restore merges by specimen/trip ID (same ID overwrites). Prefer restoring into an empty browser profile when moving devices.</p>
         </div>
     </dialog>
 

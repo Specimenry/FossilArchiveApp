@@ -3194,6 +3194,8 @@ dialog::backdrop {
         padding: 0.5rem 0.75rem;
         gap: 0.5rem;
         overflow: visible !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
     }
 
     /* Row 1 has search wrapper taking up 100% width on left and funnel button on right */
@@ -3358,6 +3360,7 @@ dialog::backdrop {
         z-index: 20030 !important;
         max-height: min(82dvh, 620px) !important;
         overflow-y: auto !important;
+        overflow-x: hidden !important;
         -webkit-overflow-scrolling: touch;
         margin: 0 !important;
         padding: 0 0.9rem max(1rem, env(safe-area-inset-bottom, 0px)) !important;
@@ -3367,6 +3370,7 @@ dialog::backdrop {
         background: var(--bg-surface) !important;
         box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.18) !important;
         width: 100% !important;
+        max-width: 100vw !important;
         box-sizing: border-box !important;
     }
     .mobile-filter-sheet-handle {
@@ -3469,131 +3473,90 @@ dialog::backdrop {
         flex-direction: column !important;
         align-items: stretch !important;
         gap: 0.4rem !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
     }
-    .mobile-sort-list {
+    .mobile-sort-controls {
         display: flex !important;
-        flex-direction: column;
+        flex-direction: column !important;
+        gap: 0.45rem;
         width: 100%;
-        border: 1px solid var(--border-color);
-        border-radius: 12px;
-        overflow: hidden;
-        background: var(--bg-primary, var(--bg-body));
-    }
-    .mobile-sort-option {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 0.75rem;
-        width: 100%;
-        min-height: 52px;
-        padding: 0.65rem 0.85rem;
-        border: none;
-        border-bottom: 1px solid var(--border-color);
-        background: transparent;
-        color: var(--text-primary);
-        font-family: inherit;
-        text-align: left;
-        cursor: pointer;
-        -webkit-tap-highlight-color: transparent;
-        transition: background 0.12s ease;
-    }
-    .mobile-sort-option:last-child {
-        border-bottom: none;
-    }
-    .mobile-sort-option:active {
-        background: rgba(0, 0, 0, 0.04);
-    }
-    [data-theme="dark"] .mobile-sort-option:active {
-        background: rgba(255, 255, 255, 0.06);
-    }
-    .mobile-sort-option-main {
-        display: flex;
-        flex-direction: column;
-        gap: 0.1rem;
+        max-width: 100%;
         min-width: 0;
     }
-    .mobile-sort-option-title {
-        font-size: 0.92rem;
-        font-weight: 650;
-        line-height: 1.2;
+    .mobile-sort-fields,
+    .mobile-sort-dirs {
+        display: flex !important;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        width: 100%;
+        max-width: 100%;
     }
-    .mobile-sort-option-sub {
-        font-size: 0.75rem;
-        font-weight: 500;
-        color: var(--text-secondary);
-        line-height: 1.2;
+    .mobile-sort-fields .mf-chip {
+        flex: 1 1 calc(33.33% - 0.35rem);
+        min-width: 0;
+        min-height: 40px;
+        font-size: 0.8rem;
     }
-    .mobile-sort-check {
-        width: 22px;
-        height: 22px;
-        border-radius: 50%;
-        border: 1.5px solid var(--border-color);
-        flex-shrink: 0;
-        position: relative;
-        box-sizing: border-box;
-    }
-    .mobile-sort-option.is-active {
-        background: color-mix(in srgb, var(--accent) 10%, transparent);
-    }
-    .mobile-sort-option.is-active .mobile-sort-option-title {
-        color: var(--accent);
-    }
-    .mobile-sort-option.is-active .mobile-sort-check {
-        border-color: var(--accent);
-        background: var(--accent);
-    }
-    .mobile-sort-option.is-active .mobile-sort-check::after {
-        content: '';
-        position: absolute;
-        left: 6px;
-        top: 3px;
-        width: 6px;
-        height: 10px;
-        border: solid #fff;
-        border-width: 0 2px 2px 0;
-        transform: rotate(45deg);
+    .mobile-sort-dirs .mf-chip {
+        flex: 1 1 calc(50% - 0.35rem);
+        min-width: 0;
+        min-height: 42px;
+        font-size: 0.8rem;
     }
 
     .filter-bar.show-mobile-filters .dropdowns-row {
         gap: 0.85rem !important;
         padding-top: 0 !important;
+        overflow-x: hidden !important;
+        max-width: 100vw !important;
     }
 
-    /* Segmented view controls — keep overflow visible so More menu isn't clipped */
+    /* Segmented view controls — fit width, no horizontal page scroll */
     .view-toggle-group {
         width: 100% !important;
+        max-width: 100% !important;
         overflow: visible !important;
+        min-width: 0 !important;
     }
     .view-toggle-row {
         overflow: visible !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
     }
     .view-toggle {
         width: 100% !important;
+        max-width: 100% !important;
         display: flex !important;
         flex-shrink: 0 !important;
         flex-wrap: nowrap !important;
-        overflow: visible !important;
+        overflow: hidden !important;
         margin-bottom: 0.5rem !important;
-        gap: 0.15rem !important;
+        gap: 0 !important;
         padding-bottom: 0 !important;
         border-bottom: 2px solid var(--border-color) !important;
         border-radius: 0 !important;
         background: transparent !important;
+        box-sizing: border-box !important;
     }
     .view-toggle::-webkit-scrollbar {
-        display: none !important; /* Chrome/Safari/Edge */
+        display: none !important;
     }
 
     .view-toggle .btn-text {
         display: inline !important;
-        font-size: 0.8rem !important;
+        font-size: 0.72rem !important;
         font-weight: 600 !important;
         white-space: nowrap !important;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
     }
 
     .view-toggle .toggle-btn {
-        flex: 0 0 auto !important; /* Keep natural size based on text, do not squeeze */
-        padding: 0.65rem 0.25rem !important; /* Side padding handled by gap */
+        min-width: 0 !important;
+        padding: 0.65rem 0.15rem !important;
         height: auto !important;
         justify-content: center !important;
         align-items: center !important;
@@ -3603,6 +3566,15 @@ dialog::backdrop {
         background: transparent !important;
         margin-bottom: -2px !important;
         border-bottom: 2px solid transparent !important;
+        gap: 0.2rem !important;
+    }
+    /* Primary tabs share width equally — overrides earlier flex: 0 0 auto */
+    .view-toggle .toggle-btn.view-tab-primary {
+        flex: 1 1 0 !important;
+        min-width: 0 !important;
+    }
+    .view-toggle .toggle-btn.view-tab-primary svg {
+        display: none !important;
     }
 
     .view-toggle .toggle-btn.active {
@@ -3614,11 +3586,19 @@ dialog::backdrop {
         margin: 0 !important;
         width: 13px !important;
         height: 13px !important;
+        flex-shrink: 0;
     }
 
     /* Must win over .view-toggle .toggle-btn { display: inline-flex } above */
     .view-toggle .toggle-btn.view-tab-more {
         display: none !important;
+    }
+    .view-more-wrap {
+        flex: 0 0 auto !important;
+    }
+    #btn-view-more {
+        flex: 0 0 auto !important;
+        padding: 0.65rem 0.45rem !important;
     }
 
     .dropdowns-row .form-group {
@@ -4013,7 +3993,15 @@ dialog::backdrop {
         margin-top: 0.4rem !important;
     }
 
-    /* Sticky Add FAB */
+/* One Add CTA on wishlist / dream / carts: keep in-page controls, hide header + FAB */
+body[data-archive-view="wishlist"] #btn-add-fossil,
+body[data-archive-view="dream"] #btn-add-fossil,
+body[data-archive-view="carts"] #btn-add-fossil,
+body[data-archive-view="wishlist"] #btn-fab-add,
+body[data-archive-view="dream"] #btn-fab-add,
+body[data-archive-view="carts"] #btn-fab-add {
+    display: none !important;
+}
     .fab-add {
         position: fixed !important;
         right: max(1rem, env(safe-area-inset-right, 0px)) !important;
@@ -9938,6 +9926,21 @@ body:not(.pref-shop-active) .shop-field-group {
 .welcome-landing-inner,
 .backup-center-inner {
     padding: 1.35rem 1.4rem 1.2rem;
+}
+.backup-center-scroll {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+.backup-center-includes-list {
+    margin: 0.65rem 0 0.4rem;
+    padding-left: 1.2rem;
+    font-size: 0.8rem;
+    line-height: 1.45;
+    color: var(--text-primary);
+}
+.backup-center-risk {
+    margin: 0;
 }
 .welcome-landing-brand {
     display: flex;
