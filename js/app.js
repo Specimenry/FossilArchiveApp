@@ -5,7 +5,7 @@
 // =========================================================================
 
 // --- CONSTANTS ---
-var SPECIMENRY_VERSION = '0.9.14';
+var SPECIMENRY_VERSION = '0.9.16';
 var SPECIMENRY_BUILD_DATE = '2026-07-19';
 
 var CATEGORIES = [
@@ -1286,16 +1286,40 @@ window.addEventListener('DOMContentLoaded', function() {
         var btnListM = document.getElementById('btn-layout-list-mobile');
         if (layout === 'list') {
             if (grid) grid.classList.add('list-view-active');
-            if (btnGrid) btnGrid.classList.remove('active');
-            if (btnList) btnList.classList.add('active');
-            if (btnGridM) { btnGridM.classList.remove('is-active', 'active'); }
-            if (btnListM) { btnListM.classList.add('is-active', 'active'); }
+            if (btnGrid) {
+                btnGrid.classList.remove('active');
+                btnGrid.setAttribute('aria-pressed', 'false');
+            }
+            if (btnList) {
+                btnList.classList.add('active');
+                btnList.setAttribute('aria-pressed', 'true');
+            }
+            if (btnGridM) {
+                btnGridM.classList.remove('is-active', 'active');
+                btnGridM.setAttribute('aria-pressed', 'false');
+            }
+            if (btnListM) {
+                btnListM.classList.add('is-active', 'active');
+                btnListM.setAttribute('aria-pressed', 'true');
+            }
         } else {
             if (grid) grid.classList.remove('list-view-active');
-            if (btnGrid) btnGrid.classList.add('active');
-            if (btnList) btnList.classList.remove('active');
-            if (btnGridM) { btnGridM.classList.add('is-active', 'active'); }
-            if (btnListM) { btnListM.classList.remove('is-active', 'active'); }
+            if (btnGrid) {
+                btnGrid.classList.add('active');
+                btnGrid.setAttribute('aria-pressed', 'true');
+            }
+            if (btnList) {
+                btnList.classList.remove('active');
+                btnList.setAttribute('aria-pressed', 'false');
+            }
+            if (btnGridM) {
+                btnGridM.classList.add('is-active', 'active');
+                btnGridM.setAttribute('aria-pressed', 'true');
+            }
+            if (btnListM) {
+                btnListM.classList.remove('is-active', 'active');
+                btnListM.setAttribute('aria-pressed', 'false');
+            }
         }
     } catch (e) {
         console.error('Failed to pre-sync active view:', e);
@@ -1554,6 +1578,11 @@ document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape' && window.app) {
         var sheet = document.getElementById('specimenry-sheet');
         if (sheet && (sheet.classList.contains('active') || sheet.open)) {
+            // Modal <dialog> already fires 'cancel' → closeSpecimenrySheet; skip duplicate.
+            if (sheet.open && typeof sheet.showModal === 'function' && !sheet.classList.contains('specimenry-sheet--polyfill')) {
+                e.preventDefault();
+                return;
+            }
             window.app.closeSpecimenrySheet(false);
             e.preventDefault();
             return;
@@ -6987,6 +7016,9 @@ window.app = {
         var fab = document.getElementById('btn-fab-add');
         var labelMobile = addBtn ? addBtn.querySelector('.btn-text-mobile') : null;
         var labelDesktop = addBtn ? addBtn.querySelector('.btn-text') : null;
+        var menuCta = document.getElementById('mobile-menu-add-cta');
+        var menuTitle = document.getElementById('mobile-menu-add-title');
+        var menuSub = document.getElementById('mobile-menu-add-sub');
 
         if (slug === 'wishlist') {
             if (addBtn) {
@@ -6997,6 +7029,9 @@ window.app = {
             if (labelMobile) labelMobile.textContent = 'Add';
             if (labelDesktop) labelDesktop.textContent = 'Add Want';
             if (fab) fab.setAttribute('onclick', "app.focusWishlistQuickAdd()");
+            if (menuTitle) menuTitle.textContent = 'Add to wishlist';
+            if (menuSub) menuSub.textContent = 'Name it — details later';
+            if (menuCta) menuCta.setAttribute('aria-label', 'Add to wishlist');
         } else if (slug === 'dream') {
             if (addBtn) {
                 addBtn.setAttribute('onclick', "app.openDreamItemModal()");
@@ -7006,6 +7041,9 @@ window.app = {
             if (labelMobile) labelMobile.textContent = 'Add';
             if (labelDesktop) labelDesktop.textContent = 'Add Dream';
             if (fab) fab.setAttribute('onclick', "app.openDreamItemModal()");
+            if (menuTitle) menuTitle.textContent = 'Add dream specimen';
+            if (menuSub) menuSub.textContent = 'Save a specimen you hope to find';
+            if (menuCta) menuCta.setAttribute('aria-label', 'Add dream specimen');
         } else if (slug === 'carts') {
             if (addBtn) {
                 addBtn.setAttribute('onclick', "app.openCartItemModal()");
@@ -7015,6 +7053,9 @@ window.app = {
             if (labelMobile) labelMobile.textContent = 'Add';
             if (labelDesktop) labelDesktop.textContent = 'Add Draft';
             if (fab) fab.setAttribute('onclick', "app.openCartItemModal()");
+            if (menuTitle) menuTitle.textContent = 'Add draft item';
+            if (menuSub) menuSub.textContent = 'Park a possible purchase';
+            if (menuCta) menuCta.setAttribute('aria-label', 'Add draft item');
         } else {
             if (addBtn) {
                 addBtn.setAttribute('onclick', "app.openModal()");
@@ -7024,7 +7065,24 @@ window.app = {
             if (labelMobile) labelMobile.textContent = 'Add';
             if (labelDesktop) labelDesktop.textContent = 'Add Fossil';
             if (fab) fab.setAttribute('onclick', "app.openQuickCapture()");
+            if (menuTitle) menuTitle.textContent = 'Add specimen';
+            if (menuSub) menuSub.textContent = 'Photo, name, Save — details later';
+            if (menuCta) menuCta.setAttribute('aria-label', 'Add specimen');
         }
+    },
+
+    /** Mobile menu Add — same destination as header/FAB for the current archive view. */
+    handleMobileMenuAdd: function() {
+        this.closeMobileMenu();
+        var slug = document.body.getAttribute('data-archive-view') || 'collection';
+        var self = this;
+        // Let the menu close animation start before opening another surface.
+        setTimeout(function() {
+            if (slug === 'wishlist') self.focusWishlistQuickAdd();
+            else if (slug === 'dream') self.openDreamItemModal();
+            else if (slug === 'carts') self.openCartItemModal();
+            else self.openQuickCapture();
+        }, 50);
     },
 
     focusWishlistQuickAdd: function() {
@@ -9400,7 +9458,9 @@ window.app = {
         var chips = document.querySelectorAll('#mobile-filter-type-chips .mf-chip');
         for (var i = 0; i < chips.length; i++) {
             var chipVal = chips[i].getAttribute('data-spec-type') || '';
-            chips[i].classList.toggle('is-active', chipVal === val);
+            var on = chipVal === val;
+            chips[i].classList.toggle('is-active', on);
+            chips[i].setAttribute('aria-pressed', on ? 'true' : 'false');
         }
     },
 
@@ -9425,12 +9485,20 @@ window.app = {
 
         var fields = document.querySelectorAll('.mobile-sort-fields .mf-chip');
         for (var i = 0; i < fields.length; i++) {
-            fields[i].classList.toggle('is-active', (fields[i].getAttribute('data-sort-field') || '') === parsed.field);
+            var on = (fields[i].getAttribute('data-sort-field') || '') === parsed.field;
+            fields[i].classList.toggle('is-active', on);
+            fields[i].setAttribute('aria-pressed', on ? 'true' : 'false');
         }
         var dirA = document.getElementById('mobile-sort-dir-a');
         var dirB = document.getElementById('mobile-sort-dir-b');
-        if (dirA) dirA.classList.toggle('is-active', parsed.dir === 'a');
-        if (dirB) dirB.classList.toggle('is-active', parsed.dir === 'b');
+        if (dirA) {
+            dirA.classList.toggle('is-active', parsed.dir === 'a');
+            dirA.setAttribute('aria-pressed', parsed.dir === 'a' ? 'true' : 'false');
+        }
+        if (dirB) {
+            dirB.classList.toggle('is-active', parsed.dir === 'b');
+            dirB.setAttribute('aria-pressed', parsed.dir === 'b' ? 'true' : 'false');
+        }
         this._updateMobileSortDirLabels();
     },
 
@@ -9468,7 +9536,9 @@ window.app = {
         this._updateMobileSortDirLabels();
         var fields = document.querySelectorAll('.mobile-sort-fields .mf-chip');
         for (var i = 0; i < fields.length; i++) {
-            fields[i].classList.toggle('is-active', (fields[i].getAttribute('data-sort-field') || '') === this._mobileSortField);
+            var on = (fields[i].getAttribute('data-sort-field') || '') === this._mobileSortField;
+            fields[i].classList.toggle('is-active', on);
+            fields[i].setAttribute('aria-pressed', on ? 'true' : 'false');
         }
         this.setMobileSort(this._mobileSortValueFromParts(this._mobileSortField, this._mobileSortDir));
     },
@@ -9477,8 +9547,14 @@ window.app = {
         this._mobileSortDir = dir === 'b' ? 'b' : 'a';
         var dirA = document.getElementById('mobile-sort-dir-a');
         var dirB = document.getElementById('mobile-sort-dir-b');
-        if (dirA) dirA.classList.toggle('is-active', this._mobileSortDir === 'a');
-        if (dirB) dirB.classList.toggle('is-active', this._mobileSortDir === 'b');
+        if (dirA) {
+            dirA.classList.toggle('is-active', this._mobileSortDir === 'a');
+            dirA.setAttribute('aria-pressed', this._mobileSortDir === 'a' ? 'true' : 'false');
+        }
+        if (dirB) {
+            dirB.classList.toggle('is-active', this._mobileSortDir === 'b');
+            dirB.setAttribute('aria-pressed', this._mobileSortDir === 'b' ? 'true' : 'false');
+        }
         this.setMobileSort(this._mobileSortValueFromParts(this._mobileSortField || 'date', this._mobileSortDir));
     },
 
@@ -9502,10 +9578,12 @@ window.app = {
         if (btnGridM) {
             btnGridM.classList.toggle('is-active', !isList);
             btnGridM.classList.toggle('active', !isList);
+            btnGridM.setAttribute('aria-pressed', !isList ? 'true' : 'false');
         }
         if (btnListM) {
             btnListM.classList.toggle('is-active', !!isList);
             btnListM.classList.toggle('active', !!isList);
+            btnListM.setAttribute('aria-pressed', isList ? 'true' : 'false');
         }
     },
 
@@ -9516,7 +9594,9 @@ window.app = {
         if (chipEl && chipEl.parentNode) {
             var siblings = chipEl.parentNode.querySelectorAll('.mf-chip');
             for (var i = 0; i < siblings.length; i++) {
-                siblings[i].classList.toggle('is-active', siblings[i] === chipEl);
+                var on = siblings[i] === chipEl;
+                siblings[i].classList.toggle('is-active', on);
+                siblings[i].setAttribute('aria-pressed', on ? 'true' : 'false');
             }
         }
         this.onSpecimenTypeFilterChange();
@@ -9662,14 +9742,19 @@ window.app = {
         }
 
         // Native <dialog>.showModal() puts the sheet in the top layer above Backup Center etc.
+        sheet.classList.remove('specimenry-sheet--polyfill');
+        var usedModal = false;
         try {
             if (typeof sheet.showModal === 'function') {
                 if (!sheet.open) sheet.showModal();
-            } else {
-                sheet.setAttribute('open', '');
+                usedModal = true;
             }
         } catch (err) {
+            usedModal = false;
+        }
+        if (!usedModal) {
             sheet.setAttribute('open', '');
+            sheet.classList.add('specimenry-sheet--polyfill');
         }
         if (!sheet._specimenryCancelBound) {
             sheet.addEventListener('cancel', function(ev) {
@@ -9678,6 +9763,7 @@ window.app = {
             });
             sheet._specimenryCancelBound = true;
         }
+        this._sheetClosing = false;
         requestAnimationFrame(function() {
             sheet.classList.add('active');
         });
@@ -9702,14 +9788,19 @@ window.app = {
     },
 
     closeSpecimenrySheet: function(result) {
+        if (this._sheetClosing) return;
         var sheet = document.getElementById('specimenry-sheet');
+        var resolve = this._sheetResolve;
+        var isOpen = sheet && (sheet.open || sheet.classList.contains('active') || sheet.hasAttribute('open'));
+        if (!isOpen && !resolve) return;
+
+        this._sheetClosing = true;
         if (sheet) {
             sheet.classList.remove('active');
             sheet.style.transform = '';
         }
         document.body.classList.remove('specimenry-sheet-open');
         this._unbindSheetSwipe();
-        var resolve = this._sheetResolve;
         this._sheetResolve = null;
         var self = this;
         setTimeout(function() {
@@ -9720,7 +9811,9 @@ window.app = {
                 } catch (err) {
                     sheet.removeAttribute('open');
                 }
+                sheet.classList.remove('specimenry-sheet--polyfill');
             }
+            self._sheetClosing = false;
             self.restoreSheetFocus(null);
         }, 280);
         if (resolve) resolve(result);
@@ -16590,8 +16683,14 @@ window.app = {
                     btnList.classList.remove('active');
                     btnList.setAttribute('aria-pressed', 'false');
                 }
-                if (btnGridM) { btnGridM.classList.add('is-active', 'active'); }
-                if (btnListM) { btnListM.classList.remove('is-active', 'active'); }
+                if (btnGridM) {
+                    btnGridM.classList.add('is-active', 'active');
+                    btnGridM.setAttribute('aria-pressed', 'true');
+                }
+                if (btnListM) {
+                    btnListM.classList.remove('is-active', 'active');
+                    btnListM.setAttribute('aria-pressed', 'false');
+                }
                 localStorage.setItem('fossil_layout_view', 'grid');
             } else {
                 grid.classList.add('list-view-active');
@@ -16603,8 +16702,14 @@ window.app = {
                     btnList.classList.add('active');
                     btnList.setAttribute('aria-pressed', 'true');
                 }
-                if (btnGridM) { btnGridM.classList.remove('is-active', 'active'); }
-                if (btnListM) { btnListM.classList.add('is-active', 'active'); }
+                if (btnGridM) {
+                    btnGridM.classList.remove('is-active', 'active');
+                    btnGridM.setAttribute('aria-pressed', 'false');
+                }
+                if (btnListM) {
+                    btnListM.classList.add('is-active', 'active');
+                    btnListM.setAttribute('aria-pressed', 'true');
+                }
                 localStorage.setItem('fossil_layout_view', 'list');
             }
             

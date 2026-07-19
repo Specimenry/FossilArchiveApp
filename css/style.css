@@ -3993,15 +3993,6 @@ dialog::backdrop {
         margin-top: 0.4rem !important;
     }
 
-/* One Add CTA on wishlist / dream / carts: keep in-page controls, hide header + FAB */
-body[data-archive-view="wishlist"] #btn-add-fossil,
-body[data-archive-view="dream"] #btn-add-fossil,
-body[data-archive-view="carts"] #btn-add-fossil,
-body[data-archive-view="wishlist"] #btn-fab-add,
-body[data-archive-view="dream"] #btn-fab-add,
-body[data-archive-view="carts"] #btn-fab-add {
-    display: none !important;
-}
     .fab-add {
         position: fixed !important;
         right: max(1rem, env(safe-area-inset-right, 0px)) !important;
@@ -4054,6 +4045,16 @@ body[data-archive-view="carts"] #btn-fab-add {
         border: 1px solid rgba(255, 255, 255, 0.18);
     }
 
+}
+
+/* One Add CTA on wishlist / dream / carts: keep in-page controls, hide header + FAB (all viewports) */
+body[data-archive-view="wishlist"] #btn-add-fossil,
+body[data-archive-view="dream"] #btn-add-fossil,
+body[data-archive-view="carts"] #btn-add-fossil,
+body[data-archive-view="wishlist"] #btn-fab-add,
+body[data-archive-view="dream"] #btn-fab-add,
+body[data-archive-view="carts"] #btn-fab-add {
+    display: none !important;
 }
 
 /* Fossil Card UI Refinements */
@@ -10052,26 +10053,6 @@ body:not(.pref-shop-active) .shop-field-group {
     margin: 0;
     font-size: 1.15rem;
 }
-.backup-center-includes {
-    margin-bottom: 0.85rem;
-    padding: 0.75rem 0.85rem;
-    background: var(--bg-warm);
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--border-color);
-}
-.backup-center-includes h3 {
-    margin: 0 0 0.4rem;
-    font-size: 0.78rem;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: var(--accent);
-}
-.backup-center-includes ul {
-    margin: 0;
-    padding-left: 1.1rem;
-    font-size: 0.8rem;
-    line-height: 1.45;
-}
 .backup-center-excludes {
     margin: 0.55rem 0 0;
     font-size: 0.72rem;
@@ -10133,16 +10114,12 @@ body:not(.pref-shop-active) .shop-field-group {
     #mobile-menu-dropdown-content.mobile-menu-sheet,
     .fab-add,
     #btn-back-to-top,
-    .specimenry-sheet,
-    .specimenry-sheet-backdrop {
+    .specimenry-sheet {
         transition: none !important;
     }
 }
 
 /* --- Apple-like action / confirm sheets (native dialog → top layer above other modals) --- */
-.specimenry-sheet-backdrop {
-    display: none !important;
-}
 dialog.specimenry-sheet {
     position: fixed;
     left: 0;
@@ -10172,6 +10149,11 @@ dialog.specimenry-sheet[open] {
 }
 dialog.specimenry-sheet.active {
     transform: translateY(0);
+}
+/* Non-modal fallback when showModal() is unavailable or fails under another dialog */
+dialog.specimenry-sheet.specimenry-sheet--polyfill {
+    display: flex;
+    z-index: 2147483000;
 }
 dialog.specimenry-sheet::backdrop {
     background: rgba(0, 0, 0, 0.45);
@@ -10274,6 +10256,7 @@ dialog.specimenry-sheet::backdrop {
     line-height: 1.45;
     color: var(--text-secondary);
     margin: 0.35rem 0.9rem 1rem;
+    white-space: pre-wrap;
 }
 .specimenry-confirm-footer {
     display: flex;

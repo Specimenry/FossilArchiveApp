@@ -187,11 +187,11 @@
             <button type="button" class="mobile-menu-close" onclick="app.closeMobileMenu()" aria-label="Close menu">&times;</button>
         </div>
         <div class="mobile-menu-sheet-body">
-            <a href="#" class="mobile-menu-add-cta" onclick="app.closeMobileMenu(); app.openQuickCapture(); return false;">
+            <a href="#" id="mobile-menu-add-cta" class="mobile-menu-add-cta" onclick="app.handleMobileMenuAdd(); return false;">
                 <span class="mobile-menu-add-icon" aria-hidden="true">+</span>
                 <span class="mobile-menu-add-copy">
-                    <strong>Add specimen</strong>
-                    <small>Photo, name, Save — details later</small>
+                    <strong id="mobile-menu-add-title">Add specimen</strong>
+                    <small id="mobile-menu-add-sub">Photo, name, Save — details later</small>
                 </span>
             </a>
 
@@ -398,8 +398,8 @@
                 <div class="form-group mobile-filter-layout-block mobile-only">
                     <label>Layout</label>
                     <div class="mobile-filter-layout-toggle" role="group" aria-label="Card layout">
-                        <button type="button" id="btn-layout-grid-mobile" class="mf-chip is-active" onclick="app.setLayoutView('grid')">Grid</button>
-                        <button type="button" id="btn-layout-list-mobile" class="mf-chip" onclick="app.setLayoutView('list')">List</button>
+                        <button type="button" id="btn-layout-grid-mobile" class="mf-chip is-active" onclick="app.setLayoutView('grid')" aria-pressed="true">Grid</button>
+                        <button type="button" id="btn-layout-list-mobile" class="mf-chip" onclick="app.setLayoutView('list')" aria-pressed="false">List</button>
                     </div>
                 </div>
                 
