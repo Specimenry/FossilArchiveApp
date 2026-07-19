@@ -65,8 +65,8 @@
                     <svg id="theme-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
                 </button>
                 <span id="field-outdoor-badge" class="field-outdoor-badge" hidden title="Field / Outdoor mode is on — turn off in Settings" onclick="app.toggleSettingsModal()">☀️ Field</span>
-                <a href="https://ko-fi.com/specimenry" target="_blank" id="btn-support-project" class="desktop-only" title="Support Specimenry on Ko-fi" aria-label="Support Specimenry on Ko-fi" style="color: var(--text-primary); background: var(--bg-warm); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 0.35rem 0.65rem; font-size: 0.75rem; font-weight: 600; text-decoration: none; display: flex; align-items: center; gap: 0.35rem; transition: all 0.2s;" onmouseover="this.style.background='var(--border-color)'" onmouseout="this.style.background='var(--bg-warm)'">
-                    <span style="color: #ef4444;">❤️</span> Support
+                <a href="https://ko-fi.com/specimenry" target="_blank" id="btn-support-project" class="desktop-only" title="Tip on Ko-fi" aria-label="Tip on Ko-fi" style="color: var(--text-primary); background: var(--bg-warm); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 0.35rem 0.65rem; font-size: 0.75rem; font-weight: 600; text-decoration: none; display: flex; align-items: center; gap: 0.35rem; transition: all 0.2s;" onmouseover="this.style.background='var(--border-color)'" onmouseout="this.style.background='var(--bg-warm)'">
+                    <span style="color: #ef4444;">❤️</span> Tip on Ko-fi
                 </a>
                 <a href="#" onclick="app.openBugReportModal(); return false;" id="btn-report-bug-header" class="desktop-only" title="Report a Bug" aria-label="Report a Bug" style="color: var(--text-primary); background: var(--bg-warm); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 0.35rem 0.65rem; font-size: 0.75rem; font-weight: 600; text-decoration: none; display: flex; align-items: center; gap: 0.35rem; transition: all 0.2s; margin-left: 0.5rem;" onmouseover="this.style.background='var(--border-color)'" onmouseout="this.style.background='var(--bg-warm)'">
                     <span>🐛</span> Report Bug
@@ -114,7 +114,7 @@
                             📖 Export Shareable Catalog
                         </a>
                         <a href="https://ko-fi.com/specimenry" target="_blank" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1rem; font-size: 0.8rem; color: #ef4444; text-decoration: none; transition: background 0.15s; border-top: 1px solid var(--border-color); font-weight: 600;" onmouseover="this.style.background='var(--bg-warm)'" onmouseout="this.style.background='transparent'">
-                            ❤️ Support on Ko-fi
+                            ❤️ Tip on Ko-fi
                         </a>
                     </div>
                 </div>
@@ -217,7 +217,7 @@
                 <a href="#" class="mobile-menu-link" onclick="app.closeMobileMenu(); app.toggleComparePickerMode(); return false;">⚖️ Compare</a>
                 <a href="#" class="mobile-menu-link" onclick="app.closeMobileMenu(); app.batchAutoEnrichAll(); return false;">⚡ Auto-Fill Data</a>
                 <a href="#" class="mobile-menu-link" onclick="app.closeMobileMenu(); app.toggleAutoEnhance(); return false;">💡 Auto-Enhance Lighting</a>
-                <a href="https://ko-fi.com/specimenry" target="_blank" rel="noopener" class="mobile-menu-link mobile-menu-link-kofi" onclick="app.closeMobileMenu();">❤️ Support on Ko-fi</a>
+                <a href="https://ko-fi.com/specimenry" target="_blank" rel="noopener" class="mobile-menu-link mobile-menu-link-kofi" onclick="app.closeMobileMenu();">❤️ Tip on Ko-fi</a>
                 <a href="#" class="mobile-menu-link" onclick="app.closeMobileMenu(); app.openBugReportModal(); return false;">🐛 Report a Bug</a>
                 <a href="#" class="mobile-menu-link" onclick="app.closeMobileMenu(); app.startTour(); return false;">🙋 Guided Tour</a>
             </details>
@@ -472,7 +472,7 @@
                 </button>
                 <button type="button" id="btn-toggle-scoreboard" onclick="app.toggleScoreboard()">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                    <span class="stats-tab-full">Leaderboard</span><span class="stats-tab-short">Board</span>
+                    <span class="stats-tab-full">Leaderboard</span><span class="stats-tab-short">Leaders</span>
                 </button>
                 <button type="button" id="btn-toggle-map" onclick="app.toggleFossilMap()">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
@@ -488,11 +488,11 @@
                 </button>
                 <button type="button" id="btn-toggle-chrono-chart" onclick="app.toggleChronoChart()">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                    <span class="stats-tab-full">Deep Time</span><span class="stats-tab-short">Time</span>
+                    <span class="stats-tab-full">Deep Time</span><span class="stats-tab-short">Deep Time</span>
                 </button>
                 <button type="button" id="btn-toggle-portfolio" onclick="app.togglePortfolio()">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
-                    <span class="stats-tab-full">Portfolio</span><span class="stats-tab-short">Value</span>
+                    <span class="stats-tab-full">Portfolio</span><span class="stats-tab-short">Portfolio</span>
                 </button>
             </div>
             
@@ -537,7 +537,7 @@
             </div>
             <div style="text-align: center; font-size: 0.75rem; color: var(--text-secondary); margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border-color); opacity: 0.8; display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
                 <span>Developed with ❤️ for fossil collectors.</span>
-                <span>Love the app? Consider <a href="https://ko-fi.com/specimenry" target="_blank" style="color: #ef4444; font-weight: 600; text-decoration: underline;">supporting us on Ko-fi</a>!</span>
+                <span>Love the app? Consider <a href="https://ko-fi.com/specimenry" target="_blank" style="color: #ef4444; font-weight: 600; text-decoration: underline;">a tip on Ko-fi</a>!</span>
                 <span>•</span>
                 <span>Found a bug? <a href="#" onclick="app.openBugReportModal(); return false;" style="color: var(--text-primary); font-weight: 600; text-decoration: underline;">Report a Bug</a></span>
             </div>

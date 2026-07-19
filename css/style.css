@@ -3956,8 +3956,8 @@ dialog::backdrop {
         overflow-x: auto !important;
         -webkit-overflow-scrolling: touch !important;
         scrollbar-width: none !important;
-        gap: 0.25rem !important;
-        padding: 0.3rem !important;
+        gap: 0.4rem !important;
+        padding: 0.35rem !important;
         grid-template-columns: none !important;
     }
     .stats-segmented-control::-webkit-scrollbar {
@@ -3965,9 +3965,9 @@ dialog::backdrop {
     }
     .stats-segmented-control button {
         flex: 0 0 auto !important;
-        padding: 0.55rem 0.7rem !important;
-        font-size: 0.72rem !important;
-        gap: 0.3rem !important;
+        padding: 0.55rem 0.9rem !important;
+        font-size: 0.8rem !important;
+        gap: 0.35rem !important;
     }
     .stats-tab-full {
         display: none !important;
@@ -7586,158 +7586,181 @@ body[data-archive-view="carts"] #btn-fab-add {
 }
 
 /* ==========================================================================
-   ⏳ DEEP TIME GEOLOGIC CHRONO-CHART TIMELINE (Sea Monsters style)
+   Deep Time — geologic timeline (museum / archive theme)
    ========================================================================== */
 .chrono-dashboard-wrapper {
-    padding: 1.5rem;
-    background: radial-gradient(circle at top, #1a1e36 0%, #0d0f17 100%);
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.6);
+    padding: 1.35rem 1.25rem 1.5rem;
+    background: var(--bg-surface);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
     margin-top: 1rem;
 }
 
 .chrono-intro-header {
     text-align: center;
-    margin-bottom: 2.5rem;
+    margin-bottom: 2rem;
 }
 
 .chrono-intro-header h2 {
-    font-size: 1.75rem;
-    color: #ffcc00;
-    text-shadow: 0 0 10px rgba(255, 204, 0, 0.25);
-    margin-bottom: 0.5rem;
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.55rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    text-shadow: none;
+    margin-bottom: 0.45rem;
 }
 
 .chrono-intro-header p {
     font-size: 0.9rem;
-    color: #cbd5e0;
-    max-width: 600px;
+    color: var(--text-secondary);
+    max-width: 36rem;
     margin: 0 auto;
+    line-height: 1.5;
 }
 
 .chrono-vertical-column {
     position: relative;
     display: flex;
     flex-direction: column;
-    gap: 2.5rem;
-    padding-left: 2rem;
+    gap: 1.75rem;
+    padding-left: 1.75rem;
 }
 
 .chrono-vertical-column::before {
     content: '';
     position: absolute;
-    top: 0;
-    bottom: 0;
-    left: calc(2rem - 2px);
-    width: 4px;
-    background: linear-gradient(to bottom, #4fd1c5 0%, #ffcc00 40%, #dd6b20 70%, #4a5568 100%);
-    box-shadow: 0 0 8px rgba(79, 209, 197, 0.4);
+    top: 0.35rem;
+    bottom: 0.35rem;
+    left: calc(1.75rem - 1.5px);
+    width: 3px;
+    background: linear-gradient(
+        to bottom,
+        #5a9e8e 0%,
+        var(--accent) 35%,
+        #c07840 65%,
+        #8a8070 100%
+    );
+    box-shadow: none;
     border-radius: 99px;
+    opacity: 0.85;
 }
 
 .chrono-layer-card {
     position: relative;
-    background: rgba(13, 15, 23, 0.65);
-    backdrop-filter: blur(15px);
-    border-radius: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 1.25rem;
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    background: var(--bg-warm);
+    backdrop-filter: none;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    padding: 1.1rem 1.15rem;
+    transition: border-color var(--motion-normal) var(--ease-out),
+                box-shadow var(--motion-normal) var(--ease-out),
+                transform var(--motion-normal) var(--ease-out);
+    box-shadow: var(--shadow-sm);
+}
+
+.chrono-layer-bed-texture {
+    display: none;
 }
 
 .chrono-layer-card::before {
     content: '';
     position: absolute;
-    top: 24px;
-    left: -2.35rem;
-    width: 14px;
-    height: 14px;
-    background: #0d0f17;
-    border: 3px solid #cbd5e0;
+    top: 1.35rem;
+    left: -2.05rem;
+    width: 12px;
+    height: 12px;
+    background: var(--bg-surface);
+    border: 2.5px solid var(--border-hover);
     border-radius: 50%;
     z-index: 2;
-    transition: all 0.3s ease;
+    transition: border-color var(--motion-fast) ease, background var(--motion-fast) ease;
+    box-shadow: 0 0 0 3px var(--bg-base);
 }
 
 .chrono-layer-card:hover {
-    transform: translateX(6px);
-    border-color: rgba(255,255,255,0.2);
-    box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+    transform: translateX(3px);
+    border-color: var(--border-hover);
+    box-shadow: var(--shadow-md);
 }
 
 .chrono-layer-card:hover::before {
-    background: #ffcc00;
-    border-color: #ffcc00;
-    box-shadow: 0 0 10px rgba(255, 204, 0, 0.6);
+    background: var(--accent);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--bg-base);
 }
 
-/* Era Based Colors */
-.chrono-layer-card.cenozoic { border-left: 4px solid #4fd1c5; }
-.chrono-layer-card.cenozoic::before { border-color: #4fd1c5; }
-.chrono-layer-card.cretaceous, .chrono-layer-card.jurassic, .chrono-layer-card.triassic { border-left: 4px solid #dd6b20; }
-.chrono-layer-card.cretaceous::before { border-color: #f6ad55; }
-.chrono-layer-card.jurassic::before { border-color: #dd6b20; }
-.chrono-layer-card.triassic::before { border-color: #e53e3e; }
-.chrono-layer-card.permian-carboniferous, .chrono-layer-card.devonian-silurian, .chrono-layer-card.ordovician-cambrian { border-left: 4px solid #2b6cb0; }
-.chrono-layer-card.permian-carboniferous::before { border-color: #3182ce; }
-.chrono-layer-card.devonian-silurian::before { border-color: #4299e1; }
-.chrono-layer-card.ordovician-cambrian::before { border-color: #63b3ed; }
-.chrono-layer-card.precambrian { border-left: 4px solid #4a5568; }
-.chrono-layer-card.precambrian::before { border-color: #718096; }
+/* Era accents — earthy, readable on light & dark */
+.chrono-layer-card.cenozoic { border-left: 4px solid #5a9e8e; }
+.chrono-layer-card.cenozoic::before { border-color: #5a9e8e; }
+.chrono-layer-card.cretaceous,
+.chrono-layer-card.jurassic,
+.chrono-layer-card.triassic { border-left: 4px solid #c07840; }
+.chrono-layer-card.cretaceous::before { border-color: #d4925a; }
+.chrono-layer-card.jurassic::before { border-color: #c07840; }
+.chrono-layer-card.triassic::before { border-color: #b35a4a; }
+.chrono-layer-card.permian-carboniferous,
+.chrono-layer-card.devonian-silurian,
+.chrono-layer-card.ordovician-cambrian { border-left: 4px solid #6a8499; }
+.chrono-layer-card.permian-carboniferous::before { border-color: #6a8499; }
+.chrono-layer-card.devonian-silurian::before { border-color: #7a94a8; }
+.chrono-layer-card.ordovician-cambrian::before { border-color: #8aa4b5; }
+.chrono-layer-card.precambrian { border-left: 4px solid #8a8070; }
+.chrono-layer-card.precambrian::before { border-color: #8a8070; }
 
 .chrono-layer-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
     flex-wrap: wrap;
-    gap: 1rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    gap: 0.85rem;
+    border-bottom: 1px solid var(--border-color);
     padding-bottom: 0.75rem;
     margin-bottom: 0.75rem;
 }
 
 .chrono-badge-era {
-    font-size: 0.65rem;
-    font-weight: 800;
+    font-size: 0.68rem;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.06em;
-    background: rgba(255, 255, 255, 0.06);
-    padding: 0.15rem 0.5rem;
-    border-radius: 4px;
-    color: #a0aec0;
+    letter-spacing: 0.05em;
+    background: var(--accent-bg);
+    padding: 0.2rem 0.5rem;
+    border-radius: var(--radius-sm);
+    color: var(--accent);
 }
 
 .chrono-layer-title {
-    font-size: 1.1rem;
-    font-weight: 800;
-    color: #ffffff;
-    margin: 0.25rem 0;
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0.3rem 0 0.15rem;
 }
 
 .chrono-climate-grid {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-top: 0.4rem;
+    gap: 0.4rem;
+    margin-top: 0.45rem;
 }
 
 .chrono-climate-stat {
-    font-size: 0.7rem;
+    font-size: 0.72rem;
     font-weight: 600;
-    color: #edf2f7;
-    background: rgba(255, 255, 255, 0.03);
-    padding: 0.15rem 0.4rem;
-    border-radius: 3px;
-    border: 1px solid rgba(255, 255, 255, 0.04);
+    color: var(--text-primary);
+    background: var(--bg-surface);
+    padding: 0.2rem 0.45rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-color);
 }
 
 .chrono-climate-stat-wide {
-    font-size: 0.7rem;
+    font-size: 0.72rem;
     font-weight: 500;
-    color: #cbd5e0;
+    color: var(--text-secondary);
     width: 100%;
+    line-height: 1.4;
 }
 
 .chrono-danger-container {
@@ -7748,10 +7771,11 @@ body[data-archive-view="carts"] #btn-fab-add {
 
 .chrono-danger-container .danger-label {
     font-size: 0.65rem;
-    font-weight: 800;
+    font-weight: 700;
     text-transform: uppercase;
-    color: #fc8181;
-    margin-bottom: 0.25rem;
+    letter-spacing: 0.04em;
+    color: var(--danger);
+    margin-bottom: 0.3rem;
 }
 
 .danger-bar-wrapper {
@@ -7762,66 +7786,72 @@ body[data-archive-view="carts"] #btn-fab-add {
 .danger-bar-tick {
     width: 8px;
     height: 8px;
-    background: rgba(255, 255, 255, 0.08);
-    border-radius: 1px;
+    background: var(--border-color);
+    border-radius: 2px;
 }
 
 .danger-bar-tick.filled {
-    background: #e53e3e;
-    box-shadow: 0 0 6px rgba(229, 62, 62, 0.6);
+    background: var(--danger);
+    box-shadow: none;
 }
 
-.chrono-layer-card.cenozoic .danger-bar-tick.filled { background: #4fd1c5; box-shadow: 0 0 6px rgba(79, 209, 197, 0.6); }
+.chrono-layer-card.cenozoic .danger-bar-tick.filled {
+    background: #5a9e8e;
+    box-shadow: none;
+}
 .chrono-layer-card.permian-carboniferous .danger-bar-tick.filled,
 .chrono-layer-card.devonian-silurian .danger-bar-tick.filled,
-.chrono-layer-card.ordovician-cambrian .danger-bar-tick.filled { background: #3182ce; box-shadow: 0 0 6px rgba(49, 130, 206, 0.6); }
+.chrono-layer-card.ordovician-cambrian .danger-bar-tick.filled {
+    background: #6a8499;
+    box-shadow: none;
+}
 
 .chrono-narration-box {
-    background: rgba(0, 0, 0, 0.2);
-    border-left: 2px solid #ffcc00;
-    padding: 0.5rem 0.75rem;
-    border-radius: 0 4px 4px 0;
-    font-size: 0.78rem;
-    line-height: 1.45;
-    color: #edf2f7;
-    margin-bottom: 1rem;
+    background: var(--bg-surface);
+    border-left: 3px solid var(--accent);
+    padding: 0.55rem 0.8rem;
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    color: var(--text-secondary);
+    margin-bottom: 0.85rem;
 }
 
 .chrono-specimens-section {
-    margin-top: 0.75rem;
+    margin-top: 0.65rem;
 }
 
 .chrono-section-title {
     font-size: 0.72rem;
-    font-weight: 850;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: #ffcc00;
-    margin-bottom: 0.5rem;
+    letter-spacing: 0.04em;
+    color: var(--accent);
+    margin-bottom: 0.55rem;
 }
 
 .chrono-specimens-shelf {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.75rem;
+    gap: 0.55rem;
 }
 
 .chrono-spec-pill {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    padding: 0.35rem 0.6rem;
-    border-radius: 6px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    padding: 0.4rem 0.65rem;
+    border-radius: var(--radius-sm);
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: border-color var(--motion-fast) ease, background var(--motion-fast) ease;
 }
 
 .chrono-spec-pill:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: #ffcc00;
-    transform: translateY(-1px);
+    background: var(--accent-bg);
+    border-color: var(--accent);
+    transform: none;
 }
 
 .chrono-spec-thumb {
@@ -7829,7 +7859,7 @@ body[data-archive-view="carts"] #btn-fab-add {
     height: 32px;
     object-fit: cover;
     border-radius: 4px;
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    border: 1px solid var(--border-color);
 }
 
 .chrono-spec-thumb-emoji {
@@ -7838,20 +7868,23 @@ body[data-archive-view="carts"] #btn-fab-add {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.25rem;
-    background: rgba(255, 255, 255, 0.03);
+    font-size: 1.15rem;
+    background: var(--bg-warm);
     border-radius: 4px;
+    border: 1px solid var(--border-color);
 }
 
 .chrono-spec-pill-text {
     display: flex;
     flex-direction: column;
+    min-width: 0;
 }
 
 .chrono-spec-pill-title {
-    font-size: 0.75rem;
-    font-weight: 700;
-    color: #ffffff;
+    font-size: 0.78rem;
+    font-weight: 650;
+    color: var(--text-primary);
+    line-height: 1.3;
 }
 
 .chrono-spec-pill-title em {
@@ -7859,83 +7892,87 @@ body[data-archive-view="carts"] #btn-fab-add {
 }
 
 .chrono-spec-pill-sub {
-    font-size: 0.6rem;
-    color: #a0aec0;
+    font-size: 0.65rem;
+    color: var(--text-secondary);
 }
 
-/* Time Gaps alert */
 .chrono-time-gap-alert {
     display: flex;
-    gap: 0.75rem;
-    background: rgba(229, 62, 62, 0.03);
-    border: 1px dashed rgba(229, 62, 62, 0.2);
-    padding: 0.75rem 1rem;
-    border-radius: 6px;
+    gap: 0.65rem;
+    background: rgba(179, 58, 58, 0.06);
+    border: 1px dashed rgba(179, 58, 58, 0.28);
+    padding: 0.75rem 0.9rem;
+    border-radius: var(--radius-sm);
 }
 
 .chrono-layer-card.time-gap-exposed {
     background: repeating-linear-gradient(
         45deg,
-        rgba(0, 0, 0, 0.3),
-        rgba(0, 0, 0, 0.3) 10px,
-        rgba(255, 255, 255, 0.005) 10px,
-        rgba(255, 255, 255, 0.005) 20px
-    ), rgba(13, 15, 23, 0.4);
-    border-color: rgba(229, 62, 62, 0.15);
+        transparent,
+        transparent 8px,
+        rgba(179, 58, 58, 0.04) 8px,
+        rgba(179, 58, 58, 0.04) 16px
+    ), var(--bg-warm);
+    border-color: rgba(179, 58, 58, 0.22);
 }
 
 .gap-glow-bullet {
     width: 8px;
     height: 8px;
-    background: #e53e3e;
+    background: var(--danger);
     border-radius: 50%;
-    margin-top: 3px;
-    box-shadow: 0 0 8px #e53e3e;
-    animation: pulseGlow 1.5s infinite;
+    margin-top: 4px;
+    flex-shrink: 0;
+    box-shadow: none;
+    animation: none;
 }
 
 .gap-text-content {
     display: flex;
     flex-direction: column;
-    gap: 0.15rem;
+    gap: 0.2rem;
+    min-width: 0;
 }
 
 .gap-title {
     font-size: 0.75rem;
-    font-weight: 800;
-    color: #fc8181;
+    font-weight: 700;
+    color: var(--danger);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.04em;
     margin: 0;
 }
 
 .gap-desc {
-    font-size: 0.7rem;
-    color: #cbd5e0;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
     margin: 0;
+    line-height: 1.4;
 }
 
 .gap-hint {
-    font-size: 0.68rem;
-    color: #ffd700;
-    margin: 0.25rem 0 0 0;
+    font-size: 0.72rem;
+    color: var(--accent);
+    margin: 0.2rem 0 0;
+    font-weight: 600;
 }
 
 @keyframes pulseGlow {
     0% { transform: scale(0.9); opacity: 0.6; }
-    50% { transform: scale(1.1); opacity: 1; box-shadow: 0 0 12px #e53e3e; }
+    50% { transform: scale(1.1); opacity: 1; box-shadow: 0 0 12px var(--danger); }
     100% { transform: scale(0.9); opacity: 0.6; }
 }
 
 
 /* ==========================================================================
-   💼 ACQUISITION PORTFOLIO LEDGER
+   Portfolio — collection valuations (archive theme)
    ========================================================================== */
 .portfolio-wrapper {
-    padding: 1.5rem;
-    background: radial-gradient(circle at top, #1e223c 0%, #0d0f17 100%);
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 1.35rem 1.25rem 1.5rem;
+    background: var(--bg-surface);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
     margin-top: 1rem;
 }
 
@@ -7945,159 +7982,193 @@ body[data-archive-view="carts"] #btn-fab-add {
     align-items: center;
     flex-wrap: wrap;
     gap: 1rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    padding-bottom: 1.25rem;
-    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 1.1rem;
+    margin-bottom: 1.25rem;
 }
 
 .portfolio-header-text h2 {
-    font-size: 1.5rem;
-    color: #ffcc00;
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.45rem;
+    font-weight: 700;
+    color: var(--text-primary);
     margin: 0;
 }
 
 .portfolio-header-text p {
-    font-size: 0.85rem;
-    color: #cbd5e0;
-    margin: 0.25rem 0 0 0;
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    margin: 0.3rem 0 0;
+    line-height: 1.45;
+    max-width: 36rem;
 }
 
 .portfolio-header-actions {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    flex-wrap: wrap;
+    gap: 0.75rem;
 }
 
 .portfolio-currency-picker {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.45rem;
 }
 
 .portfolio-currency-picker .picker-label {
     font-size: 0.72rem;
-    font-weight: 700;
-    color: #edf2f7;
+    font-weight: 650;
+    color: var(--text-secondary);
     text-transform: uppercase;
+    letter-spacing: 0.03em;
 }
 
 .portfolio-select {
-    background: rgba(13, 15, 23, 0.9) !important;
-    border: 1px solid rgba(255, 255, 255, 0.15) !important;
-    color: #ffffff !important;
-    padding: 0.25rem 1.5rem 0.25rem 0.5rem !important;
-    font-size: 0.75rem !important;
-    font-weight: 700 !important;
-    border-radius: 4px !important;
+    background: var(--bg-warm) !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-primary) !important;
+    padding: 0.4rem 1.6rem 0.4rem 0.55rem !important;
+    font-size: 0.8rem !important;
+    font-weight: 600 !important;
+    border-radius: var(--radius-sm) !important;
     cursor: pointer !important;
-    background-image: none !important;
+    background-image: var(--select-arrow) !important;
+    background-repeat: no-repeat !important;
+    background-position: right 0.45rem center !important;
+    background-size: 12px !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
 }
 
 .portfolio-dashboard-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1rem;
-    margin-bottom: 2rem;
+    gap: 0.85rem;
+    margin-bottom: 1.5rem;
 }
 
 .portfolio-kpi-card {
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 8px;
-    padding: 1.25rem;
+    background: var(--bg-warm);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 1.1rem 1.05rem;
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-    transition: transform 0.2s ease;
+    gap: 0.3rem;
+    box-shadow: none;
+    transition: border-color var(--motion-fast) ease, transform var(--motion-fast) ease;
 }
 
 .portfolio-kpi-card:hover {
-    transform: translateY(-2px);
-    border-color: rgba(255,255,255,0.15);
+    transform: translateY(-1px);
+    border-color: var(--border-hover);
 }
 
 .portfolio-kpi-card .kpi-label {
-    font-size: 0.65rem;
-    font-weight: 800;
+    font-size: 0.68rem;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: #a0aec0;
+    letter-spacing: 0.04em;
+    color: var(--text-secondary);
 }
 
 .portfolio-kpi-card .kpi-val {
-    font-size: 1.6rem;
-    font-weight: 850;
-    color: #ffffff;
+    font-size: 1.45rem;
+    font-weight: 750;
+    color: var(--text-primary);
+    line-height: 1.2;
 }
 
 .portfolio-kpi-card .kpi-sub {
-    font-size: 0.7rem;
-    color: #718096;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    line-height: 1.35;
 }
 
-/* Appreciation Glow highlights */
 .portfolio-kpi-card.appreciation-positive {
-    background: rgba(79, 209, 197, 0.03);
-    border-color: rgba(79, 209, 197, 0.2);
+    background: rgba(67, 151, 117, 0.08);
+    border-color: rgba(67, 151, 117, 0.28);
 }
 .portfolio-kpi-card.appreciation-negative {
-    background: rgba(229, 62, 62, 0.03);
-    border-color: rgba(229, 62, 62, 0.2);
+    background: rgba(179, 58, 58, 0.07);
+    border-color: rgba(179, 58, 58, 0.25);
 }
-.portfolio-kpi-card .kpi-val.appreciation-positive { color: #4fd1c5; text-shadow: 0 0 10px rgba(79, 209, 197, 0.2); }
-.portfolio-kpi-card .kpi-val.appreciation-negative { color: #fc8181; text-shadow: 0 0 10px rgba(229, 62, 62, 0.2); }
-.portfolio-kpi-card .kpi-sub.appreciation-positive { color: #4fd1c5; font-weight:700; }
-.portfolio-kpi-card .kpi-sub.appreciation-negative { color: #fc8181; font-weight:700; }
+.portfolio-kpi-card .kpi-val.appreciation-positive {
+    color: #439775;
+    text-shadow: none;
+}
+.portfolio-kpi-card .kpi-val.appreciation-negative {
+    color: var(--danger);
+    text-shadow: none;
+}
+.portfolio-kpi-card .kpi-sub.appreciation-positive {
+    color: #439775;
+    font-weight: 650;
+}
+.portfolio-kpi-card .kpi-sub.appreciation-negative {
+    color: var(--danger);
+    font-weight: 650;
+}
 
 .portfolio-inventory-section .section-title {
-    font-size: 1rem;
-    color: #ffcc00;
-    margin-bottom: 0.75rem;
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.7rem;
 }
 
 .portfolio-table-wrapper {
     overflow-x: auto;
-    border-radius: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    background: var(--bg-warm);
 }
 
 .portfolio-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.78rem;
-    background: rgba(13, 15, 23, 0.5);
+    font-size: 0.8rem;
+    background: transparent;
 }
 
-.portfolio-table th, .portfolio-table td {
-    padding: 0.85rem 1rem;
+.portfolio-table th,
+.portfolio-table td {
+    padding: 0.75rem 0.9rem;
     text-align: left;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-primary);
 }
 
 .portfolio-table th {
-    background: rgba(0, 0, 0, 0.3);
-    font-weight: 800;
+    background: var(--bg-surface);
+    font-weight: 700;
     text-transform: uppercase;
-    font-size: 0.65rem;
-    letter-spacing: 0.05em;
-    color: #a0aec0;
+    font-size: 0.68rem;
+    letter-spacing: 0.04em;
+    color: var(--text-secondary);
+}
+
+.portfolio-table tbody tr:last-child td {
+    border-bottom: none;
 }
 
 .portfolio-table tbody tr:hover td {
-    background: rgba(255, 255, 255, 0.02);
+    background: var(--accent-bg);
 }
 
 .table-spec-cell {
     display: flex;
     flex-direction: column;
+    gap: 0.1rem;
 }
 
 .table-spec-name {
-    font-weight: 750;
-    color: #ffffff;
+    font-weight: 650;
+    color: var(--text-primary);
     cursor: pointer;
-    transition: color 0.2s ease;
+    transition: color var(--motion-fast) ease;
 }
 
 .table-spec-name em {
@@ -8105,33 +8176,34 @@ body[data-archive-view="carts"] #btn-fab-add {
 }
 
 .table-spec-name:hover {
-    color: #ffcc00;
+    color: var(--accent);
     text-decoration: underline;
 }
 
 .table-spec-sub {
-    font-size: 0.62rem;
-    color: #718096;
+    font-size: 0.68rem;
+    color: var(--text-secondary);
 }
 
 .status-pill {
-    font-size: 0.62rem;
-    font-weight: 800;
+    font-size: 0.65rem;
+    font-weight: 700;
     text-transform: uppercase;
-    padding: 0.15rem 0.4rem;
-    border-radius: 4px;
+    letter-spacing: 0.03em;
+    padding: 0.2rem 0.45rem;
+    border-radius: var(--radius-sm);
 }
 
 .status-pill.active {
-    background: rgba(79, 209, 197, 0.1);
-    color: #4fd1c5;
-    border: 1px solid rgba(79, 209, 197, 0.2);
+    background: rgba(67, 151, 117, 0.12);
+    color: #439775;
+    border: 1px solid rgba(67, 151, 117, 0.28);
 }
 
 .status-pill.sold {
-    background: rgba(229, 62, 62, 0.1);
-    color: #fc8181;
-    border: 1px solid rgba(229, 62, 62, 0.2);
+    background: rgba(179, 58, 58, 0.1);
+    color: var(--danger);
+    border: 1px solid rgba(179, 58, 58, 0.25);
 }
 
 .flex-btn {
@@ -8144,16 +8216,16 @@ body[data-archive-view="carts"] #btn-fab-add {
 .chrono-epochs-strip {
     font-size: 0.72rem;
     color: var(--text-secondary);
-    opacity: 0.85;
+    opacity: 0.9;
     margin-top: 0.35rem;
     margin-bottom: 0.5rem;
     font-style: italic;
     letter-spacing: 0.01em;
-    line-height: 1.3;
+    line-height: 1.35;
 }
 
 [data-theme="dark"] .chrono-epochs-strip {
-    color: #cbd5e0;
+    color: var(--text-secondary);
 }
 
 /* =========================================================================

@@ -5,7 +5,7 @@
 // =========================================================================
 
 // --- CONSTANTS ---
-var SPECIMENRY_VERSION = '0.9.16';
+var SPECIMENRY_VERSION = '0.9.18';
 var SPECIMENRY_BUILD_DATE = '2026-07-19';
 
 var CATEGORIES = [
@@ -4491,8 +4491,8 @@ window.app = {
 
         var html = '<div class="chrono-dashboard-wrapper">';
         html += '<div class="chrono-intro-header">' +
-                '<h2>⏳ Geologic Time Drill-Down</h2>' +
-                '<p>Travel back through Deep Time. Check where your fossil specimens reside across stratigraphy layers, and expose missing geological gaps.</p>' +
+                '<h2>Deep Time</h2>' +
+                '<p>See where your fossils sit across geologic eras — and spot gaps still missing from the collection.</p>' +
                 '</div>';
 
         html += '<div class="chrono-vertical-column">';
@@ -4535,7 +4535,7 @@ window.app = {
 
             if (count > 0) {
                 html += '<div class="chrono-specimens-section">' +
-                            '<h4 class="chrono-section-title">🦴 Mapped Specimens (' + count + ')</h4>' +
+                            '<h4 class="chrono-section-title">Specimens in this era (' + count + ')</h4>' +
                             '<div class="chrono-specimens-shelf">';
                 
                 periodFossils.forEach(function(f) {
@@ -4644,12 +4644,12 @@ window.app = {
         
         html += '<div class="portfolio-header-bar">' +
                     '<div class="portfolio-header-text">' +
-                        '<h2>💼 Acquisition Portfolio & Valuations</h2>' +
-                        '<p>Track capital investments, curatorial appreciation, and liquidation records across currencies.</p>' +
+                        '<h2>Collection Value</h2>' +
+                        '<p>Acquisition costs, estimated values, and sales — in one place.</p>' +
                     '</div>' +
                     '<div class="portfolio-header-actions">' +
                         '<div class="portfolio-currency-picker">' +
-                            '<span class="picker-label">Base Valuation:</span>' +
+                            '<span class="picker-label">Currency</span>' +
                             '<select class="portfolio-select" onchange="window.app.setPortfolioBaseCurrency(this.value)">' +
                                 '<option value="USD" ' + (activeBaseCurrency === 'USD' ? 'selected' : '') + '>USD ($)</option>' +
                                 '<option value="EUR" ' + (activeBaseCurrency === 'EUR' ? 'selected' : '') + '>EUR (€)</option>' +
@@ -4666,22 +4666,22 @@ window.app = {
         // KPI Dashboard Grid
         html += '<div class="portfolio-dashboard-grid">' +
                     '<div class="portfolio-kpi-card">' +
-                        '<span class="kpi-label">Active Capital Invested</span>' +
+                        '<span class="kpi-label">Acquisition cost</span>' +
                         '<span class="kpi-val">' + formatVal(totalCost) + '</span>' +
-                        '<span class="kpi-sub">' + activeCount + ' active curated specimens</span>' +
+                        '<span class="kpi-sub">' + activeCount + ' active specimens</span>' +
                     '</div>' +
                     '<div class="portfolio-kpi-card">' +
-                        '<span class="kpi-label">Assessed Portfolio Value</span>' +
+                        '<span class="kpi-label">Estimated value</span>' +
                         '<span class="kpi-val">' + formatVal(totalEstValue) + '</span>' +
-                        '<span class="kpi-sub">Aggregated portfolio value</span>' +
+                        '<span class="kpi-sub">Current collection estimate</span>' +
                     '</div>' +
                     '<div class="portfolio-kpi-card ' + appreciationClass + '">' +
-                        '<span class="kpi-label">Assessed Appreciation</span>' +
+                        '<span class="kpi-label">Appreciation</span>' +
                         '<span class="kpi-val ' + appreciationClass + '">' + appreciationSign + ' ' + formatVal(netAppreciation) + '</span>' +
-                        '<span class="kpi-sub ' + appreciationClass + '">' + (appreciationPct >= 0 ? '+' : '') + appreciationPct.toFixed(1) + '% Net Return</span>' +
+                        '<span class="kpi-sub ' + appreciationClass + '">' + (appreciationPct >= 0 ? '+' : '') + appreciationPct.toFixed(1) + '% vs cost</span>' +
                     '</div>' +
                     '<div class="portfolio-kpi-card">' +
-                        '<span class="kpi-label">Liquidation Revenue</span>' +
+                        '<span class="kpi-label">Sales revenue</span>' +
                         '<span class="kpi-val">' + formatVal(soldTotalRevenue) + '</span>' +
                         '<span class="kpi-sub">Sold: ' + soldCount + ' (' + (soldProfit >= 0 ? '+' : '') + soldProfitPct.toFixed(1) + '% profit)</span>' +
                     '</div>' +
@@ -4695,7 +4695,7 @@ window.app = {
 
         // Inventory table / list
         html += '<div class="portfolio-inventory-section">' +
-                    '<h3 class="section-title">📂 Asset Registry Ledger</h3>' +
+                    '<h3 class="section-title">Specimen valuations</h3>' +
                     '<div class="portfolio-table-wrapper">' +
                         '<table class="portfolio-table">' +
                             '<thead>' +

@@ -606,23 +606,55 @@
     }
 
     /* =====================================================================
-       Dashboard — phone-first panels
+       Dashboard — phone-first panels (readable, not cramped)
        ===================================================================== */
     .stats-summary {
         margin: 0 0 1rem !important;
-        padding: 0.85rem 0.75rem 1rem !important;
+        padding: 0.9rem 0.8rem 1.1rem !important;
         border-radius: 14px !important;
-        gap: 0.85rem !important;
+        gap: 1rem !important;
         box-shadow: none !important;
     }
     .stats-summary .stats-header {
-        padding-bottom: 0.65rem !important;
+        padding-bottom: 0.75rem !important;
         margin-bottom: 0 !important;
-        align-items: center !important;
+        align-items: flex-start !important;
+        gap: 0.35rem !important;
     }
     .stats-text {
-        font-size: 0.82rem !important;
-        line-height: 1.55 !important;
+        font-size: 0.9rem !important;
+        line-height: 1.5 !important;
+        min-width: 0 !important;
+    }
+    .stats-summary-pills {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 0.5rem !important;
+        width: 100% !important;
+    }
+    .stats-pill {
+        display: flex !important;
+        align-items: flex-start !important;
+        gap: 0.45rem !important;
+        flex: 1 1 auto !important;
+        min-width: min(100%, 9.5rem) !important;
+        max-width: 100% !important;
+        padding: 0.55rem 0.8rem !important;
+        border-radius: 0.85rem !important;
+        font-size: 0.88rem !important;
+        font-weight: 550 !important;
+        line-height: 1.4 !important;
+        box-sizing: border-box !important;
+    }
+    .stats-pill svg {
+        flex-shrink: 0 !important;
+        margin-top: 0.12rem !important;
+    }
+    .stats-pill span {
+        white-space: normal !important;
+        overflow-wrap: anywhere !important;
+        word-break: break-word !important;
+        min-width: 0 !important;
     }
     .stats-segmented-control {
         position: sticky !important;
@@ -630,13 +662,13 @@
         z-index: 4 !important;
         display: flex !important;
         flex-wrap: nowrap !important;
-        gap: 0.35rem !important;
+        gap: 0.4rem !important;
         overflow-x: auto !important;
         -webkit-overflow-scrolling: touch !important;
         scrollbar-width: none !important;
-        padding: 0.35rem 0.15rem 0.55rem !important;
-        margin: 0 -0.15rem 0.25rem !important;
-        background: linear-gradient(to bottom, var(--bg-surface) 70%, transparent) !important;
+        padding: 0.4rem 0.1rem 0.65rem !important;
+        margin: 0 -0.1rem 0.35rem !important;
+        background: linear-gradient(to bottom, var(--bg-surface) 72%, transparent) !important;
         border: none !important;
     }
     .stats-segmented-control::-webkit-scrollbar {
@@ -644,14 +676,16 @@
     }
     .stats-segmented-control button {
         flex: 0 0 auto !important;
-        min-height: 40px !important;
-        padding: 0.5rem 0.8rem !important;
+        min-height: 42px !important;
+        padding: 0.55rem 0.95rem !important;
         border-radius: 999px !important;
         border: 1px solid var(--border-color) !important;
         background: var(--bg-warm) !important;
-        font-size: 0.75rem !important;
+        font-size: 0.82rem !important;
         font-weight: 650 !important;
+        letter-spacing: 0.01em !important;
         white-space: nowrap !important;
+        gap: 0.4rem !important;
     }
     .stats-segmented-control button.active {
         background: var(--accent) !important;
@@ -659,13 +693,14 @@
         color: #fff !important;
     }
     .stats-segmented-control button svg {
-        width: 13px !important;
-        height: 13px !important;
+        width: 14px !important;
+        height: 14px !important;
+        flex-shrink: 0 !important;
     }
     .stats-charts {
         flex-direction: column !important;
-        gap: 1.25rem !important;
-        padding: 0.75rem 0 0.25rem !important;
+        gap: 1.35rem !important;
+        padding: 0.85rem 0 0.35rem !important;
         border-top: none !important;
         align-items: stretch !important;
     }
@@ -675,9 +710,24 @@
         width: 100% !important;
     }
     .chart-title {
-        font-size: 0.75rem !important;
-        margin-bottom: 0.65rem !important;
+        font-size: 0.8rem !important;
+        letter-spacing: 0.04em !important;
+        margin-bottom: 0.75rem !important;
+        line-height: 1.35 !important;
         align-self: flex-start;
+        white-space: normal !important;
+    }
+    .dashboard-custom-legend {
+        gap: 0.45rem !important;
+        justify-content: flex-start !important;
+        margin-top: 0.85rem !important;
+    }
+    .dashboard-custom-legend > div {
+        font-size: 0.8rem !important;
+        line-height: 1.35 !important;
+        padding: 0.35rem 0.65rem !important;
+        white-space: normal !important;
+        max-width: 100% !important;
     }
     .dashboard-visual-container,
     .data-insights-container {
@@ -685,6 +735,22 @@
         max-width: 100% !important;
         margin: 0 !important;
         padding: 0 !important;
+        overflow-x: hidden !important;
+    }
+    .data-insights-grid {
+        grid-template-columns: 1fr !important;
+        gap: 0.85rem !important;
+        padding: 0.35rem 0 0.75rem !important;
+    }
+    .data-card {
+        padding: 1.1rem 1rem !important;
+        border-radius: 12px !important;
+    }
+    .data-card > div[style*="font-size: 2.25rem"],
+    .data-card > div[style*="font-size: 2rem"] {
+        font-size: 1.65rem !important;
+        line-height: 1.2 !important;
+        overflow-wrap: anywhere !important;
     }
     #fossil-map-container {
         height: min(58vh, 420px) !important;
@@ -692,9 +758,131 @@
         border-radius: 12px !important;
         overflow: hidden !important;
     }
-    .portfolio-dashboard-grid,
-    .chrono-dashboard-wrapper {
+
+    /* Leaderboard */
+    .scoreboard-nav-pills {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 0.4rem !important;
+        margin-bottom: 0.85rem !important;
+    }
+    .scoreboard-nav-pills button {
+        min-height: 40px !important;
+        padding: 0.45rem 0.85rem !important;
+        font-size: 0.8rem !important;
+    }
+    .scoreboard-item {
+        flex-wrap: wrap !important;
+        align-items: flex-start !important;
+        gap: 0.65rem 0.75rem !important;
+        padding: 0.75rem 0.85rem !important;
+    }
+    .scoreboard-left-group {
+        flex: 1 1 12rem !important;
+        gap: 0.65rem !important;
+        min-width: 0 !important;
+    }
+    .scoreboard-specimen-name {
+        white-space: normal !important;
+        overflow: visible !important;
+        text-overflow: unset !important;
+        font-size: 0.92rem !important;
+        line-height: 1.35 !important;
+    }
+    .scoreboard-specimen-meta {
+        white-space: normal !important;
+        overflow: visible !important;
+        text-overflow: unset !important;
+        flex-wrap: wrap !important;
+        row-gap: 0.2rem !important;
+        font-size: 0.78rem !important;
+        line-height: 1.35 !important;
+    }
+    .scoreboard-metric-capsule {
+        margin-left: auto !important;
+        padding: 0.4rem 0.75rem !important;
+        font-size: 0.8rem !important;
+        line-height: 1.3 !important;
+        white-space: normal !important;
+        text-align: right !important;
+        max-width: 100% !important;
+    }
+    .scoreboard-zero-desc {
+        font-size: 0.88rem !important;
+        line-height: 1.5 !important;
+        max-width: none !important;
+        padding: 0 0.25rem !important;
+    }
+
+    /* Portfolio / Deep Time */
+    .portfolio-wrapper {
+        padding: 1rem 0.85rem !important;
+    }
+    .portfolio-header-bar {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 0.75rem !important;
+        padding-bottom: 1rem !important;
+        margin-bottom: 1.1rem !important;
+    }
+    .portfolio-header-text h2 {
+        font-size: 1.2rem !important;
+        line-height: 1.25 !important;
+    }
+    .portfolio-header-text p {
+        font-size: 0.88rem !important;
+        line-height: 1.45 !important;
+    }
+    .portfolio-dashboard-grid {
         grid-template-columns: 1fr !important;
-        gap: 0.85rem !important;
+        gap: 0.75rem !important;
+    }
+    .portfolio-kpi-card {
+        padding: 1rem 0.95rem !important;
+        gap: 0.35rem !important;
+    }
+    .portfolio-kpi-card .kpi-label {
+        font-size: 0.72rem !important;
+        letter-spacing: 0.04em !important;
+        line-height: 1.3 !important;
+    }
+    .portfolio-kpi-card .kpi-val {
+        font-size: 1.35rem !important;
+        line-height: 1.2 !important;
+        overflow-wrap: anywhere !important;
+    }
+    .portfolio-kpi-card .kpi-sub {
+        font-size: 0.8rem !important;
+        line-height: 1.4 !important;
+    }
+    .chrono-intro-header h2 {
+        font-size: 1.15rem !important;
+        line-height: 1.3 !important;
+    }
+    .chrono-intro-header p {
+        font-size: 0.88rem !important;
+        line-height: 1.45 !important;
+    }
+    .chrono-layer-card {
+        padding: 0.9rem 0.85rem !important;
+    }
+    .chrono-layer-title {
+        font-size: 0.95rem !important;
+        line-height: 1.35 !important;
+        white-space: normal !important;
+    }
+    .chrono-climate-grid {
+        grid-template-columns: 1fr !important;
+        gap: 0.55rem !important;
+    }
+    .chrono-climate-stat {
+        font-size: 0.85rem !important;
+        line-height: 1.4 !important;
+    }
+
+    @media (min-width: 420px) {
+        .portfolio-dashboard-grid {
+            grid-template-columns: 1fr 1fr !important;
+        }
     }
 }
