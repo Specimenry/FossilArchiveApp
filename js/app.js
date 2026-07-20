@@ -5,7 +5,7 @@
 // =========================================================================
 
 // --- CONSTANTS ---
-var SPECIMENRY_VERSION = '0.9.19';
+var SPECIMENRY_VERSION = '0.9.21';
 var SPECIMENRY_BUILD_DATE = '2026-07-19';
 
 var CATEGORIES = [
@@ -1220,6 +1220,9 @@ window.addEventListener('DOMContentLoaded', function() {
     // Apply curation profile settings immediately to prevent visual flashing
     if (window.app && typeof window.app.applySettingsVisibility === 'function') {
         window.app.applySettingsVisibility();
+    }
+    if (window.app && typeof window.app.applyPricePrivacy === 'function') {
+        window.app.applyPricePrivacy();
     }
     if (window.app && typeof window.app.initDictationLanguageUI === 'function') {
         window.app.initDictationLanguageUI();
@@ -2614,11 +2617,11 @@ window.app = {
             if (f.size) curParts.push('📏 <strong>Size:</strong> ' + formatSpecimenDimensions(f));
             if (f.weight) curParts.push('⚖️ <strong>Weight:</strong> ' + formatSpecimenWeight(f.weight));
             if (f.isSold && f.salePrice > 0) {
-                curParts.push('💰 <strong>Sold Price:</strong> ' + f.salePrice + ' ' + (f.saleCurrency || 'USD'));
+                curParts.push('<span class="privacy-price">💰 <strong>Sold Price:</strong> ' + f.salePrice + ' ' + (f.saleCurrency || 'USD') + '</span>');
             } else if (f.isForSale && f.salePrice > 0) {
-                curParts.push('🏷️ <strong>Asking Price:</strong> ' + f.salePrice + ' ' + (f.saleCurrency || 'USD'));
+                curParts.push('<span class="privacy-price">🏷️ <strong>Asking Price:</strong> ' + f.salePrice + ' ' + (f.saleCurrency || 'USD') + '</span>');
             } else if (f.price && !f.isWishlist && !f.isDream) {
-                curParts.push('💰 <strong>Value:</strong> ' + f.price + ' ' + (f.currency || 'USD'));
+                curParts.push('<span class="privacy-price">💰 <strong>Value:</strong> ' + f.price + ' ' + (f.currency || 'USD') + '</span>');
             }
             if (f.fossilType) curParts.push('🦕 <strong>Fossil Type:</strong> ' + escapeHtml(f.fossilType));
             
@@ -3617,7 +3620,7 @@ window.app = {
                 if (totalCostSEK > 0) {
                     statsHtml += '<div class="stats-pill" style="display: flex; align-items: center; gap: 0.5rem; background: var(--bg-warm); padding: 0.4rem 0.85rem; border-radius: 2rem; border: 1px solid var(--border-color); font-size: 0.85rem; font-weight: 500;">' +
                                     '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b5d4d" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M16 8l-8 8M8 8l8 8"/></svg>' +
-                                    '<span>Acquisition Cost: <strong>' + formatDashMoney(totalCostSEK) + '</strong></span>' +
+                                    '<span class="privacy-price">Acquisition Cost: <strong>' + formatDashMoney(totalCostSEK) + '</strong></span>' +
                                   '</div>';
                 }
 
@@ -3625,7 +3628,7 @@ window.app = {
                 if (totalSaleSEK > 0) {
                     statsHtml += '<div class="stats-pill" style="display: flex; align-items: center; gap: 0.5rem; background: var(--bg-warm); padding: 0.4rem 0.85rem; border-radius: 2rem; border: 1px solid var(--border-color); font-size: 0.85rem; font-weight: 500;">' +
                                     '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>' +
-                                    '<span>Sales Revenue: <strong>' + formatDashMoney(totalSaleSEK) + '</strong></span>' +
+                                    '<span class="privacy-price">Sales Revenue: <strong>' + formatDashMoney(totalSaleSEK) + '</strong></span>' +
                                   '</div>';
                 }
 
@@ -3638,7 +3641,7 @@ window.app = {
                     var profitDisp = window.app._convertCurrency(totalProfitSEK, 'SEK', displayCurr);
                     statsHtml += '<div class="stats-pill" style="display: flex; align-items: center; gap: 0.5rem; background: ' + profitBg + '; color: ' + profitColor + '; padding: 0.4rem 0.85rem; border-radius: 2rem; border: 1px solid ' + profitBorder + '; font-size: 0.85rem; font-weight: 700;">' +
                                     '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>' +
-                                    '<span>Net Profit: ' + (profitDisp >= 0 ? '+' : '') + Math.round(profitDisp).toLocaleString() + ' ' + displayCurr + ' (' + (totalProfitSEK >= 0 ? '↑' : '↓') + percentProfit + '%)</span>' +
+                                    '<span class="privacy-price">Net Profit: ' + (profitDisp >= 0 ? '+' : '') + Math.round(profitDisp).toLocaleString() + ' ' + displayCurr + ' (' + (totalProfitSEK >= 0 ? '↑' : '↓') + percentProfit + '%)</span>' +
                                   '</div>';
                 }
             } else {
@@ -3669,7 +3672,7 @@ window.app = {
                 if (totalCostSEK > 0) {
                     statsHtml += '<div class="stats-pill" style="display: flex; align-items: center; gap: 0.5rem; background: var(--bg-warm); padding: 0.4rem 0.85rem; border-radius: 2rem; border: 1px solid var(--border-color); font-size: 0.85rem; font-weight: 500;">' +
                                     '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b5d4d" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M16 8l-8 8M8 8l8 8"/></svg>' +
-                                    '<span>Cost: <strong>' + formatDashMoney(totalCostSEK) + '</strong></span>' +
+                                    '<span class="privacy-price">Cost: <strong>' + formatDashMoney(totalCostSEK) + '</strong></span>' +
                                   '</div>';
                 }
 
@@ -3677,7 +3680,7 @@ window.app = {
                 if (totalEstSEK > 0) {
                     statsHtml += '<div class="stats-pill" style="display: flex; align-items: center; gap: 0.5rem; background: var(--bg-warm); padding: 0.4rem 0.85rem; border-radius: 2rem; border: 1px solid var(--border-color); font-size: 0.85rem; font-weight: 500;">' +
                                     '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e6a817" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v12M17 12H7"/></svg>' +
-                                    '<span>Value: <strong>' + formatDashMoney(totalEstSEK) + '</strong></span>' +
+                                    '<span class="privacy-price">Value: <strong>' + formatDashMoney(totalEstSEK) + '</strong></span>' +
                                   '</div>';
                 }
 
@@ -3686,7 +3689,7 @@ window.app = {
                     var percentGain = Math.round((totalAppreciation / totalCostSEK) * 100);
                     statsHtml += '<div class="stats-pill" style="display: flex; align-items: center; gap: 0.5rem; background: rgba(67, 151, 117, 0.1); color: #439775; padding: 0.4rem 0.85rem; border-radius: 2rem; border: 1px solid rgba(67, 151, 117, 0.2); font-size: 0.85rem; font-weight: 700;">' +
                                     '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>' +
-                                    '<span>Appreciation: +' + formatDashMoney(totalAppreciation) + ' (↑' + percentGain + '%)</span>' +
+                                    '<span class="privacy-price">Appreciation: +' + formatDashMoney(totalAppreciation) + ' (↑' + percentGain + '%)</span>' +
                                   '</div>';
                 }
             }
@@ -3772,7 +3775,7 @@ window.app = {
                                     '<div class="data-card" style="background: var(--bg-warm); padding: 1.5rem; border-radius: 1rem; border: 1px solid var(--border-color); text-align: center; box-shadow: var(--shadow-sm);">' +
                                         '<div style="color: var(--accent); margin-bottom: 0.5rem;"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>' +
                                         '<div style="font-size: 0.9rem; opacity: 0.7; font-weight: 600; text-transform: uppercase;">Total Target Budget</div>' +
-                                        '<div style="font-size: 2.25rem; font-weight: 800; color: var(--text-main); margin-top: 0.5rem;">' + formatDashMoney(totalBudget) + '</div>' +
+                                        '<div class="privacy-price" style="font-size: 2.25rem; font-weight: 800; color: var(--text-main); margin-top: 0.5rem;">' + formatDashMoney(totalBudget) + '</div>' +
                                         '<div style="font-size: 0.8rem; opacity: 0.6; margin-top: 0.25rem;">For ' + missingCount + ' tracked specimens</div>' +
                                     '</div>' +
                                     // Most Wanted Card
@@ -4722,7 +4725,7 @@ window.app = {
                 '</div>';
 
         // KPI Dashboard Grid
-        html += '<div class="portfolio-dashboard-grid">' +
+        html += '<div class="portfolio-dashboard-grid privacy-price">' +
                     '<div class="portfolio-kpi-card">' +
                         '<span class="kpi-label">Acquisition cost</span>' +
                         '<span class="kpi-val">' + formatVal(totalCost) + '</span>' +
@@ -4754,7 +4757,7 @@ window.app = {
         // Inventory table / list
         html += '<div class="portfolio-inventory-section">' +
                     '<h3 class="section-title">Specimen valuations</h3>' +
-                    '<div class="portfolio-table-wrapper">' +
+                    '<div class="portfolio-table-wrapper privacy-price">' +
                         '<table class="portfolio-table">' +
                             '<thead>' +
                                 '<tr>' +
@@ -5209,18 +5212,18 @@ window.app = {
                     var origPrice = parseFloat(f.price).toLocaleString() + ' ' + currency;
                     if (currency !== 'SEK') {
                         var sekEquiv = Math.round(toSEK(f));
-                        metricText = '💰 ' + origPrice + ' <small style="opacity: 0.85; font-size: 0.7rem; font-weight: 500; margin-left: 0.25rem; font-family: monospace;">(~' + sekEquiv.toLocaleString() + ' SEK)</small>';
+                        metricText = '<span class="privacy-price">💰 ' + origPrice + ' <small style="opacity: 0.85; font-size: 0.7rem; font-weight: 500; margin-left: 0.25rem; font-family: monospace;">(~' + sekEquiv.toLocaleString() + ' SEK)</small></span>';
                     } else {
-                        metricText = '💰 ' + origPrice;
+                        metricText = '<span class="privacy-price">💰 ' + origPrice + '</span>';
                     }
                 } else if (criteria === 'estimatedValue') {
                     var currency = f.estimatedCurrency || 'USD';
                     var origPrice = parseFloat(f.estimatedValue).toLocaleString() + ' ' + currency;
                     if (currency !== 'SEK') {
                         var sekEquiv = Math.round(toSEKEst(f));
-                        metricText = '💎 ' + origPrice + ' <small style="opacity: 0.85; font-size: 0.7rem; font-weight: 500; margin-left: 0.25rem; font-family: monospace;">(~' + sekEquiv.toLocaleString() + ' SEK)</small>';
+                        metricText = '<span class="privacy-price">💎 ' + origPrice + ' <small style="opacity: 0.85; font-size: 0.7rem; font-weight: 500; margin-left: 0.25rem; font-family: monospace;">(~' + sekEquiv.toLocaleString() + ' SEK)</small></span>';
                     } else {
-                        metricText = '💎 ' + origPrice;
+                        metricText = '<span class="privacy-price">💎 ' + origPrice + '</span>';
                     }
                 } else if (criteria === 'conditionTier') {
                     metricText = getConditionTierBadgeHtml(f.conditionTier, false);
@@ -11679,7 +11682,7 @@ window.app = {
                                 iconSvg +
                                 '<span>' + titleText + ': ' + count + ' ' + (count === 1 ? 'specimen' : 'specimens') + '</span>' +
                             '</div>' +
-                            '<div class="view-info-banner-right">' +
+                            '<div class="view-info-banner-right privacy-price">' +
                                 rightHtml +
                             '</div>';
                     } else {
@@ -11956,9 +11959,9 @@ window.app = {
                     if (f.price > 0 || f.estimatedValue > 0) {
                         var val = f.price > 0 ? f.price : f.estimatedValue;
                         var curr = f.price > 0 ? (f.currency || 'USD') : (f.estimatedCurrency || 'USD');
-                        priceTarget = '<span class="wishlist-price-badge">Target: ' + val.toLocaleString() + ' ' + curr + '</span>';
+                        priceTarget = '<span class="wishlist-price-badge privacy-price">Target: ' + val.toLocaleString() + ' ' + curr + '</span>';
                     } else {
-                        priceTarget = '<span class="wishlist-price-badge empty-placeholder">—</span>';
+                        priceTarget = '<span class="wishlist-price-badge empty-placeholder privacy-price">—</span>';
                     }
 
                     cardInnerHtml = 
@@ -12100,19 +12103,19 @@ window.app = {
                         
                         if (f.isSold && f.salePrice > 0) {
                             var saleVal = f.salePrice + ' ' + (f.saleCurrency || 'USD');
-                            detailsHtml += '<span class="spec-micro-pill" title="Sold for: ' + escapeHtml(saleVal) + '" style="display: inline-flex; align-items: center; gap: 0.25rem; background: rgba(220, 95, 60, 0.08); border: 1px solid rgba(220, 95, 60, 0.2); padding: 0.2rem 0.5rem; border-radius: 6px; font-size: 0.7rem; font-weight: 700; color: #eb7350;">' +
+                            detailsHtml += '<span class="spec-micro-pill privacy-price" title="Sold for: ' + escapeHtml(saleVal) + '" style="display: inline-flex; align-items: center; gap: 0.25rem; background: rgba(220, 95, 60, 0.08); border: 1px solid rgba(220, 95, 60, 0.2); padding: 0.2rem 0.5rem; border-radius: 6px; font-size: 0.7rem; font-weight: 700; color: #eb7350;">' +
                                                 '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>' +
                                                 'Sold: ' + escapeHtml(saleVal) +
                                            '</span>';
                         } else if (f.isForSale && f.salePrice > 0) {
                             var askVal = f.salePrice + ' ' + (f.saleCurrency || 'USD');
-                            detailsHtml += '<span class="spec-micro-pill" title="Asking Price: ' + escapeHtml(askVal) + '" style="display: inline-flex; align-items: center; gap: 0.25rem; background: rgba(229, 142, 38, 0.08); border: 1px solid rgba(229, 142, 38, 0.25); padding: 0.2rem 0.5rem; border-radius: 6px; font-size: 0.7rem; font-weight: 700; color: var(--warning);">' +
+                            detailsHtml += '<span class="spec-micro-pill privacy-price" title="Asking Price: ' + escapeHtml(askVal) + '" style="display: inline-flex; align-items: center; gap: 0.25rem; background: rgba(229, 142, 38, 0.08); border: 1px solid rgba(229, 142, 38, 0.25); padding: 0.2rem 0.5rem; border-radius: 6px; font-size: 0.7rem; font-weight: 700; color: var(--warning);">' +
                                                 '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>' +
                                                 'Asking: ' + escapeHtml(askVal) +
                                            '</span>';
                         } else if (f.price) {
                             var priceVal = f.price + ' ' + (f.currency || 'USD');
-                            detailsHtml += '<span class="spec-micro-pill" title="Acquisition Cost: ' + escapeHtml(priceVal) + '" style="display: inline-flex; align-items: center; gap: 0.25rem; background: var(--accent-bg); border: 1px solid rgba(122, 92, 18, 0.15); padding: 0.2rem 0.5rem; border-radius: 6px; font-size: 0.7rem; font-weight: 700; color: var(--accent);">' +
+                            detailsHtml += '<span class="spec-micro-pill privacy-price" title="Acquisition Cost: ' + escapeHtml(priceVal) + '" style="display: inline-flex; align-items: center; gap: 0.25rem; background: var(--accent-bg); border: 1px solid rgba(122, 92, 18, 0.15); padding: 0.2rem 0.5rem; border-radius: 6px; font-size: 0.7rem; font-weight: 700; color: var(--accent);">' +
                                                 '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>' +
                                                 escapeHtml(priceVal) +
                                            '</span>';
@@ -13001,7 +13004,7 @@ window.app = {
         html += '    <p>' + count + ' ' + (count === 1 ? 'draft specimen' : 'draft specimens') + '</p>';
         html += '  </div>';
         html += '  <div class="cart-summary-right">';
-        html += '    <div class="cart-summary-total">' + totalHtml + '</div>';
+        html += '    <div class="cart-summary-total privacy-price">' + totalHtml + '</div>';
         html += '    <button class="btn-primary" onclick="app.openCartItemModal()"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> Add Draft Item</button>';
         if (count >= 1) {
             html += '    <button class="btn-secondary" onclick="app.startCartShowcase()"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg> Play Slideshow</button>';
@@ -13075,7 +13078,7 @@ window.app = {
                 html += '      <p class="cart-card-notes">' + escapeHtml(f.notes || 'No curator notes logged.') + '</p>';
                 html += '      <div class="cart-card-pills">';
                 if (f.price) {
-                    html += '        <span class="cart-card-pill price">' + escapeHtml(priceStr) + '</span>';
+                    html += '        <span class="cart-card-pill price privacy-price">' + escapeHtml(priceStr) + '</span>';
                 }
                 if (sizeStr) {
                     html += '        <span class="cart-card-pill size">' + escapeHtml(sizeStr) + '</span>';
@@ -16722,6 +16725,39 @@ window.app = {
         .finally(function() {
             if (submitBtn) submitBtn.disabled = false;
         });
+    },
+
+    /** Hide prices on cards/lightbox/dashboard for privacy screenshots. Does not change stored data. */
+    isPricesHidden: function() {
+        try { return localStorage.getItem('pref_hide_prices') === 'true'; } catch (e) { return false; }
+    },
+
+    toggleHidePrices: function() {
+        var next = !this.isPricesHidden();
+        try { localStorage.setItem('pref_hide_prices', next ? 'true' : 'false'); } catch (e) {}
+        this.applyPricePrivacy();
+        this.showToast(next ? 'Prices hidden — safe for screenshots.' : 'Prices visible again.', next ? 'info' : 'success', 2200);
+    },
+
+    applyPricePrivacy: function() {
+        var hidden = this.isPricesHidden();
+        document.body.classList.toggle('privacy-hide-prices', hidden);
+
+        var btn = document.getElementById('btn-hide-prices');
+        var label = document.getElementById('btn-hide-prices-label');
+        var btnM = document.getElementById('btn-hide-prices-mobile');
+        if (btn) {
+            btn.setAttribute('aria-pressed', hidden ? 'true' : 'false');
+            btn.title = hidden ? 'Show prices' : 'Hide prices for screenshots';
+            btn.classList.toggle('active', hidden);
+        }
+        if (label) label.textContent = hidden ? 'Show prices' : 'Hide prices';
+        if (btnM) {
+            btnM.setAttribute('aria-pressed', hidden ? 'true' : 'false');
+            btnM.classList.toggle('is-active', hidden);
+            btnM.classList.toggle('active', hidden);
+            btnM.textContent = hidden ? 'Show prices' : 'Hide prices';
+        }
     },
 
     setLayoutView: function(view) {
