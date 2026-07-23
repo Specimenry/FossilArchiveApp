@@ -51,6 +51,9 @@
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.4.7/peerjs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+    <!-- Anonymous page views only (no cookies / no collection data) — https://specimenry.goatcounter.com -->
+    <script data-goatcounter="https://specimenry.goatcounter.com/count"
+            async src="https://gc.zgo.at/count.js"></script>
 </head>
 <body>
  
@@ -402,11 +405,26 @@
                         <button type="button" id="btn-layout-list-mobile" class="mf-chip" onclick="app.setLayoutView('list')" aria-pressed="false">List</button>
                     </div>
                 </div>
+
+                <div class="form-group mobile-filter-privacy-block mobile-only">
+                    <label>Prices</label>
+                    <div class="mobile-filter-layout-toggle" role="group" aria-label="Show or hide prices">
+                        <button type="button" id="btn-hide-prices-mobile" class="mf-chip" onclick="app.toggleHidePrices()" aria-pressed="false">Hide prices</button>
+                    </div>
+                </div>
                 
                 <div class="form-group compare-toggle-wrapper desktop-only" style="min-width: 100px;">
                     <label style="visibility: hidden; user-select: none;">Compare</label>
                     <button id="btn-toggle-compare-picker" class="btn-secondary" onclick="app.toggleComparePickerMode()" title="Interactive Compare Selector Mode" style="height: 38px; display: flex; align-items: center; justify-content: center; gap: 0.35rem; font-size: 0.8rem; font-weight: 600; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-surface); color: var(--text-primary); cursor: pointer; transition: var(--transition); width: 100%;">
                         ⚖️ Compare
+                    </button>
+                </div>
+
+                <div class="form-group price-privacy-toggle-wrapper desktop-only" style="min-width: 110px;">
+                    <label style="visibility: hidden; user-select: none;">Prices</label>
+                    <button type="button" id="btn-hide-prices" class="btn-secondary" onclick="app.toggleHidePrices()" title="Hide prices for screenshots" aria-pressed="false" style="height: 38px; display: flex; align-items: center; justify-content: center; gap: 0.35rem; font-size: 0.8rem; font-weight: 600; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-surface); color: var(--text-primary); cursor: pointer; transition: var(--transition); width: 100%; padding: 0 0.65rem;">
+                        <span aria-hidden="true">👁</span>
+                        <span id="btn-hide-prices-label">Hide prices</span>
                     </button>
                 </div>
 
@@ -421,6 +439,7 @@
                         </button>
                     </div>
                 </div>
+
             </div>
             
             <!-- Row 3: Active Badges -->
@@ -624,14 +643,14 @@
                     <!-- Section 1: Classification -->
                     <div id="tab-classification" class="tab-content active">
                     <div class="form-grid">
-                        <div class="form-group">
+                        <div class="form-group quick-add-visible" id="group-f-type-select">
                             <label for="f-type-select">Specimen Type</label>
-                            <select id="f-type-select" onchange="app.handleSpecimenTypeChange()">
+                            <select id="f-type-select" onchange="app.handleSpecimenTypeChange()" aria-label="Fossil or mineral">
                                 <option value="fossil">Fossil</option>
                                 <option value="mineral">Mineral</option>
                             </select>
                         </div>
-                        <p class="simple-mode-hint">Field log — name, photo, place, note, then <strong>Save specimen</strong>. Switch to Advanced anytime for full details.</p>
+                        <p class="simple-mode-hint">Field log — pick fossil or mineral, then name, photo, place, note, and <strong>Save</strong>. Switch to Advanced anytime for full details.</p>
 
                         <div class="form-group full-width quick-add-visible">
                             <label for="f-specimen">Specimen Name *</label>
@@ -1464,7 +1483,7 @@
                             <span class="meta-label">Preservation & Condition</span>
                             <span id="showcase-meta-condition" class="meta-val">🟢 Stable</span>
                         </div>
-                        <div class="showcase-meta-item" id="showcase-meta-price-wrapper" style="display: none;">
+                        <div class="showcase-meta-item privacy-price" id="showcase-meta-price-wrapper" style="display: none;">
                             <span class="meta-label">Asking Price / Value</span>
                             <span id="showcase-meta-price" class="meta-val" style="color: var(--warning); font-weight: 800; font-size: 1.1rem;">N/A</span>
                         </div>
@@ -2542,7 +2561,7 @@
             <p class="welcome-landing-lead">A personal database for fossils and minerals — catalog, field notes, labels, and your collection story in one place.</p>
 
             <ul class="welcome-landing-points">
-                <li><strong>Local-first &amp; private.</strong> Specimens, photos, and field diary trips stay in <em>your</em> browser. No account required. Nothing is uploaded unless you choose optional sync.</li>
+                <li><strong>Local-first &amp; private.</strong> Specimens, photos, and field diary trips stay in <em>your</em> browser. No account required. Nothing is uploaded unless you choose optional sync. Anonymous page-view counts (GoatCounter, no cookies) help see if the site is used — not who you are, and never your collection.</li>
                 <li><strong>Free to use.</strong> The app is free. Optional <a href="https://ko-fi.com/specimenry" target="_blank" rel="noopener">Ko-fi tips</a> support development — there is no paid lock on core features.</li>
                 <li><strong>Phone &amp; desktop.</strong> In the field, use <strong>Simple</strong> mode when adding (name, photo, location, notes, trip). On desktop, use Advanced for full curation.</li>
             </ul>

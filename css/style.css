@@ -10115,6 +10115,23 @@ body:not(.pref-shop-active) .shop-field-group {
 #backup-stat-ok {
     color: var(--accent);
 }
+
+/* Hide money on cards / lightbox / banners for privacy screenshots */
+body.privacy-hide-prices .privacy-price {
+    display: none !important;
+}
+body.privacy-hide-prices #btn-hide-prices,
+body.privacy-hide-prices #btn-hide-prices-mobile {
+    background: var(--accent-bg) !important;
+    border-color: var(--accent) !important;
+    color: var(--accent) !important;
+}
+body.privacy-hide-prices #btn-hide-prices-mobile.is-active {
+    background: var(--accent) !important;
+    color: #fff !important;
+    border-color: var(--accent) !important;
+}
+
 .backup-center-header {
     display: flex;
     justify-content: space-between;

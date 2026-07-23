@@ -5,7 +5,7 @@
 // =========================================================================
 
 // --- CONSTANTS ---
-var SPECIMENRY_VERSION = '0.9.21';
+var SPECIMENRY_VERSION = '0.9.22';
 var SPECIMENRY_BUILD_DATE = '2026-07-19';
 
 var CATEGORIES = [
